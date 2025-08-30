@@ -1,0 +1,126 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Regras para usuários
+    match /users/{userId} {
+      // Usuário pode ler e escrever seus próprios dados
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Admin pode ler todos os usuários
+      allow read: if request.auth != null && isAdmin();
+    }
+    
+    // Regras para alunos
+    match /students/{studentId} {
+      // Aluno pode ler seus próprios dados
+      allow read: if request.auth != null && request.auth.uid == studentId;
+      // Professor pode ler dados de seus alunos
+      allow read: if request.auth != null && isInstructor() && isStudentOfInstructor(studentId);
+      // Admin pode ler e escrever todos
+      allow read, write: if request.auth != null && isAdmin();
+      // Professor pode escrever graduações de seus alunos
+      allow write: if request.auth != null && isInstructor() && isStudentOfInstructor(studentId);
+    }
+    
+    // Regras para turmas
+    match /classes/{classId} {
+      // Aluno pode ler dados de suas turmas
+      allow read: if request.auth != null && isStudentInClass(classId);
+      // Professor pode ler e escrever dados de suas turmas
+      allow read, write: if request.auth != null && isInstructorOfClass(classId);
+      // Admin pode ler e escrever todas
+      allow read, write: if request.auth != null && isAdmin();
+    }
+    
+    // Regras para pagamentos
+    match /payments/{paymentId} {
+      // Aluno pode ler seus próprios pagamentos
+      allow read: if request.auth != null && resource.data.studentId == request.auth.uid;
+      // Admin pode ler e escrever todos
+      allow read, write: if request.auth != null && isAdmin();
+    }
+    
+    // Regras para check-ins
+    match /checkIns/{checkInId} {
+      // Aluno pode criar check-in para si mesmo
+      allow create: if request.auth != null && request.resource.data.studentId == request.auth.uid;
+      // Professor pode ler check-ins de suas turmas
+      allow read: if request.auth != null && isInstructorOfClass(resource.data.classId);
+      // Admin pode ler todos
+      allow read: if request.auth != null && isAdmin();
+    }
+    
+    // Regras para modalidades
+    match /modalities/{modalityId} {
+      // Todos os usuários autenticados podem ler
+      allow read: if request.auth != null;
+      // Apenas admin pode escrever
+      allow write: if request.auth != null && isAdmin();
+    }
+    
+    // Regras para planos
+    match /plans/{planId} {
+      // Todos os usuários autenticados podem ler
+      allow read: if request.auth != null;
+      // Apenas admin pode escrever
+      allow write: if request.auth != null && isAdmin();
+    }
+    
+    // Regras para avisos
+    match /announcements/{announcementId} {
+      // Todos os usuários autenticados podem ler
+      allow read: if request.auth != null;
+      // Apenas admin pode escrever
+      allow write: if request.auth != null && isAdmin();
+    }
+    
+    // Regras para eventos
+    match /events/{eventId} {
+      // Todos os usuários autenticados podem ler
+      allow read: if request.auth != null;
+      // Apenas admin pode escrever
+      allow write: if request.auth != null && isAdmin();
+    }
+    
+    // Regras para inscrições em eventos
+    match /eventRegistrations/{registrationId} {
+      // Aluno pode criar inscrição para si mesmo
+      allow create: if request.auth != null && request.resource.data.studentId == request.auth.uid;
+      // Aluno pode ler suas próprias inscrições
+      allow read: if request.auth != null && resource.data.studentId == request.auth.uid;
+      // Admin pode ler e escrever todas
+      allow read, write: if request.auth != null && isAdmin();
+    }
+    
+    // Funções auxiliares
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
+    
+    function isInstructor() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'instructor';
+    }
+    
+    function isStudent() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student';
+    }
+    
+    function isStudentOfInstructor(studentId) {
+      let studentData = get(/databases/$(database)/documents/users/$(studentId)).data;
+      let instructorData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return studentData.instructorId == request.auth.uid || 
+             studentData.classIds.hasAny(instructorData.classIds);
+    }
+    
+    function isStudentInClass(classId) {
+      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return userData.classIds.hasAny([classId]);
+    }
+    
+    function isInstructorOfClass(classId) {
+      let classData = get(/databases/$(database)/documents/classes/$(classId)).data;
+      return classData.instructorId == request.auth.uid;
+    }
+  }
+}
+
