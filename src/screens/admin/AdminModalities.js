@@ -5,7 +5,8 @@ import {
   ScrollView, 
   RefreshControl, 
   Alert,
-  TouchableOpacity
+  TouchableOpacity,
+  Platform
 } from 'react-native';
 import { 
   Card, 
@@ -99,10 +100,9 @@ const AdminModalities = ({ navigation }) => {
       'Confirmar Exclusão',
       `Tem certeza que deseja excluir a modalidade ${modality.name}?`,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Cancelar' },
         { 
           text: 'Excluir', 
-          style: 'destructive',
           onPress: async () => {
             try {
               await firestoreService.delete('modalities', modality.id);
@@ -146,10 +146,9 @@ const AdminModalities = ({ navigation }) => {
       'Confirmar Exclusão',
       `Tem certeza que deseja excluir o plano ${plan.name}?`,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Cancelar' },
         { 
           text: 'Excluir', 
-          style: 'destructive',
           onPress: async () => {
             try {
               await firestoreService.delete('plans', plan.id);
@@ -193,10 +192,9 @@ const AdminModalities = ({ navigation }) => {
       'Confirmar Exclusão',
       `Tem certeza que deseja excluir o aviso "${announcement.title}"?`,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Cancelar' },
         { 
           text: 'Excluir', 
-          style: 'destructive',
           onPress: async () => {
             try {
               await firestoreService.delete('announcements', announcement.id);
@@ -239,12 +237,12 @@ const AdminModalities = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="fitness-outline" size={24} color="#4CAF50" />
-              <Text h4 style={styles.cardTitle}>Modalidades de Luta</Text>
+              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Modalidades de Luta</Text>
               <Button 
-                mode="contained" 
+                type="solid"
                 onPress={() => setModalityDialogVisible(true)}
-                icon="plus"
-                style={styles.addButton}
+                icon={<Icon name="plus" size={20} color="white" />}
+                buttonStyle={styles.addButton}
               >
                 Adicionar
               </Button>
@@ -253,27 +251,31 @@ const AdminModalities = ({ navigation }) => {
             {modalities.length > 0 ? (
               modalities.map((modality, index) => (
                 <View key={modality.id || index}>
-                  <List.Item
-                    title={modality.name}
-                    description={modality.description || 'Sem descrição'}
-                    left={() => <List.Icon icon="fitness" color="#4CAF50" />}
-                    right={() => (
+                  <View style={styles.listItem}>
+                    <View style={styles.listItemLeft}>
+                      <Ionicons name="fitness" size={24} color="#4CAF50" />
+                    </View>
+                    <View style={styles.listItemContent}>
+                      <Text style={styles.listItemTitle}>{modality.name}</Text>
+                      <Text style={styles.listItemDescription}>{modality.description || 'Sem descrição'}</Text>
+                    </View>
+                    <View style={styles.listItemRight}>
                       <Button 
-                        mode="text" 
+                        type="clear"
                         onPress={() => handleDeleteModality(modality)}
-                        textColor="#F44336"
+                        titleStyle={{ color: '#F44336' }}
                       >
                         Excluir
                       </Button>
-                    )}
-                  />
+                    </View>
+                  </View>
                   {index < modalities.length - 1 && <Divider />}
                 </View>
               ))
             ) : (
-              <Paragraph style={styles.emptyText}>
+              <Text style={styles.emptyText}>
                 Nenhuma modalidade cadastrada
-              </Paragraph>
+              </Text>
             )}
           </Card.Content>
         </Card>
@@ -283,12 +285,12 @@ const AdminModalities = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="card-outline" size={24} color="#2196F3" />
-              <Text h4 style={styles.cardTitle}>Planos de Pagamento</Text>
+              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Planos de Pagamento</Text>
               <Button 
-                mode="contained" 
+                type="solid"
                 onPress={() => setPlanDialogVisible(true)}
-                icon="plus"
-                style={styles.addButton}
+                icon={<Icon name="plus" size={20} color="white" />}
+                buttonStyle={styles.addButton}
               >
                 Adicionar
               </Button>
@@ -297,27 +299,31 @@ const AdminModalities = ({ navigation }) => {
             {plans.length > 0 ? (
               plans.map((plan, index) => (
                 <View key={plan.id || index}>
-                  <List.Item
-                    title={`${plan.name} - ${formatCurrency(plan.value)}`}
-                    description={`${plan.duration || 1} mês(es) • ${plan.description || 'Sem descrição'}`}
-                    left={() => <List.Icon icon="cash" color="#2196F3" />}
-                    right={() => (
+                  <View style={styles.listItem}>
+                    <View style={styles.listItemLeft}>
+                      <Ionicons name="cash" size={24} color="#2196F3" />
+                    </View>
+                    <View style={styles.listItemContent}>
+                      <Text style={styles.listItemTitle}>{`${plan.name} - ${formatCurrency(plan.value)}`}</Text>
+                      <Text style={styles.listItemDescription}>{`${plan.duration || 1} mês(es) • ${plan.description || 'Sem descrição'}`}</Text>
+                    </View>
+                    <View style={styles.listItemRight}>
                       <Button 
-                        mode="text" 
+                        type="clear"
                         onPress={() => handleDeletePlan(plan)}
-                        textColor="#F44336"
+                        titleStyle={{ color: '#F44336' }}
                       >
                         Excluir
                       </Button>
-                    )}
-                  />
+                    </View>
+                  </View>
                   {index < plans.length - 1 && <Divider />}
                 </View>
               ))
             ) : (
-              <Paragraph style={styles.emptyText}>
+              <Text style={styles.emptyText}>
                 Nenhum plano cadastrado
-              </Paragraph>
+              </Text>
             )}
           </Card.Content>
         </Card>
@@ -327,12 +333,12 @@ const AdminModalities = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="megaphone-outline" size={24} color="#FF9800" />
-              <Text h4 style={styles.cardTitle}>Mural de Avisos</Text>
+              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Mural de Avisos</Text>
               <Button 
-                mode="contained" 
+                type="solid"
                 onPress={() => setAnnouncementDialogVisible(true)}
-                icon="plus"
-                style={styles.addButton}
+                icon={<Icon name="plus" size={20} color="white" />}
+                buttonStyle={styles.addButton}
               >
                 Publicar
               </Button>
@@ -341,20 +347,24 @@ const AdminModalities = ({ navigation }) => {
             {announcements.length > 0 ? (
               announcements.map((announcement, index) => (
                 <View key={announcement.id || index}>
-                  <List.Item
-                    title={announcement.title}
-                    description={`${announcement.content.substring(0, 100)}${announcement.content.length > 100 ? '...' : ''}`}
-                    left={() => <List.Icon icon="bullhorn" color="#FF9800" />}
-                    right={() => (
+                  <View style={styles.listItem}>
+                    <View style={styles.listItemLeft}>
+                      <Ionicons name="bullhorn" size={24} color="#FF9800" />
+                    </View>
+                    <View style={styles.listItemContent}>
+                      <Text style={styles.listItemTitle}>{announcement.title}</Text>
+                      <Text style={styles.listItemDescription}>{`${announcement.content.substring(0, 100)}${announcement.content.length > 100 ? '...' : ''}`}</Text>
+                    </View>
+                    <View style={styles.listItemRight}>
                       <Button 
-                        mode="text" 
+                        type="clear"
                         onPress={() => handleDeleteAnnouncement(announcement)}
-                        textColor="#F44336"
+                        titleStyle={{ color: '#F44336' }}
                       >
                         Excluir
                       </Button>
-                    )}
-                  />
+                    </View>
+                  </View>
                   <Text style={styles.announcementDate}>
                     Expira em: {formatDate(announcement.expirationDate)}
                   </Text>
@@ -362,9 +372,9 @@ const AdminModalities = ({ navigation }) => {
                 </View>
               ))
             ) : (
-              <Paragraph style={styles.emptyText}>
+              <Text style={styles.emptyText}>
                 Nenhum aviso publicado
-              </Paragraph>
+              </Text>
             )}
           </Card.Content>
         </Card>
@@ -372,7 +382,7 @@ const AdminModalities = ({ navigation }) => {
         {/* Estatísticas */}
         <Card style={styles.statsCard}>
           <Card.Content>
-            <Text h4 style={styles.statsTitle}>Resumo</Text>
+                          <Text style={[styles.statsTitle, { fontSize: 20, fontWeight: 'bold' }]}>Resumo</Text>
             
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
@@ -399,124 +409,122 @@ const AdminModalities = ({ navigation }) => {
         visible={modalityDialogVisible} 
         onDismiss={() => setModalityDialogVisible(false)}
       >
-        <Dialog.Title>Nova Modalidade</Dialog.Title>
-        <Dialog.Content>
-          <TextInput
+        <View style={styles.dialogContent}>
+          <Text style={styles.dialogTitle}>Nova Modalidade</Text>
+          <Input
             label="Nome da Modalidade"
             value={newModality.name}
             onChangeText={(text) => setNewModality({...newModality, name: text})}
-            mode="outlined"
-            style={styles.dialogInput}
+            containerStyle={styles.dialogInput}
             accessibilityLabel="Nome da modalidade"
             accessibilityHint="Digite o nome da nova modalidade"
           />
-          <TextInput
+          <Input
             label="Descrição (opcional)"
             value={newModality.description}
             onChangeText={(text) => setNewModality({...newModality, description: text})}
-            mode="outlined"
             multiline
             numberOfLines={3}
-            style={styles.dialogInput}
+            containerStyle={styles.dialogInput}
             accessibilityLabel="Descrição da modalidade"
             accessibilityHint="Digite uma descrição opcional para a modalidade"
           />
-        </Dialog.Content>
-        <Dialog.Actions>
-          <Button 
-            onPress={() => setModalityDialogVisible(false)}
-            accessibilityLabel="Cancelar criação de modalidade"
-          >
-            Cancelar
-          </Button>
-          <Button 
-            onPress={handleAddModality}
-            accessibilityLabel="Criar nova modalidade"
-          >
-            Criar
-          </Button>
-        </Dialog.Actions>
+          <View style={styles.dialogActions}>
+            <Button 
+              onPress={() => setModalityDialogVisible(false)}
+              accessibilityLabel="Cancelar criação de modalidade"
+              type="outline"
+              style={styles.dialogButton}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onPress={handleAddModality}
+              accessibilityLabel="Criar nova modalidade"
+              type="solid"
+              style={styles.dialogButton}
+            >
+              Criar
+            </Button>
+          </View>
+        </View>
       </AccessibleDialog>
 
-      <Portal>
-        {/* Diálogo para adicionar plano */}
-        <Dialog visible={planDialogVisible} onDismiss={() => setPlanDialogVisible(false)}>
-          <Dialog.Title>Novo Plano</Dialog.Title>
-          <Dialog.Content>
-            <TextInput
-              label="Nome do Plano"
-              value={newPlan.name}
-              onChangeText={(text) => setNewPlan({...newPlan, name: text})}
-              mode="outlined"
-              style={styles.dialogInput}
-            />
-            <TextInput
-              label="Valor (R$)"
-              value={newPlan.value}
-              onChangeText={(text) => setNewPlan({...newPlan, value: text})}
-              mode="outlined"
-              keyboardType="numeric"
-              style={styles.dialogInput}
-            />
-            <TextInput
-              label="Duração (meses)"
-              value={newPlan.duration}
-              onChangeText={(text) => setNewPlan({...newPlan, duration: text})}
-              mode="outlined"
-              keyboardType="numeric"
-              style={styles.dialogInput}
-            />
-            <TextInput
-              label="Descrição (opcional)"
-              value={newPlan.description}
-              onChangeText={(text) => setNewPlan({...newPlan, description: text})}
-              mode="outlined"
-              multiline
-              numberOfLines={2}
-              style={styles.dialogInput}
-            />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setPlanDialogVisible(false)}>Cancelar</Button>
-            <Button onPress={handleAddPlan}>Criar</Button>
-          </Dialog.Actions>
-        </Dialog>
+      <AccessibleDialog 
+        visible={planDialogVisible} 
+        onDismiss={() => setPlanDialogVisible(false)}
+      >
+        <View style={styles.dialogContent}>
+          <Text style={styles.dialogTitle}>Novo Plano</Text>
+          <Input
+            label="Nome do Plano"
+            value={newPlan.name}
+            onChangeText={(text) => setNewPlan({...newPlan, name: text})}
+            containerStyle={styles.dialogInput}
+          />
+          <Input
+            label="Valor (R$)"
+            value={newPlan.value}
+            onChangeText={(text) => setNewPlan({...newPlan, value: text})}
+            containerStyle={styles.dialogInput}
+            keyboardType="numeric"
+          />
+          <Input
+            label="Duração (meses)"
+            value={newPlan.duration}
+            onChangeText={(text) => setNewPlan({...newPlan, duration: text})}
+            containerStyle={styles.dialogInput}
+            keyboardType="numeric"
+          />
+          <Input
+            label="Descrição (opcional)"
+            value={newPlan.description}
+            onChangeText={(text) => setNewPlan({...newPlan, description: text})}
+            containerStyle={styles.dialogInput}
+            multiline
+            numberOfLines={2}
+          />
+          <View style={styles.dialogActions}>
+            <Button onPress={() => setPlanDialogVisible(false)} type="outline" style={styles.dialogButton}>Cancelar</Button>
+            <Button onPress={handleAddPlan} type="solid" style={styles.dialogButton}>Criar</Button>
+          </View>
+        </View>
+      </AccessibleDialog>
 
         {/* Diálogo para adicionar aviso */}
-        <Dialog visible={announcementDialogVisible} onDismiss={() => setAnnouncementDialogVisible(false)}>
-          <Dialog.Title>Novo Aviso</Dialog.Title>
-          <Dialog.Content>
-            <TextInput
+        <AccessibleDialog 
+          visible={announcementDialogVisible} 
+          onDismiss={() => setAnnouncementDialogVisible(false)}
+        >
+          <View style={styles.dialogContent}>
+            <Text style={styles.dialogTitle}>Novo Aviso</Text>
+            <Input
               label="Título do Aviso"
               value={newAnnouncement.title}
               onChangeText={(text) => setNewAnnouncement({...newAnnouncement, title: text})}
-              mode="outlined"
-              style={styles.dialogInput}
+              containerStyle={styles.dialogInput}
             />
-            <TextInput
+            <Input
               label="Conteúdo"
               value={newAnnouncement.content}
               onChangeText={(text) => setNewAnnouncement({...newAnnouncement, content: text})}
-              mode="outlined"
+              containerStyle={styles.dialogInput}
               multiline
               numberOfLines={4}
-              style={styles.dialogInput}
             />
-            <TextInput
+            <Input
               label="Data de Expiração (opcional)"
               value={newAnnouncement.expirationDate}
               onChangeText={(text) => setNewAnnouncement({...newAnnouncement, expirationDate: text})}
-              mode="outlined"
+              containerStyle={styles.dialogInput}
               placeholder="DD/MM/AAAA"
-              style={styles.dialogInput}
             />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setAnnouncementDialogVisible(false)}>Cancelar</Button>
-            <Button onPress={handleAddAnnouncement}>Publicar</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+            <View style={styles.dialogActions}>
+              <Button onPress={() => setAnnouncementDialogVisible(false)} type="outline" style={styles.dialogButton}>Cancelar</Button>
+              <Button onPress={handleAddAnnouncement} type="solid" style={styles.dialogButton}>Publicar</Button>
+            </View>
+          </View>
+        </AccessibleDialog>
     </SafeAreaView>
   );
 };
@@ -535,7 +543,17 @@ const styles = StyleSheet.create({
   card: {
     margin: 16,
     marginBottom: 8,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   cardHeader: {
     flexDirection: 'row',
@@ -566,8 +584,18 @@ const styles = StyleSheet.create({
   statsCard: {
     margin: 16,
     marginTop: 8,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     backgroundColor: '#E8F5E8',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   statsTitle: {
     textAlign: 'center',
@@ -592,6 +620,49 @@ const styles = StyleSheet.create({
   },
   dialogInput: {
     marginBottom: 12,
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  listItemLeft: {
+    marginRight: 16,
+  },
+  listItemContent: {
+    flex: 1,
+  },
+  listItemTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  listItemDescription: {
+    fontSize: 14,
+    color: '#666',
+  },
+  listItemRight: {
+    marginLeft: 8,
+  },
+  dialogContent: {
+    padding: 20,
+    minWidth: 300,
+  },
+  dialogTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  dialogActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 20,
+  },
+  dialogButton: {
+    minWidth: 100,
   },
 });
 

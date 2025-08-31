@@ -123,7 +123,7 @@ const StudentEvolution = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="trophy-outline" size={24} color="#FFD700" />
-              <Title style={styles.cardTitle}>Minha Evolução</Title>
+              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Minha Evolução</Text>
             </View>
             
             <View style={styles.statsGrid}>
@@ -145,19 +145,19 @@ const StudentEvolution = ({ navigation }) => {
             
             <View style={styles.currentGraduation}>
               <Text style={styles.currentLabel}>Graduação Atual:</Text>
-              <Chip 
-                mode="outlined"
+              <View 
                 style={[
                   styles.graduationChip, 
                   { borderColor: getGraduationColor(stats.currentGraduation) }
                 ]}
-                textStyle={{ 
+              >
+                <Text style={{ 
                   color: getGraduationColor(stats.currentGraduation),
                   fontWeight: 'bold'
-                }}
-              >
-                {stats.currentGraduation}
-              </Chip>
+                }}>
+                  {stats.currentGraduation}
+                </Text>
+              </View>
             </View>
           </Card.Content>
         </Card>
@@ -167,7 +167,7 @@ const StudentEvolution = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="timeline-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Timeline de Graduações</Title>
+              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Timeline de Graduações</Text>
             </View>
             
             {graduations.length > 0 ? (
@@ -211,12 +211,12 @@ const StudentEvolution = ({ navigation }) => {
             ) : (
               <View style={styles.emptyState}>
                 <Ionicons name="medal-outline" size={48} color="#ccc" />
-                <Paragraph style={styles.emptyText}>
+                <Text style={styles.emptyText}>
                   Nenhuma graduação registrada ainda
-                </Paragraph>
-                <Paragraph style={styles.emptySubtext}>
+                </Text>
+                <Text style={styles.emptySubtext}>
                   Suas graduações aparecerão aqui conforme você evolui
-                </Paragraph>
+                </Text>
               </View>
             )}
           </Card.Content>
@@ -228,19 +228,18 @@ const StudentEvolution = ({ navigation }) => {
             <Card.Content>
               <View style={styles.cardHeader}>
                 <Ionicons name="fitness-outline" size={24} color="#4CAF50" />
-                <Title style={styles.cardTitle}>Modalidades Praticadas</Title>
+                <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Modalidades Praticadas</Text>
               </View>
               
               <View style={styles.modalitiesContainer}>
                 {stats.modalities.map((modality, index) => (
-                  <Chip 
+                  <View 
                     key={index}
-                    mode="outlined"
                     style={styles.modalityChip}
-                    icon={getGraduationIcon(modality)}
                   >
-                    {modality}
-                  </Chip>
+                    <Ionicons name={getGraduationIcon(modality)} size={16} color="#666" />
+                    <Text>{modality}</Text>
+                  </View>
                 ))}
               </View>
             </Card.Content>
@@ -252,26 +251,38 @@ const StudentEvolution = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="target-outline" size={24} color="#FF9800" />
-              <Title style={styles.cardTitle}>Próximos Objetivos</Title>
+                              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Próximos Objetivos</Text>
             </View>
             
-            <List.Item
-              title="Manter frequência nas aulas"
-              description="Continue participando regularmente das aulas"
-              left={() => <List.Icon icon="check-circle-outline" color="#4CAF50" />}
-            />
+            <View style={styles.listItem}>
+              <View style={styles.listItemLeft}>
+                <Ionicons name="check-circle-outline" size={24} color="#4CAF50" />
+              </View>
+              <View style={styles.listItemContent}>
+                <Text style={styles.listItemTitle}>Manter frequência nas aulas</Text>
+                <Text style={styles.listItemDescription}>Continue participando regularmente das aulas</Text>
+              </View>
+            </View>
             
-            <List.Item
-              title="Aperfeiçoar técnicas"
-              description="Foque no desenvolvimento técnico"
-              left={() => <List.Icon icon="trending-up" color="#2196F3" />}
-            />
+            <View style={styles.listItem}>
+              <View style={styles.listItemLeft}>
+                <Ionicons name="trending-up" size={24} color="#2196F3" />
+              </View>
+              <View style={styles.listItemContent}>
+                <Text style={styles.listItemTitle}>Aperfeiçoar técnicas</Text>
+                <Text style={styles.listItemDescription}>Foque no desenvolvimento técnico</Text>
+              </View>
+            </View>
             
-            <List.Item
-              title="Próxima graduação"
-              description="Continue se dedicando para a próxima faixa"
-              left={() => <List.Icon icon="trophy" color="#FFD700" />}
-            />
+            <View style={styles.listItem}>
+              <View style={styles.listItemLeft}>
+                <Ionicons name="trophy" size={24} color="#FFD700" />
+              </View>
+              <View style={styles.listItemContent}>
+                <Text style={styles.listItemTitle}>Próxima graduação</Text>
+                <Text style={styles.listItemDescription}>Continue se dedicando para a próxima faixa</Text>
+              </View>
+            </View>
           </Card.Content>
         </Card>
       </ScrollView>
@@ -293,13 +304,33 @@ const styles = StyleSheet.create({
   statsCard: {
     margin: 16,
     marginBottom: 8,
-    boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
     backgroundColor: '#E8F5E8',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
   card: {
     margin: 16,
     marginTop: 8,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   cardHeader: {
     flexDirection: 'row',
@@ -319,8 +350,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderRadius: 8,
-    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
     backgroundColor: '#fff',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   statNumber: {
     fontSize: 24,

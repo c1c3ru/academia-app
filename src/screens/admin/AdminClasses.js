@@ -9,10 +9,15 @@ import {
   Icon,
   ListItem,
   Divider,
-  SearchBar
+  SearchBar,
+  IconButton,
+  Chip,
+  Title,
+  Paragraph
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import CustomMenu from '../../components/CustomMenu';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, classService, studentService } from '../../services/firestoreService';
 
@@ -222,7 +227,7 @@ const AdminClasses = ({ navigation }) => {
         />
         
         <View style={styles.filterRow}>
-          <Menu
+          <CustomMenu
             visible={filterVisible}
             onDismiss={() => setFilterVisible(false)}
             anchor={
@@ -236,14 +241,14 @@ const AdminClasses = ({ navigation }) => {
               </Button>
             }
           >
-            <Menu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title="Todas" />
-            <Menu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title="Ativas" />
-            <Menu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title="Inativas" />
+            <CustomMenu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title="Todas" />
+            <CustomMenu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title="Ativas" />
+            <CustomMenu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title="Inativas" />
             <Divider />
-            <Menu.Item onPress={() => { setSelectedFilter('full'); setFilterVisible(false); }} title="Lotadas" />
-            <Menu.Item onPress={() => { setSelectedFilter('empty'); setFilterVisible(false); }} title="Vazias" />
-            <Menu.Item onPress={() => { setSelectedFilter('no_instructor'); setFilterVisible(false); }} title="Sem Professor" />
-          </Menu>
+            <CustomMenu.Item onPress={() => { setSelectedFilter('full'); setFilterVisible(false); }} title="Lotadas" />
+            <CustomMenu.Item onPress={() => { setSelectedFilter('empty'); setFilterVisible(false); }} title="Vazias" />
+            <CustomMenu.Item onPress={() => { setSelectedFilter('no_instructor'); setFilterVisible(false); }} title="Sem Professor" />
+          </CustomMenu>
         </View>
       </View>
 
@@ -281,7 +286,7 @@ const AdminClasses = ({ navigation }) => {
                       </Chip>
                     </View>
                     
-                    <Menu
+                    <CustomMenu
                       visible={false}
                       onDismiss={() => {}}
                       anchor={
@@ -291,9 +296,9 @@ const AdminClasses = ({ navigation }) => {
                         />
                       }
                     >
-                      <Menu.Item onPress={() => handleEditClass(classItem)} title="Editar" />
-                      <Menu.Item onPress={() => handleDeleteClass(classItem)} title="Excluir" />
-                    </Menu>
+                      <CustomMenu.Item onPress={() => handleEditClass(classItem)} title="Editar" />
+                      <CustomMenu.Item onPress={() => handleDeleteClass(classItem)} title="Excluir" />
+                    </CustomMenu>
                   </View>
 
                   <View style={styles.classDetails}>

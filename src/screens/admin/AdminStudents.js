@@ -9,10 +9,15 @@ import {
   Icon,
   ListItem,
   Divider,
-  SearchBar
+  SearchBar,
+  IconButton,
+  Chip,
+  Title,
+  Paragraph
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import CustomMenu from '../../components/CustomMenu';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, paymentService } from '../../services/firestoreService';
 
@@ -191,7 +196,7 @@ const AdminStudents = ({ navigation }) => {
         />
         
         <View style={styles.filterRow}>
-          <Menu
+          <CustomMenu
             visible={filterVisible}
             onDismiss={() => setFilterVisible(false)}
             anchor={
@@ -205,14 +210,14 @@ const AdminStudents = ({ navigation }) => {
               </Button>
             }
           >
-            <Menu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title="Todos" />
-            <Menu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title="Ativos" />
-            <Menu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title="Inativos" />
+            <CustomMenu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title="Todos" />
+            <CustomMenu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title="Ativos" />
+            <CustomMenu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title="Inativos" />
             <Divider />
-            <Menu.Item onPress={() => { setSelectedFilter('payment_ok'); setFilterVisible(false); }} title="Pagamento OK" />
-            <Menu.Item onPress={() => { setSelectedFilter('payment_pending'); setFilterVisible(false); }} title="Pagamento Pendente" />
-            <Menu.Item onPress={() => { setSelectedFilter('payment_overdue'); setFilterVisible(false); }} title="Pagamento Atrasado" />
-          </Menu>
+            <CustomMenu.Item onPress={() => { setSelectedFilter('payment_ok'); setFilterVisible(false); }} title="Pagamento OK" />
+            <CustomMenu.Item onPress={() => { setSelectedFilter('payment_pending'); setFilterVisible(false); }} title="Pagamento Pendente" />
+            <CustomMenu.Item onPress={() => { setSelectedFilter('payment_overdue'); setFilterVisible(false); }} title="Pagamento Atrasado" />
+          </CustomMenu>
         </View>
       </View>
 
@@ -243,7 +248,7 @@ const AdminStudents = ({ navigation }) => {
                     </View>
                   </View>
                   
-                  <Menu
+                  <CustomMenu
                     visible={false}
                     onDismiss={() => {}}
                     anchor={
@@ -253,9 +258,9 @@ const AdminStudents = ({ navigation }) => {
                       />
                     }
                   >
-                    <Menu.Item onPress={() => handleEditStudent(student)} title="Editar" />
-                    <Menu.Item onPress={() => handleDeleteStudent(student)} title="Excluir" />
-                  </Menu>
+                    <CustomMenu.Item onPress={() => handleEditStudent(student)} title="Editar" />
+                    <CustomMenu.Item onPress={() => handleDeleteStudent(student)} title="Excluir" />
+                  </CustomMenu>
                 </View>
 
                 <View style={styles.studentStats}>

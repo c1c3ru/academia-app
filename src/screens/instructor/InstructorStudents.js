@@ -9,10 +9,15 @@ import {
   Icon,
   ListItem,
   Divider,
-  SearchBar
+  SearchBar,
+  IconButton,
+  Chip,
+  Title,
+  Paragraph
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import CustomMenu from '../../components/CustomMenu';
 import { useAuth } from '../../contexts/AuthContext';
 import { studentService, firestoreService } from '../../services/firestoreService';
 
@@ -130,25 +135,25 @@ const InstructorStudents = ({ navigation }) => {
         />
         
         <View style={styles.filterRow}>
-          <Menu
+          <CustomMenu
             visible={filterVisible}
             onDismiss={() => setFilterVisible(false)}
             anchor={
               <Button 
-                mode="outlined" 
+                type="outline"
                 onPress={() => setFilterVisible(true)}
-                icon="filter"
-                style={styles.filterButton}
+                icon={<Icon name="filter" size={20} color="#666" />}
+                buttonStyle={styles.filterButton}
               >
                 {getFilterText(selectedFilter)}
               </Button>
             }
           >
-            <Menu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title="Todos" />
-            <Menu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title="Ativos" />
-            <Menu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title="Inativos" />
-            <Menu.Item onPress={() => { setSelectedFilter('payment_pending'); setFilterVisible(false); }} title="Pagamento Pendente" />
-          </Menu>
+            <CustomMenu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title="Todos" />
+            <CustomMenu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title="Ativos" />
+            <CustomMenu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title="Inativos" />
+            <CustomMenu.Item onPress={() => { setSelectedFilter('payment_pending'); setFilterVisible(false); }} title="Pagamento Pendente" />
+          </CustomMenu>
         </View>
       </View>
 
@@ -173,59 +178,53 @@ const InstructorStudents = ({ navigation }) => {
                       style={styles.avatar}
                     />
                     <View style={styles.studentDetails}>
-                      <Title style={styles.studentName}>{student.name}</Title>
+                      <Text style={styles.studentName}>{student.name}</Text>
                       <Text style={styles.studentEmail}>{student.email}</Text>
                       {student.currentGraduation && (
-                        <Chip 
-                          mode="outlined" 
-                          style={styles.graduationChip}
-                          textStyle={styles.graduationText}
-                        >
-                          {student.currentGraduation}
-                        </Chip>
+                        <View style={[styles.graduationChip, styles.graduationText]}>
+                          <Text style={styles.graduationText}>{student.currentGraduation}</Text>
+                        </View>
                       )}
                     </View>
                   </View>
                   
-                  <IconButton
-                    icon="dots-vertical"
+                  <TouchableOpacity
                     onPress={() => handleStudentPress(student)}
-                  />
+                    style={styles.iconButton}
+                  >
+                    <Ionicons name="ellipsis-vertical" size={24} color="#666" />
+                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.studentStats}>
                   <View style={styles.statItem}>
                     <Text style={styles.statLabel}>Status</Text>
-                    <Chip 
-                      mode="outlined"
-                      style={[
-                        styles.statusChip,
-                        { borderColor: student.isActive !== false ? '#4CAF50' : '#F44336' }
-                      ]}
-                      textStyle={{ 
+                    <View style={[
+                      styles.statusChip,
+                      { borderColor: student.isActive !== false ? '#4CAF50' : '#F44336' }
+                    ]}>
+                      <Text style={{ 
                         color: student.isActive !== false ? '#4CAF50' : '#F44336',
                         fontSize: 12
-                      }}
-                    >
-                      {student.isActive !== false ? 'Ativo' : 'Inativo'}
-                    </Chip>
+                      }}>
+                        {student.isActive !== false ? 'Ativo' : 'Inativo'}
+                      </Text>
+                    </View>
                   </View>
 
                   <View style={styles.statItem}>
                     <Text style={styles.statLabel}>Pagamento</Text>
-                    <Chip 
-                      mode="outlined"
-                      style={[
-                        styles.statusChip,
-                        { borderColor: getPaymentStatusColor(student.paymentStatus) }
-                      ]}
-                      textStyle={{ 
+                    <View style={[
+                      styles.statusChip,
+                      { borderColor: getPaymentStatusColor(student.paymentStatus) }
+                    ]}>
+                      <Text style={{ 
                         color: getPaymentStatusColor(student.paymentStatus),
                         fontSize: 12
-                      }}
-                    >
-                      {getPaymentStatusText(student.paymentStatus)}
-                    </Chip>
+                      }}>
+                        {getPaymentStatusText(student.paymentStatus)}
+                      </Text>
+                    </View>
                   </View>
                 </View>
 
@@ -245,19 +244,19 @@ const InstructorStudents = ({ navigation }) => {
 
                 <View style={styles.studentActions}>
                   <Button 
-                    mode="outlined" 
+                    type="outline"
                     onPress={() => handleStudentPress(student)}
-                    style={styles.actionButton}
-                    icon="eye"
+                    buttonStyle={styles.actionButton}
+                    icon={<Icon name="eye" size={20} color="#666" />}
                   >
                     Ver Perfil
                   </Button>
 
                   <Button 
-                    mode="contained" 
+                    type="solid"
                     onPress={() => handleAddGraduation(student)}
-                    style={styles.actionButton}
-                    icon="trophy"
+                    buttonStyle={styles.actionButton}
+                    icon={<Icon name="trophy" size={20} color="white" />}
                   >
                     Graduação
                   </Button>
@@ -269,13 +268,13 @@ const InstructorStudents = ({ navigation }) => {
           <Card style={styles.emptyCard}>
             <Card.Content style={styles.emptyContent}>
               <Ionicons name="people-outline" size={48} color="#ccc" />
-              <Title style={styles.emptyTitle}>Nenhum aluno encontrado</Title>
-              <Paragraph style={styles.emptyText}>
+              <Text style={styles.emptyTitle}>Nenhum aluno encontrado</Text>
+              <Text style={styles.emptyText}>
                 {searchQuery ? 
                   'Nenhum aluno corresponde à sua busca' : 
                   'Você ainda não possui alunos atribuídos'
                 }
-              </Paragraph>
+              </Text>
             </Card.Content>
           </Card>
         )}
@@ -284,7 +283,7 @@ const InstructorStudents = ({ navigation }) => {
         {students.length > 0 && (
           <Card style={styles.statsCard}>
             <Card.Content>
-              <Title style={styles.statsTitle}>Resumo dos Alunos</Title>
+              <Text style={styles.statsTitle}>Resumo dos Alunos</Text>
               
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
