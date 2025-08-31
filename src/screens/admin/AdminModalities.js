@@ -199,10 +199,19 @@ const AdminModalities = ({ navigation }) => {
         }
       }
 
+      // Garantir que a data seja um objeto Date válido
+      const expirationDateObj = new Date(expirationDate);
+      if (isNaN(expirationDateObj.getTime())) {
+        Alert.alert('Erro', 'Data de expiração inválida');
+        return;
+      }
+
       const announcementData = {
-        ...newAnnouncement,
-        expirationDate,
-        publishedBy: user.uid
+        title: newAnnouncement.title,
+        content: newAnnouncement.content,
+        expirationDate: expirationDateObj,
+        publishedBy: user.uid,
+        createdAt: new Date()
       };
       
       await firestoreService.create('announcements', announcementData);
