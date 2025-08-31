@@ -306,12 +306,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     backgroundColor: '#E8F5E8',
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-      },
+      ios: {},
       android: {
         elevation: 8,
       },
@@ -324,12 +319,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     borderRadius: 12,
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
+      ios: {},
       android: {
         elevation: 4,
       },
@@ -359,12 +349,7 @@ const styles = StyleSheet.create({
     margin: 4,
     flex: 1,
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
+      ios: {},
       android: {
         elevation: 4,
       },
@@ -403,12 +388,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-      },
+      ios: {},
       android: {
         elevation: 2,
       },

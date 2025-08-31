@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert, Platform } from 'react-native';
 import { 
   Card, 
   Text, 
@@ -107,7 +107,10 @@ const StudentDetailsScreen = ({ route, navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView 
-        style={styles.container}
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -278,17 +281,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     ...Platform.select({
 
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
+      ios: {},
 
       android: {
 
@@ -376,6 +369,12 @@ const styles = StyleSheet.create({
   actionButton: {
     width: '48%',
     borderRadius: 12,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
   },
 });
 

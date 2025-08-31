@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity, Platform } from 'react-native';
 import { 
   Card, 
   Text, 
@@ -335,17 +335,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     ...Platform.select({
 
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
+      ios: {},
 
       android: {
 
@@ -385,17 +375,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     ...Platform.select({
 
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
+      ios: {},
 
       android: {
 
@@ -494,17 +474,7 @@ const styles = StyleSheet.create({
     margin: 16,
     ...Platform.select({
 
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
+      ios: {},
 
       android: {
 
@@ -537,17 +507,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     ...Platform.select({
 
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
+      ios: {},
 
       android: {
 

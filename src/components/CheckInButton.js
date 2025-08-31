@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, Platform } from 'react-native';
 import { Button, Text, Card, Icon } from 'react-native-elements';
 import { ActivityIndicator } from 'react-native';
 import locationService from '../services/locationService';
@@ -148,17 +148,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     ...Platform.select({
 
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
+      ios: {},
 
       android: {
 
@@ -211,17 +201,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     ...Platform.select({
 
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
+      ios: {},
 
       android: {
 

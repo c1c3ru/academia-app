@@ -98,73 +98,26 @@ const StudentCalendar = ({ navigation }) => {
     
     const classesForDay = classes.filter(classItem => 
       classItem.schedule?.some(schedule => schedule.dayOfWeek === selectedDay)
-    ).map(classItem => ({
-      ...classItem,
-      todaySchedule: classItem.schedule.filter(s => s.dayOfWeek === selectedDay)
-    }));
+    );
     
     setDayClasses(classesForDay);
   };
 
-  const onRefresh = () => {
+  const handleRefresh = () => {
     setRefreshing(true);
     loadClasses();
   };
 
-  const onDayPress = (day) => {
-    const newMarkedDates = { ...markedDates };
+  const formatTime = (time) => {
+    if (!time) return '';
     
-    // Remove seleção anterior
-    Object.keys(newMarkedDates).forEach(date => {
-      if (newMarkedDates[date].selected) {
-        delete newMarkedDates[date].selected;
-        delete newMarkedDates[date].selectedColor;
-      }
-    });
-    
-    // Adiciona nova seleção
-    newMarkedDates[day.dateString] = {
-      ...newMarkedDates[day.dateString],
-      selected: true,
-      selectedColor: '#2196F3'
-    };
-    
-    setSelectedDate(day.dateString);
-    setMarkedDates(newMarkedDates);
+    const [hours, minutes] = time.split(':');
+    return `${hours}:${minutes}`;
   };
 
-  const formatTime = (hour, minute = 0) => {
-    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const handleCheckIn = (classItem) => {
-    // Verificar se está no horário correto para check-in
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    
-    const canCheckIn = classItem.todaySchedule.some(schedule => {
-      const classTime = schedule.hour * 60 + (schedule.minute || 0);
-      const currentTime = currentHour * 60 + currentMinute;
-      const timeDiff = Math.abs(classTime - currentTime);
-      
-      return timeDiff <= 15; // 15 minutos antes ou depois
-    });
-    
-    if (canCheckIn) {
-      Alert.alert('Check-in', 'Check-in realizado com sucesso!');
-    } else {
-      Alert.alert('Check-in', 'Check-in só pode ser feito 15 minutos antes ou depois do horário da aula');
-    }
+  const getDayName = (dayIndex) => {
+    const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    return days[dayIndex] || '';
   };
 
   return (
@@ -172,142 +125,133 @@ const StudentCalendar = ({ navigation }) => {
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-        keyboardShouldPersistTaps="handled"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#2196F3']}
+            tintColor="#2196F3"
+          />
         }
       >
-        {/* Calendário */}
         <Card containerStyle={styles.calendarCard}>
-            <Calendar
-              onDayPress={onDayPress}
-              markedDates={markedDates}
-              theme={{
-                backgroundColor: '#ffffff',
-                calendarBackground: '#ffffff',
-                textSectionTitleColor: '#b6c1cd',
-                selectedDayBackgroundColor: '#2196F3',
-                selectedDayTextColor: '#ffffff',
-                todayTextColor: '#2196F3',
-                dayTextColor: '#2d4150',
-                textDisabledColor: '#d9e1e8',
-                dotColor: '#2196F3',
-                selectedDotColor: '#ffffff',
-                arrowColor: '#2196F3',
-                monthTextColor: '#2196F3',
-                indicatorColor: '#2196F3',
-                textDayFontWeight: '300',
-                textMonthFontWeight: 'bold',
-                textDayHeaderFontWeight: '300',
-                textDayFontSize: 16,
-                textMonthFontSize: 16,
-                textDayHeaderFontSize: 13
-              }}
-            />
+          <Calendar
+            current={selectedDate}
+            onDayPress={(day) => setSelectedDate(day.dateString)}
+            markedDates={markedDates}
+            theme={{
+              selectedDayBackgroundColor: '#2196F3',
+              todayTextColor: '#2196F3',
+              dotColor: '#2196F3',
+              arrowColor: '#2196F3',
+            }}
+          />
         </Card>
 
-        {/* Aulas do Dia Selecionado */}
         <Card containerStyle={styles.card}>
-            <View style={styles.cardHeader}>
-              <Icon name="calendar-outline" type="ionicon" size={24} color="#2196F3" />
-              <Text h4 style={styles.cardTitle}>
-                Aulas - {formatDate(selectedDate)}
-              </Text>
-            </View>
-            
-            {dayClasses.length > 0 ? (
-              dayClasses.map((classItem, index) => (
-                <View key={`class-${classItem.id || index}`} style={styles.classItem}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="calendar" size={24} color="#2196F3" />
+            <Text style={styles.cardTitle}>
+              {new Date(selectedDate).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
+            </Text>
+          </View>
+
+          {loading ? (
+            <Text>Carregando...</Text>
+          ) : dayClasses.length > 0 ? (
+            <>
+              {dayClasses.map((classItem, index) => (
+                <View key={index} style={styles.classItem}>
                   <View style={styles.classHeader}>
                     <Text style={styles.className}>{classItem.name}</Text>
-                    <Badge value={classItem.modality} badgeStyle={styles.modalityChip} textStyle={styles.modalityText} />
+                    <Badge
+                      value={classItem.modality}
+                      status="primary"
+                      textStyle={styles.modalityText}
+                      containerStyle={styles.modalityChip}
+                    />
                   </View>
                   
-                  {classItem.todaySchedule.map((schedule, scheduleIndex) => (
-                    <View key={`schedule-${scheduleIndex}-${schedule.hour}-${schedule.minute}`} style={styles.scheduleItem}>
-                      <View style={styles.timeInfo}>
-                        <Icon name="time-outline" type="ionicon" size={16} color="#666" />
-                        <Text style={styles.timeText}>
-                          {formatTime(schedule.hour, schedule.minute)}
-                        </Text>
-                      </View>
-                      
-                      <View style={styles.instructorInfo}>
-                        <Icon name="person-outline" type="ionicon" size={16} color="#666" />
-                        <Text style={styles.instructorText}>
-                          {classItem.instructorName || 'Professor não definido'}
-                        </Text>
-                      </View>
-                      
-                      {classItem.location && (
-                        <View style={styles.locationInfo}>
-                          <Icon name="location-outline" type="ionicon" size={16} color="#666" />
-                          <Text style={styles.locationText}>{classItem.location}</Text>
+                  {classItem.schedule
+                    ?.filter(schedule => schedule.dayOfWeek === new Date(selectedDate).getDay())
+                    .map((schedule, schedIndex) => (
+                      <View key={schedIndex} style={styles.scheduleItem}>
+                        <View style={styles.timeInfo}>
+                          <Ionicons name="time-outline" size={16} color="#666" />
+                          <Text style={styles.timeText}>
+                            {formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}
+                          </Text>
                         </View>
-                      )}
-                    </View>
-                  ))}
-                  
-                  <View style={styles.classActions}>
-                    <Button 
-                      type="outline" 
-                      onPress={() => navigation.navigate('ClassDetails', { classId: classItem.id })}
-                      buttonStyle={styles.actionButton}
-                      icon={<Icon name="eye" type="ionicon" size={16} color="#2196F3" />}
-                      title="Detalhes"
-                    />
-                    
-                    <Button 
-                      onPress={() => handleCheckIn(classItem)}
-                      buttonStyle={styles.actionButton}
-                      icon={<Icon name="checkmark" type="ionicon" size={16} color="white" />}
-                      title="Check-in"
-                    />
-                  </View>
-                  
-                  {index < dayClasses.length - 1 && (
-                    <View style={styles.divider} />
-                  )}
+                        
+                        <View style={styles.classInfo}>
+                          <Ionicons name="person-outline" size={16} color="#666" />
+                          <Text style={styles.classInfoText}>
+                            {classItem.instructorName || 'Sem instrutor'}
+                          </Text>
+                        </View>
+                        
+                        {classItem.location && (
+                          <View style={styles.classInfo}>
+                            <Ionicons name="location-outline" size={16} color="#666" />
+                            <Text style={styles.locationText}>
+                              {classItem.location}
+                            </Text>
+                          </View>
+                        )}
+                        
+                        <View style={styles.classActions}>
+                          <Button
+                            title="Ver detalhes"
+                            type="outline"
+                            buttonStyle={styles.actionButton}
+                            onPress={() => navigation.navigate('ClassDetails', { classId: classItem.id })}
+                          />
+                          <Button
+                            title="Marcar presença"
+                            buttonStyle={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
+                            onPress={() => navigation.navigate('CheckIn', { classId: classItem.id })}
+                          />
+                        </View>
+                      </View>
+                    ))}
                 </View>
-              ))
-            ) : (
-              <View style={styles.emptyState}>
-                <Icon name="calendar-clear-outline" type="ionicon" size={48} color="#ccc" />
-                <Text style={styles.emptyText}>
-                  Nenhuma aula agendada para este dia
-                </Text>
-              </View>
-            )}
+              ))}
+            </>
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="calendar-outline" size={48} color="#ccc" />
+              <Text style={styles.emptyText}>
+                Nenhuma aula agendada para este dia.
+              </Text>
+            </View>
+          )}
         </Card>
 
-        {/* Resumo Semanal */}
         <Card containerStyle={styles.card}>
-            <View style={styles.cardHeader}>
-              <Icon name="stats-chart-outline" type="ionicon" size={24} color="#4CAF50" />
-              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Resumo Semanal</Text>
+          <Text style={{ fontWeight: 'bold', marginBottom: 16 }}>Resumo Semanal</Text>
+          
+          <View style={styles.weeklyStats}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>
+                {Array.from(new Set(classes.flatMap(c => c.schedule?.map(s => s.dayOfWeek) || []))).length}
+              </Text>
+              <Text style={styles.statLabel}>Dias de Aula</Text>
             </View>
             
-            <View style={styles.weeklyStats}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{classes.length}</Text>
-                <Text style={styles.statLabel}>Turmas</Text>
-              </View>
-              
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>
-                  {classes.reduce((total, c) => total + (c.schedule?.length || 0), 0)}
-                </Text>
-                <Text style={styles.statLabel}>Aulas/Semana</Text>
-              </View>
-              
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>
-                  {[...new Set(classes.map(c => c.modality))].length}
-                </Text>
-                <Text style={styles.statLabel}>Modalidades</Text>
-              </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>
+                {classes.reduce((total, c) => total + (c.schedule?.length || 0), 0)}
+              </Text>
+              <Text style={styles.statLabel}>Aulas/Semana</Text>
             </View>
+            
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>
+                {[...new Set(classes.map(c => c.modality))].length}
+              </Text>
+              <Text style={styles.statLabel}>Modalidades</Text>
+            </View>
+          </View>
         </Card>
       </ScrollView>
     </SafeAreaView>
@@ -329,89 +273,27 @@ const styles = StyleSheet.create({
     margin: 16,
     marginBottom: 8,
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 4,
-      },
       web: {
-        ...Platform.select({
-
-          ios: {
-
-            shadowColor: '#000',
-
-            shadowOffset: { width: 0, height: 2 },
-
-            shadowOpacity: 0.1,
-
-            shadowRadius: 4,
-
-          },
-
-          android: {
-
-            elevation: 4,
-
-          },
-
-          web: {
-
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-          },
-
-        }),
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       },
+      ios: {},
+      default: {
+        elevation: 4
+      }
     }),
   },
   card: {
     margin: 16,
     marginTop: 8,
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 4,
-      },
       web: {
-        ...Platform.select({
-
-          ios: {
-
-            shadowColor: '#000',
-
-            shadowOffset: { width: 0, height: 2 },
-
-            shadowOpacity: 0.1,
-
-            shadowRadius: 4,
-
-          },
-
-          android: {
-
-            elevation: 4,
-
-          },
-
-          web: {
-
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-          },
-
-        }),
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       },
-    }),
+      ios: {},
+      default: {
+        elevation: 4
+      }
+    })
   },
   cardHeader: {
     flexDirection: 'row',
@@ -461,16 +343,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#2196F3',
   },
-  instructorInfo: {
+  classInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 4,
   },
-  instructorText: {
-    marginLeft: 8,
-    color: '#666',
-  },
-  locationInfo: {
+  classInfoText: {
+    marginLeft: 4,
     flexDirection: 'row',
     alignItems: 'center',
   },

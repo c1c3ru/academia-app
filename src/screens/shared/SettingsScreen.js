@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { 
   Card, 
   Text, 
@@ -255,17 +255,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     ...Platform.select({
 
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
+      ios: {},
 
       android: {
 

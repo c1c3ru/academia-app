@@ -1,33 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity } from 'react-native';
-import { 
-  Card, 
-  Text, 
-  Button,
-  Badge,
-  Avatar,
-  Icon,
-  ListItem,
-  Divider,
-  SearchBar,
-  IconButton,
-  Chip,
-  Title,
-  Paragraph
-} from 'react-native-elements';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  View,
+  StyleSheet,
+  Alert,
+  Platform,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl
+} from 'react-native';
+import { Card, Title, Paragraph, IconButton, Button, Chip, FAB, Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import CustomMenu from '../../components/CustomMenu';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
-import { firestoreService, paymentService } from '../../services/firestoreService';
+import { firestoreService } from '../../services/firestoreService';
 
 const AdminStudents = ({ navigation }) => {
   const { user } = useAuth();
   const [students, setStudents] = useState([]);
-  const [filteredStudents, setFilteredStudents] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterVisible, setFilterVisible] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -35,379 +24,208 @@ const AdminStudents = ({ navigation }) => {
     loadStudents();
   }, []);
 
-  useEffect(() => {
-    filterStudents();
-  }, [searchQuery, selectedFilter, students]);
-
   const loadStudents = async () => {
     try {
       setLoading(true);
-      
-      // Buscar todos os usuários do tipo student
-      const allUsers = await firestoreService.getAll('users');
-      const studentUsers = allUsers.filter(user => user.userType === 'student');
-      
-      // Buscar informações de pagamento para cada aluno
-      const studentsWithPayments = await Promise.all(
-        studentUsers.map(async (student) => {
-          try {
-            const payments = await paymentService.getPaymentsByStudent(student.id);
-            const latestPayment = payments[0];
-            return {
-              ...student,
-              paymentStatus: latestPayment?.status || 'unknown',
-              lastPaymentDate: latestPayment?.createdAt,
-              totalPayments: payments.length
-            };
-          } catch (error) {
-            return {
-              ...student,
-              paymentStatus: 'unknown',
-              totalPayments: 0
-            };
-          }
-        })
-      );
-      
-      setStudents(studentsWithPayments);
+      const users = await firestoreService.getAll('users');
+      const studentsList = users.filter(user => user.userType === 'student');
+      setStudents(studentsList || []);
     } catch (error) {
       console.error('Erro ao carregar alunos:', error);
       Alert.alert('Erro', 'Não foi possível carregar os alunos');
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
-  const filterStudents = () => {
-    let filtered = students;
-
-    // Filtro por busca
-    if (searchQuery) {
-      filtered = filtered.filter(student =>
-        student.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.currentGraduation?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Filtro por status
-    switch (selectedFilter) {
-      case 'active':
-        filtered = filtered.filter(s => s.isActive !== false);
-        break;
-      case 'inactive':
-        filtered = filtered.filter(s => s.isActive === false);
-        break;
-      case 'payment_ok':
-        filtered = filtered.filter(s => s.paymentStatus === 'paid');
-        break;
-      case 'payment_pending':
-        filtered = filtered.filter(s => s.paymentStatus === 'pending');
-        break;
-      case 'payment_overdue':
-        filtered = filtered.filter(s => s.paymentStatus === 'overdue');
-        break;
-      default:
-        break;
-    }
-
-    setFilteredStudents(filtered);
-  };
-
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    loadStudents();
-  };
-
-  const handleStudentPress = (student) => {
-    navigation.navigate('StudentDetails', { studentId: student.id, studentData: student });
+    await loadStudents();
+    setRefreshing(false);
   };
 
   const handleAddStudent = () => {
     navigation.navigate('AddStudent');
   };
 
-  const handleEditStudent = (student) => {
-    navigation.navigate('EditStudent', { studentId: student.id, studentData: student });
-  };
-
-  const handleDeleteStudent = (student) => {
-    Alert.alert(
-      'Confirmar Exclusão',
-      `Tem certeza que deseja excluir o aluno ${student.name}?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Excluir', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await firestoreService.delete('users', student.id);
-              loadStudents();
-              Alert.alert('Sucesso', 'Aluno excluído com sucesso');
-            } catch (error) {
-              Alert.alert('Erro', 'Não foi possível excluir o aluno');
-            }
-          }
-        }
-      ]
-    );
-  };
-
-  const getPaymentStatusColor = (status) => {
+  const getStatusColor = (status) => {
     switch (status) {
-      case 'paid': return '#4CAF50';
-      case 'pending': return '#FF9800';
-      case 'overdue': return '#F44336';
+      case 'active': return '#4CAF50';
+      case 'inactive': return '#F44336';
+      case 'suspended': return '#FF9800';
       default: return '#9E9E9E';
     }
   };
 
-  const getPaymentStatusText = (status) => {
+  const getStatusText = (status) => {
     switch (status) {
-      case 'paid': return 'Em dia';
-      case 'pending': return 'Pendente';
-      case 'overdue': return 'Atrasado';
-      default: return 'N/A';
+      case 'active': return 'Ativo';
+      case 'inactive': return 'Inativo';
+      case 'suspended': return 'Suspenso';
+      default: return 'Indefinido';
     }
   };
 
-  const getFilterText = (filter) => {
-    const filters = {
-      'all': 'Todos',
-      'active': 'Ativos',
-      'inactive': 'Inativos',
-      'payment_ok': 'Pagamento OK',
-      'payment_pending': 'Pagamento Pendente',
-      'payment_overdue': 'Pagamento Atrasado'
-    };
-    return filters[filter] || 'Todos';
-  };
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#6200ea" />
+          <Text style={styles.loadingText}>Carregando alunos...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <SearchBar
-          placeholder="Buscar alunos..."
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={styles.searchbar}
-        />
-        
-        <View style={styles.filterRow}>
-          <CustomMenu
-            visible={filterVisible}
-            onDismiss={() => setFilterVisible(false)}
-            anchor={
-              <Button 
-                mode="outlined" 
-                onPress={() => setFilterVisible(true)}
-                icon="filter"
-                style={styles.filterButton}
-              >
-                {getFilterText(selectedFilter)}
-              </Button>
-            }
-          >
-            <CustomMenu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title="Todos" />
-            <CustomMenu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title="Ativos" />
-            <CustomMenu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title="Inativos" />
-            <Divider />
-            <CustomMenu.Item onPress={() => { setSelectedFilter('payment_ok'); setFilterVisible(false); }} title="Pagamento OK" />
-            <CustomMenu.Item onPress={() => { setSelectedFilter('payment_pending'); setFilterVisible(false); }} title="Pagamento Pendente" />
-            <CustomMenu.Item onPress={() => { setSelectedFilter('payment_overdue'); setFilterVisible(false); }} title="Pagamento Atrasado" />
-          </CustomMenu>
-        </View>
-      </View>
-
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
+        showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {filteredStudents.length > 0 ? (
-          filteredStudents.map((student, index) => (
-            <Card key={student.id || index} style={styles.studentCard}>
-              <Card.Content>
-                <View style={styles.studentHeader}>
-                  <View style={styles.studentInfo}>
-                    <Avatar.Text 
-                      size={50} 
-                      label={student.name?.charAt(0) || 'A'} 
-                      style={styles.avatar}
-                    />
-                    <View style={styles.studentDetails}>
-                      <Title style={styles.studentName}>{student.name}</Title>
-                      <Text style={styles.studentEmail}>{student.email}</Text>
-                      <Text style={styles.studentPhone}>{student.phone || 'Telefone não informado'}</Text>
-                    </View>
-                  </View>
-                  
-                  <CustomMenu
-                    visible={false}
-                    onDismiss={() => {}}
-                    anchor={
-                      <IconButton
-                        icon="dots-vertical"
-                        onPress={() => handleStudentPress(student)}
-                      />
-                    }
-                  >
-                    <CustomMenu.Item onPress={() => handleEditStudent(student)} title="Editar" />
-                    <CustomMenu.Item onPress={() => handleDeleteStudent(student)} title="Excluir" />
-                  </CustomMenu>
-                </View>
+        <View style={styles.header}>
+          <Title style={styles.title}>Gerenciar Alunos</Title>
+          <Paragraph style={styles.subtitle}>
+            Total de {students.length} alunos
+          </Paragraph>
+        </View>
 
-                <View style={styles.studentStats}>
-                  <View style={styles.statColumn}>
-                    <Text style={styles.statLabel}>Status</Text>
-                    <Badge
-                      value={student.isActive ? 'Ativo' : 'Inativo'}
-                      badgeStyle={[
-                        styles.statusChip,
-                        { backgroundColor: student.isActive ? '#34d399' : '#f87171' }
-                      ]}
-                      textStyle={{ 
-                        color: 'white',
-                        fontSize: 12
-                      }}
-                    />
-                  </View>
-
-                  <View style={styles.statColumn}>
-                    <Text style={styles.statLabel}>Pagamento</Text>
-                    <Badge
-                      value={getPaymentStatusText(student.paymentStatus)}
-                      badgeStyle={[
-                        styles.paymentChip,
-                        { backgroundColor: getPaymentStatusColor(student.paymentStatus) }
-                      ]}
-                      textStyle={{
-                        color: 'white',
-                        fontSize: 12
-                      }}
-                    />
-                  </View>
-
-                  <View style={styles.statColumn}>
-                    <Text style={styles.statLabel}>Graduação</Text>
-                    <Text style={styles.graduationText}>
-                      {student.currentGraduation || 'Iniciante'}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.additionalInfo}>
-                  <Text style={styles.infoText}>
-                    Plano: {student.currentPlan || 'Não definido'}
-                  </Text>
-                  <Text style={styles.infoText}>
-                    Total de pagamentos: {student.totalPayments}
-                  </Text>
-                  {student.lastPaymentDate && (
-                    <Text style={styles.infoText}>
-                      Último pagamento: {new Date(student.lastPaymentDate.seconds * 1000).toLocaleDateString('pt-BR')}
-                    </Text>
-                  )}
-                </View>
-
-                <Divider style={styles.divider} />
-
-                <View style={styles.studentActions}>
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => handleStudentPress(student)}
-                    style={styles.actionButton}
-                    icon="eye"
-                  >
-                    Ver Perfil
-                  </Button>
-
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => handleEditStudent(student)}
-                    style={styles.actionButton}
-                    icon="pencil"
-                  >
-                    Editar
-                  </Button>
-
-                  <Button 
-                    mode="contained" 
-                    onPress={() => navigation.navigate('StudentPayments', { studentId: student.id })}
-                    style={styles.actionButton}
-                    icon="cash"
-                  >
-                    Pagamentos
-                  </Button>
-                </View>
-              </Card.Content>
-            </Card>
-          ))
-        ) : (
+        {students.length === 0 ? (
           <Card style={styles.emptyCard}>
-            <Card.Content style={styles.emptyContent}>
-              <Ionicons name="people-outline" size={48} color="#ccc" />
-              <Title style={styles.emptyTitle}>Nenhum aluno encontrado</Title>
-              <Paragraph style={styles.emptyText}>
-                {searchQuery ? 
-                  'Nenhum aluno corresponde à sua busca' : 
-                  'Nenhum aluno cadastrado ainda'
-                }
-              </Paragraph>
-            </Card.Content>
-          </Card>
-        )}
-
-        {/* Estatísticas gerais */}
-        {students.length > 0 && (
-          <Card style={styles.statsCard}>
             <Card.Content>
-              <Title style={styles.statsTitle}>Estatísticas Gerais</Title>
-              
-              <View style={styles.statsGrid}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{students.length}</Text>
-                  <Text style={styles.statLabel}>Total</Text>
-                </View>
-                
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>
-                    {students.filter(s => s.isActive !== false).length}
-                  </Text>
-                  <Text style={styles.statLabel}>Ativos</Text>
-                </View>
-                
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>
-                    {students.filter(s => s.paymentStatus === 'paid').length}
-                  </Text>
-                  <Text style={styles.statLabel}>Pagamento OK</Text>
-                </View>
-                
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>
-                    {students.filter(s => s.paymentStatus === 'overdue').length}
-                  </Text>
-                  <Text style={styles.statLabel}>Atrasados</Text>
-                </View>
+              <View style={styles.emptyContainer}>
+                <Ionicons name="people-outline" size={64} color="#ccc" />
+                <Title style={styles.emptyTitle}>Nenhum aluno encontrado</Title>
+                <Paragraph style={styles.emptyText}>
+                  Comece adicionando seu primeiro aluno
+                </Paragraph>
+                <Button 
+                  mode="contained" 
+                  onPress={handleAddStudent}
+                  style={styles.emptyButton}
+                >
+                  Adicionar Primeiro Aluno
+                </Button>
               </View>
             </Card.Content>
           </Card>
+        ) : (
+          <>
+            {/* Estatísticas */}
+            <Card style={styles.statsCard}>
+              <Card.Content>
+                <Title style={styles.statsTitle}>Estatísticas</Title>
+                <View style={styles.statsContainer}>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>
+                      {students.filter(s => s.status === 'active' || !s.status).length}
+                    </Text>
+                    <Text style={styles.statLabel}>Ativos</Text>
+                  </View>
+                  
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>
+                      {students.filter(s => s.status === 'inactive').length}
+                    </Text>
+                    <Text style={styles.statLabel}>Inativos</Text>
+                  </View>
+                  
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>
+                      {students.filter(s => s.status === 'suspended').length}
+                    </Text>
+                    <Text style={styles.statLabel}>Suspensos</Text>
+                  </View>
+                </View>
+              </Card.Content>
+            </Card>
+
+            {/* Lista de Alunos */}
+            {students.map((student, index) => (
+              <Card key={student.id || index} style={styles.studentCard}>
+                <Card.Content>
+                  <View style={styles.studentHeader}>
+                    <View style={styles.studentInfo}>
+                      <View style={styles.avatarContainer}>
+                        <View style={styles.avatar}>
+                          <Text style={styles.avatarText}>
+                            {student.name?.charAt(0)?.toUpperCase() || 'A'}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.studentDetails}>
+                        <Title style={styles.studentName}>{student.name || 'Nome não informado'}</Title>
+                        <Text style={styles.studentEmail}>{student.email || 'Email não informado'}</Text>
+                        <Text style={styles.studentPhone}>{student.phone || 'Telefone não informado'}</Text>
+                      </View>
+                    </View>
+                    
+                    <Chip 
+                      mode="outlined"
+                      style={[
+                        styles.statusChip,
+                        { backgroundColor: getStatusColor(student.status || 'active') + '20' }
+                      ]}
+                      textStyle={{ color: getStatusColor(student.status || 'active') }}
+                    >
+                      {getStatusText(student.status || 'active')}
+                    </Chip>
+                  </View>
+
+                  <View style={styles.studentMeta}>
+                    <View style={styles.metaItem}>
+                      <Ionicons name="calendar-outline" size={16} color="#666" />
+                      <Text style={styles.metaText}>
+                        Cadastrado em: {student.createdAt ? 
+                          new Date(student.createdAt.seconds * 1000).toLocaleDateString() : 
+                          'Data não disponível'
+                        }
+                      </Text>
+                    </View>
+                    
+                    {student.graduations && student.graduations.length > 0 && (
+                      <View style={styles.metaItem}>
+                        <Ionicons name="ribbon-outline" size={16} color="#666" />
+                        <Text style={styles.metaText}>
+                          Graduação: {student.currentGraduation || 'Não definida'}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.studentActions}>
+                    <Button 
+                      mode="outlined" 
+                      onPress={() => navigation.navigate('StudentDetails', { studentId: student.id })}
+                      style={styles.actionButton}
+                    >
+                      Ver Detalhes
+                    </Button>
+                    <Button 
+                      mode="contained" 
+                      onPress={() => navigation.navigate('EditStudent', { studentId: student.id })}
+                      style={styles.actionButton}
+                    >
+                      Editar
+                    </Button>
+                  </View>
+                </Card.Content>
+              </Card>
+            ))}
+          </>
         )}
       </ScrollView>
 
       <FAB
         style={styles.fab}
-        icon={{ name: 'add', color: 'white' }}
-        title="Novo Aluno"
+        icon="plus"
+        label="Novo Aluno"
         onPress={handleAddStudent}
-        color="#2196F3"
       />
     </SafeAreaView>
   );
@@ -418,195 +236,39 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  header: {
-    padding: 16,
-    backgroundColor: '#fff',
-    ...Platform.select({
-
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
-  },
-  searchbar: {
-    backgroundColor: '#f5f5f5',
-    marginBottom: 8,
-    borderTopWidth: 0,
-    borderBottomWidth: 0,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  filterButton: {
-    borderColor: '#FF9800',
-  },
   scrollView: {
     flex: 1,
+    padding: 16,
   },
-  scrollContent: {
-    paddingBottom: 100,
-  },
-  studentCard: {
-    margin: 16,
-    marginBottom: 8,
-    ...Platform.select({
-
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
-  },
-  studentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  studentInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  loadingContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  avatar: {
-    backgroundColor: '#FF9800',
-  },
-  studentDetails: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  studentName: {
+  loadingText: {
+    marginTop: 16,
     fontSize: 16,
-    marginBottom: 2,
-  },
-  studentEmail: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
-  },
-  studentPhone: {
-    fontSize: 12,
     color: '#666',
   },
-  studentStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 12,
+  header: {
+    marginBottom: 20,
   },
-  statColumn: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-  },
-  statusChip: {
-    borderWidth: 1,
-  },
-  graduationText: {
-    fontSize: 12,
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
-    textAlign: 'center',
+    color: '#333',
   },
-  additionalInfo: {
-    backgroundColor: '#f8f9fa',
-    padding: 8,
-    borderRadius: 4,
-    marginBottom: 12,
-  },
-  infoText: {
-    fontSize: 12,
+  subtitle: {
+    fontSize: 16,
     color: '#666',
-    marginBottom: 2,
-  },
-  divider: {
-    marginVertical: 12,
-  },
-  studentActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  actionButton: {
-    flex: 1,
-    marginHorizontal: 2,
+    marginTop: 4,
   },
   emptyCard: {
-    margin: 16,
-    ...Platform.select({
-
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
+    marginVertical: 20,
   },
-  emptyContent: {
+  emptyContainer: {
     alignItems: 'center',
-    padding: 32,
+    padding: 20,
   },
   emptyTitle: {
     marginTop: 16,
@@ -615,44 +277,19 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: 'center',
     color: '#666',
+    marginTop: 8,
+  },
+  emptyButton: {
+    marginTop: 16,
   },
   statsCard: {
-    margin: 16,
-    marginTop: 8,
-    ...Platform.select({
-
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
-    backgroundColor: '#FFF3E0',
+    marginBottom: 20,
   },
   statsTitle: {
-    textAlign: 'center',
+    fontSize: 18,
     marginBottom: 16,
   },
-  statsGrid: {
+  statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
   },
@@ -660,16 +297,94 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#6200ea',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
+  studentCard: {
+    marginBottom: 16,
+  },
+  studentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  studentInfo: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  avatarContainer: {
+    marginRight: 12,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#6200ea',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: 'white',
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FF9800',
+  },
+  studentDetails: {
+    flex: 1,
+  },
+  studentName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  studentEmail: {
+    color: '#666',
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  studentPhone: {
+    color: '#666',
+    fontSize: 14,
+  },
+  statusChip: {
+    marginLeft: 12,
+  },
+  studentMeta: {
+    marginBottom: 16,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  metaText: {
+    marginLeft: 8,
+    color: '#666',
+    fontSize: 14,
+  },
+  studentActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  actionButton: {
+    flex: 1,
+    marginHorizontal: 4,
   },
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
     bottom: 0,
-    backgroundColor: '#FF9800',
+    backgroundColor: '#6200ea',
+  },
+  scrollContent: {
+    paddingBottom: 100,
   },
 });
 

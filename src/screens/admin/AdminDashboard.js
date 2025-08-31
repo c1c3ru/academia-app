@@ -184,25 +184,25 @@ const AdminDashboard = ({ navigation }) => {
           </View>
             {/* Estatísticas Rápidas */}
             <View style={styles.statsContainer}>
-              <Card containerStyle={[styles.statCard, { backgroundColor: '#E3F2FD' }]}>
+              <Card key="stat-students" containerStyle={[styles.statCard, { backgroundColor: '#E3F2FD' }]}>
                 <Icon name="people" type="material" size={32} color="#2196F3" />
                 <Text style={styles.statNumber}>{dashboardData.totalStudents}</Text>
                 <Text style={styles.statLabel}>Total de Alunos</Text>
               </Card>
               
-              <Card containerStyle={[styles.statCard, { backgroundColor: '#E8F5E8' }]}>
+              <Card key="stat-classes" containerStyle={[styles.statCard, { backgroundColor: '#E8F5E8' }]}>
                 <Icon name="fitness-center" type="material" size={32} color="#4CAF50" />
                 <Text style={styles.statNumber}>{dashboardData.totalClasses}</Text>
                 <Text style={styles.statLabel}>Turmas Ativas</Text>
               </Card>
               
-              <Card containerStyle={[styles.statCard, { backgroundColor: '#FFF3E0' }]}>
+              <Card key="stat-revenue" containerStyle={[styles.statCard, { backgroundColor: '#FFF3E0' }]}>
                 <Icon name="attach-money" type="material" size={32} color="#FF9800" />
                 <Text style={styles.statNumber}>R$ {dashboardData.monthlyRevenue}</Text>
                 <Text style={styles.statLabel}>Receita Mensal</Text>
               </Card>
               
-              <Card containerStyle={[styles.statCard, { backgroundColor: '#FFEBEE' }]}>
+              <Card key="stat-pending" containerStyle={[styles.statCard, { backgroundColor: '#FFEBEE' }]}>
                 <Icon name="warning" type="material" size={32} color="#F44336" />
                 <Text style={styles.statNumber}>{dashboardData.pendingPayments}</Text>
                 <Text style={styles.statLabel}>Pagamentos Pendentes</Text>
@@ -255,34 +255,54 @@ const AdminDashboard = ({ navigation }) => {
         <Card containerStyle={styles.card}>
           <Text h4 style={styles.cardTitle}>Ações Rápidas</Text>
           
-          <View style={styles.quickActionsGrid}>
-            <Button 
-              title="Gerenciar Alunos"
-              onPress={() => navigation.navigate('Alunos')}
-              buttonStyle={[styles.quickActionButton, { backgroundColor: '#2196F3' }]}
-              icon={<Icon name="people" type="material" size={20} color="white" />}
-            />
+          <View style={styles.quickActionsContainer}>
+            <View style={styles.quickActionItem}>
+              <Icon 
+                name="people" 
+                type="material" 
+                size={32} 
+                color="#2196F3"
+                containerStyle={[styles.quickActionIcon, { backgroundColor: '#E3F2FD' }]}
+                onPress={() => navigation.navigate('Alunos')}
+              />
+              <Text style={styles.quickActionLabel}>Gerenciar Alunos</Text>
+            </View>
             
-            <Button 
-              title="Gerenciar Turmas"
-              onPress={() => navigation.navigate('Turmas')}
-              buttonStyle={[styles.quickActionButton, { backgroundColor: '#4CAF50' }]}
-              icon={<Icon name="school" type="material" size={20} color="white" />}
-            />
+            <View style={styles.quickActionItem}>
+              <Icon 
+                name="school" 
+                type="material" 
+                size={32} 
+                color="#4CAF50"
+                containerStyle={[styles.quickActionIcon, { backgroundColor: '#E8F5E8' }]}
+                onPress={() => navigation.navigate('Turmas')}
+              />
+              <Text style={styles.quickActionLabel}>Gerenciar Turmas</Text>
+            </View>
             
-            <Button 
-              title="Configurações"
-              onPress={() => navigation.navigate('AdminSettings')}
-              buttonStyle={[styles.quickActionButton, { backgroundColor: '#FF9800' }]}
-              icon={<Icon name="settings" type="material" size={20} color="white" />}
-            />
+            <View style={styles.quickActionItem}>
+              <Icon 
+                name="settings" 
+                type="material" 
+                size={32} 
+                color="#FF9800"
+                containerStyle={[styles.quickActionIcon, { backgroundColor: '#FFF3E0' }]}
+                onPress={() => navigation.navigate('AdminSettings')}
+              />
+              <Text style={styles.quickActionLabel}>Configurações</Text>
+            </View>
             
-            <Button 
-              title="Modalidades"
-              onPress={() => navigation.navigate('Gestão')}
-              buttonStyle={[styles.quickActionButton, { backgroundColor: '#9C27B0' }]}
-              icon={<Icon name="fitness-center" type="material" size={20} color="white" />}
-            />
+            <View style={styles.quickActionItem}>
+              <Icon 
+                name="fitness-center" 
+                type="material" 
+                size={32} 
+                color="#9C27B0"
+                containerStyle={[styles.quickActionIcon, { backgroundColor: '#F3E5F5' }]}
+                onPress={() => navigation.navigate('Gestão')}
+              />
+              <Text style={styles.quickActionLabel}>Modalidades</Text>
+            </View>
           </View>
           
           <View style={styles.logoutContainer}>
@@ -305,7 +325,7 @@ const AdminDashboard = ({ navigation }) => {
           </View>
             
           {dashboardData.recentActivities.map((activity, index) => (
-            <ListItem key={`activity-${activity.type}-${index}`} bottomDivider>
+            <ListItem key={`activity-${activity.id || activity.type}-${index}-${activity.timestamp || Date.now()}`} bottomDivider>
               <Icon 
                 name={getActivityIcon(activity.type)} 
                 type="material"
@@ -360,29 +380,14 @@ const styles = StyleSheet.create({
     margin: 16,
     marginBottom: 8,
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
+      ios: {},
       android: {
         elevation: 4,
       },
       web: {
         ...Platform.select({
 
-          ios: {
-
-            shadowColor: '#000',
-
-            shadowOffset: { width: 0, height: 2 },
-
-            shadowOpacity: 0.1,
-
-            shadowRadius: 4,
-
-          },
+          ios: {},
 
           android: {
 
@@ -436,29 +441,14 @@ const styles = StyleSheet.create({
     margin: 16,
     marginTop: 8,
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
+      ios: {},
       android: {
         elevation: 4,
       },
       web: {
         ...Platform.select({
 
-          ios: {
-
-            shadowColor: '#000',
-
-            shadowOffset: { width: 0, height: 2 },
-
-            shadowOpacity: 0.1,
-
-            shadowRadius: 4,
-
-          },
+          ios: {},
 
           android: {
 
@@ -501,29 +491,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-      },
+      ios: {},
       android: {
         elevation: 2,
       },
       web: {
         ...Platform.select({
 
-          ios: {
-
-            shadowColor: '#000',
-
-            shadowOffset: { width: 0, height: 2 },
-
-            shadowOpacity: 0.1,
-
-            shadowRadius: 4,
-
-          },
+          ios: {},
 
           android: {
 
@@ -589,16 +564,32 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 4,
   },
-  quickActionsGrid: {
+  quickActionsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginTop: 16,
   },
-  quickActionButton: {
+  quickActionItem: {
     width: '48%',
-    marginBottom: 12,
-    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 20,
+    padding: 12,
+  },
+  quickActionIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  quickActionLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#333',
+    textAlign: 'center',
+    lineHeight: 16,
   },
   noActivities: {
     textAlign: 'center',

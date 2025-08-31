@@ -420,17 +420,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     ...Platform.select({
 
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
+      ios: {},
 
       android: {
 
@@ -464,17 +454,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     ...Platform.select({
 
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
+      ios: {},
 
       android: {
 
@@ -520,17 +500,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     ...Platform.select({
 
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
+      ios: {},
 
       android: {
 
@@ -584,17 +554,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     ...Platform.select({
 
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
+      ios: {},
 
       android: {
 
@@ -633,17 +593,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     ...Platform.select({
 
-      ios: {
-
-        shadowColor: '#000',
-
-        shadowOffset: { width: 0, height: 2 },
-
-        shadowOpacity: 0.1,
-
-        shadowRadius: 4,
-
-      },
+      ios: {},
 
       android: {
 

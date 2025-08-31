@@ -9,15 +9,15 @@ import {
   Platform
 } from 'react-native';
 import { 
-  Card, 
   Text, 
   Button,
-  Input,
   Badge,
   Icon,
   ListItem,
   Divider
 } from 'react-native-elements';
+import { TextInput } from 'react-native';
+import { Card } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -171,9 +171,37 @@ const AdminModalities = ({ navigation }) => {
     }
 
     try {
+      // Validar e converter data de expiração
+      let expirationDate = null;
+      if (newAnnouncement.expirationDate && newAnnouncement.expirationDate.trim()) {
+        // Tentar converter a data do formato DD/MM/AAAA
+        const dateParts = newAnnouncement.expirationDate.split('/');
+        if (dateParts.length === 3) {
+          const day = parseInt(dateParts[0]);
+          const month = parseInt(dateParts[1]) - 1; // Mês é 0-indexado
+          const year = parseInt(dateParts[2]);
+          
+          if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+            expirationDate = new Date(year, month, day);
+            
+            // Verificar se a data é válida
+            if (isNaN(expirationDate.getTime())) {
+              Alert.alert('Erro', 'Data de expiração inválida. Use o formato DD/MM/AAAA');
+              return;
+            }
+          } else {
+            Alert.alert('Erro', 'Data de expiração inválida. Use o formato DD/MM/AAAA');
+            return;
+          }
+        } else {
+          Alert.alert('Erro', 'Data de expiração inválida. Use o formato DD/MM/AAAA');
+          return;
+        }
+      }
+
       const announcementData = {
         ...newAnnouncement,
-        expirationDate: newAnnouncement.expirationDate ? new Date(newAnnouncement.expirationDate) : null,
+        expirationDate,
         publishedBy: user.uid
       };
       
@@ -241,7 +269,7 @@ const AdminModalities = ({ navigation }) => {
               <Button 
                 type="solid"
                 onPress={() => setModalityDialogVisible(true)}
-                icon={<Icon name="plus" size={20} color="white" />}
+                icon={<Icon name="add" type="material" size={20} color="white" />}
                 buttonStyle={styles.addButton}
               >
                 Adicionar
@@ -289,7 +317,7 @@ const AdminModalities = ({ navigation }) => {
               <Button 
                 type="solid"
                 onPress={() => setPlanDialogVisible(true)}
-                icon={<Icon name="plus" size={20} color="white" />}
+                icon={<Icon name="add" type="material" size={20} color="white" />}
                 buttonStyle={styles.addButton}
               >
                 Adicionar
@@ -337,7 +365,7 @@ const AdminModalities = ({ navigation }) => {
               <Button 
                 type="solid"
                 onPress={() => setAnnouncementDialogVisible(true)}
-                icon={<Icon name="plus" size={20} color="white" />}
+                icon={<Icon name="add" type="material" size={20} color="white" />}
                 buttonStyle={styles.addButton}
               >
                 Publicar
@@ -349,7 +377,7 @@ const AdminModalities = ({ navigation }) => {
                 <View key={announcement.id || index}>
                   <View style={styles.listItem}>
                     <View style={styles.listItemLeft}>
-                      <Ionicons name="bullhorn" size={24} color="#FF9800" />
+                      <Ionicons name="megaphone" size={24} color="#FF9800" />
                     </View>
                     <View style={styles.listItemContent}>
                       <Text style={styles.listItemTitle}>{announcement.title}</Text>
@@ -411,41 +439,45 @@ const AdminModalities = ({ navigation }) => {
       >
         <View style={styles.dialogContent}>
           <Text style={styles.dialogTitle}>Nova Modalidade</Text>
-          <Input
-            label="Nome da Modalidade"
-            value={newModality.name}
-            onChangeText={(text) => setNewModality({...newModality, name: text})}
-            containerStyle={styles.dialogInput}
-            accessibilityLabel="Nome da modalidade"
-            accessibilityHint="Digite o nome da nova modalidade"
-          />
-          <Input
-            label="Descrição (opcional)"
-            value={newModality.description}
-            onChangeText={(text) => setNewModality({...newModality, description: text})}
-            multiline
-            numberOfLines={3}
-            containerStyle={styles.dialogInput}
-            accessibilityLabel="Descrição da modalidade"
-            accessibilityHint="Digite uma descrição opcional para a modalidade"
-          />
+          <View style={styles.dialogInput}>
+            <Text style={styles.inputLabel}>Nome da Modalidade</Text>
+            <TextInput
+              value={newModality.name}
+              onChangeText={(text) => setNewModality({...newModality, name: text})}
+              style={styles.textInput}
+              accessibilityLabel="Nome da modalidade"
+              accessibilityHint="Digite o nome da nova modalidade"
+            />
+          </View>
+          <View style={styles.dialogInput}>
+            <Text style={styles.inputLabel}>Descrição (opcional)</Text>
+            <TextInput
+              value={newModality.description}
+              onChangeText={(text) => setNewModality({...newModality, description: text})}
+              multiline
+              numberOfLines={3}
+              style={[styles.textInput, styles.multilineInput]}
+              accessibilityLabel="Descrição da modalidade"
+              accessibilityHint="Digite uma descrição opcional para a modalidade"
+            />
+          </View>
           <View style={styles.dialogActions}>
             <Button 
               onPress={() => setModalityDialogVisible(false)}
               accessibilityLabel="Cancelar criação de modalidade"
+              title="✕ Cancelar"
               type="outline"
-              style={styles.dialogButton}
-            >
-              Cancelar
-            </Button>
+              buttonStyle={[styles.dialogButton, styles.cancelButton]}
+              titleStyle={styles.cancelButtonText}
+            />
             <Button 
               onPress={handleAddModality}
               accessibilityLabel="Criar nova modalidade"
+              title="✓ Criar Modalidade"
               type="solid"
-              style={styles.dialogButton}
-            >
-              Criar
-            </Button>
+              buttonStyle={[styles.dialogButton, styles.confirmButton]}
+              titleStyle={styles.confirmButtonText}
+            />
           </View>
         </View>
       </AccessibleDialog>
@@ -456,37 +488,57 @@ const AdminModalities = ({ navigation }) => {
       >
         <View style={styles.dialogContent}>
           <Text style={styles.dialogTitle}>Novo Plano</Text>
-          <Input
-            label="Nome do Plano"
-            value={newPlan.name}
-            onChangeText={(text) => setNewPlan({...newPlan, name: text})}
-            containerStyle={styles.dialogInput}
-          />
-          <Input
-            label="Valor (R$)"
-            value={newPlan.value}
-            onChangeText={(text) => setNewPlan({...newPlan, value: text})}
-            containerStyle={styles.dialogInput}
-            keyboardType="numeric"
-          />
-          <Input
-            label="Duração (meses)"
-            value={newPlan.duration}
-            onChangeText={(text) => setNewPlan({...newPlan, duration: text})}
-            containerStyle={styles.dialogInput}
-            keyboardType="numeric"
-          />
-          <Input
-            label="Descrição (opcional)"
-            value={newPlan.description}
-            onChangeText={(text) => setNewPlan({...newPlan, description: text})}
-            containerStyle={styles.dialogInput}
-            multiline
-            numberOfLines={2}
-          />
+          <View style={styles.dialogInput}>
+            <Text style={styles.inputLabel}>Nome do Plano</Text>
+            <TextInput
+              value={newPlan.name}
+              onChangeText={(text) => setNewPlan({...newPlan, name: text})}
+              style={styles.textInput}
+            />
+          </View>
+          <View style={styles.dialogInput}>
+            <Text style={styles.inputLabel}>Valor (R$)</Text>
+            <TextInput
+              value={newPlan.value}
+              onChangeText={(text) => setNewPlan({...newPlan, value: text})}
+              style={styles.textInput}
+              keyboardType="numeric"
+            />
+          </View>
+          <View style={styles.dialogInput}>
+            <Text style={styles.inputLabel}>Duração (meses)</Text>
+            <TextInput
+              value={newPlan.duration}
+              onChangeText={(text) => setNewPlan({...newPlan, duration: text})}
+              style={styles.textInput}
+              keyboardType="numeric"
+            />
+          </View>
+          <View style={styles.dialogInput}>
+            <Text style={styles.inputLabel}>Descrição (opcional)</Text>
+            <TextInput
+              value={newPlan.description}
+              onChangeText={(text) => setNewPlan({...newPlan, description: text})}
+              style={[styles.textInput, styles.multilineInput]}
+              multiline
+              numberOfLines={2}
+            />
+          </View>
           <View style={styles.dialogActions}>
-            <Button onPress={() => setPlanDialogVisible(false)} type="outline" style={styles.dialogButton}>Cancelar</Button>
-            <Button onPress={handleAddPlan} type="solid" style={styles.dialogButton}>Criar</Button>
+            <Button 
+              onPress={() => setPlanDialogVisible(false)} 
+              title="✕ Cancelar"
+              type="outline" 
+              buttonStyle={[styles.dialogButton, styles.cancelButton]}
+              titleStyle={styles.cancelButtonText}
+            />
+            <Button 
+              onPress={handleAddPlan} 
+              title="✓ Criar Plano"
+              type="solid" 
+              buttonStyle={[styles.dialogButton, styles.confirmButton]}
+              titleStyle={styles.confirmButtonText}
+            />
           </View>
         </View>
       </AccessibleDialog>
@@ -498,30 +550,48 @@ const AdminModalities = ({ navigation }) => {
         >
           <View style={styles.dialogContent}>
             <Text style={styles.dialogTitle}>Novo Aviso</Text>
-            <Input
-              label="Título do Aviso"
-              value={newAnnouncement.title}
-              onChangeText={(text) => setNewAnnouncement({...newAnnouncement, title: text})}
-              containerStyle={styles.dialogInput}
-            />
-            <Input
-              label="Conteúdo"
-              value={newAnnouncement.content}
-              onChangeText={(text) => setNewAnnouncement({...newAnnouncement, content: text})}
-              containerStyle={styles.dialogInput}
-              multiline
-              numberOfLines={4}
-            />
-            <Input
-              label="Data de Expiração (opcional)"
-              value={newAnnouncement.expirationDate}
-              onChangeText={(text) => setNewAnnouncement({...newAnnouncement, expirationDate: text})}
-              containerStyle={styles.dialogInput}
-              placeholder="DD/MM/AAAA"
-            />
+            <View style={styles.dialogInput}>
+              <Text style={styles.inputLabel}>Título do Aviso</Text>
+              <TextInput
+                value={newAnnouncement.title}
+                onChangeText={(text) => setNewAnnouncement({...newAnnouncement, title: text})}
+                style={styles.textInput}
+              />
+            </View>
+            <View style={styles.dialogInput}>
+              <Text style={styles.inputLabel}>Conteúdo</Text>
+              <TextInput
+                value={newAnnouncement.content}
+                onChangeText={(text) => setNewAnnouncement({...newAnnouncement, content: text})}
+                style={[styles.textInput, styles.multilineInput]}
+                multiline
+                numberOfLines={4}
+              />
+            </View>
+            <View style={styles.dialogInput}>
+              <Text style={styles.inputLabel}>Data de Expiração (opcional)</Text>
+              <TextInput
+                value={newAnnouncement.expirationDate}
+                onChangeText={(text) => setNewAnnouncement({...newAnnouncement, expirationDate: text})}
+                style={styles.textInput}
+                placeholder="DD/MM/AAAA"
+              />
+            </View>
             <View style={styles.dialogActions}>
-              <Button onPress={() => setAnnouncementDialogVisible(false)} type="outline" style={styles.dialogButton}>Cancelar</Button>
-              <Button onPress={handleAddAnnouncement} type="solid" style={styles.dialogButton}>Publicar</Button>
+              <Button 
+                onPress={() => setAnnouncementDialogVisible(false)} 
+                title="✕ Cancelar"
+                type="outline" 
+                buttonStyle={[styles.dialogButton, styles.cancelButton]}
+                titleStyle={styles.cancelButtonText}
+              />
+              <Button 
+                onPress={handleAddAnnouncement} 
+                title="✓ Publicar Aviso"
+                type="solid" 
+                buttonStyle={[styles.dialogButton, styles.confirmButton]}
+                titleStyle={styles.confirmButtonText}
+              />
             </View>
           </View>
         </AccessibleDialog>
@@ -544,29 +614,14 @@ const styles = StyleSheet.create({
     margin: 16,
     marginBottom: 8,
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
+      ios: {},
       android: {
         elevation: 4,
       },
       web: {
         ...Platform.select({
 
-          ios: {
-
-            shadowColor: '#000',
-
-            shadowOffset: { width: 0, height: 2 },
-
-            shadowOpacity: 0.1,
-
-            shadowRadius: 4,
-
-          },
+          ios: {},
 
           android: {
 
@@ -615,29 +670,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
     backgroundColor: '#E8F5E8',
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
+      ios: {},
       android: {
         elevation: 4,
       },
       web: {
         ...Platform.select({
 
-          ios: {
-
-            shadowColor: '#000',
-
-            shadowOffset: { width: 0, height: 2 },
-
-            shadowOpacity: 0.1,
-
-            shadowRadius: 4,
-
-          },
+          ios: {},
 
           android: {
 
@@ -677,7 +717,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   dialogInput: {
-    marginBottom: 12,
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 10,
+    padding: 16,
+    fontSize: 16,
+    backgroundColor: '#fafafa',
+    minHeight: 50,
+  },
+  multilineInput: {
+    minHeight: 100,
+    textAlignVertical: 'top',
+    paddingTop: 16,
   },
   listItem: {
     flexDirection: 'row',
@@ -705,22 +765,51 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   dialogContent: {
-    padding: 20,
-    minWidth: 300,
+    padding: 24,
+    minWidth: 320,
+    maxWidth: 400,
+    backgroundColor: '#fff',
+    borderRadius: 12,
   },
   dialogTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 24,
     textAlign: 'center',
+    color: '#333',
   },
   dialogActions: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 20,
+    justifyContent: 'space-between',
+    marginTop: 24,
+    gap: 12,
   },
   dialogButton: {
-    minWidth: 100,
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    minHeight: 48,
+  },
+  cancelButton: {
+    backgroundColor: '#f5f5f5',
+    borderColor: '#d32f2f',
+    borderWidth: 2,
+    paddingHorizontal: 20,
+  },
+  confirmButton: {
+    backgroundColor: '#4CAF50',
+    borderWidth: 0,
+    paddingHorizontal: 20,
+  },
+  cancelButtonText: {
+    color: '#d32f2f',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 

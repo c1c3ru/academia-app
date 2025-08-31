@@ -3,8 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { Button } from 'react-native-elements';
-
+import { IconButton } from 'react-native-paper';
+import { Alert } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 
 // Telas de Autenticação
@@ -34,9 +34,52 @@ import LoadingScreen from '../screens/shared/LoadingScreen';
 import ClassDetailsScreen from '../screens/shared/ClassDetailsScreen';
 import StudentDetailsScreen from '../screens/shared/StudentDetailsScreen';
 import SettingsScreen from '../screens/shared/SettingsScreen';
+import AddClassScreen from '../screens/admin/AddClassScreen';
+import AddStudentScreen from '../screens/admin/AddStudentScreen';
+import EditClassScreen from '../screens/admin/EditClassScreen';
+import EditStudentScreen from '../screens/admin/EditStudentScreen';
+import ReportsScreen from '../screens/admin/ReportsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+
+// Componente do botão de logout para o header
+const LogoutButton = () => {
+  const { logout } = useAuth();
+  
+  const handleLogout = () => {
+    Alert.alert(
+      'Sair',
+      'Tem certeza que deseja sair da sua conta?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel'
+        },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (error) {
+              Alert.alert('Erro', 'Não foi possível fazer logout');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  return (
+    <IconButton
+      icon="logout"
+      iconColor="#fff"
+      size={24}
+      onPress={handleLogout}
+    />
+  );
+};
 
 // Navegação para Alunos
 const StudentTabNavigator = () => (
@@ -166,84 +209,113 @@ const MainNavigator = ({ userType }) => {
       <Stack.Screen 
         name="MainTabs" 
         component={TabNavigator} 
-        options={({ navigation }) => ({
+        options={{
           headerShown: true,
           title: 'Academia App',
-          headerRight: () => (
-            <Button
-              onPress={() => navigation.navigate('Profile')}
-              title="Perfil"
-              color="#fff"
-              type="clear"
-            />
-          ),
-        })}
+          headerRight: () => <LogoutButton />
+        }}
       />
       <Stack.Screen 
         name="Profile" 
         component={ProfileScreen}
-        options={{ title: 'Perfil' }}
+        options={{ 
+          title: 'Perfil',
+          headerRight: () => <LogoutButton />
+        }}
       />
       
       {/* Telas de Detalhes */}
       <Stack.Screen 
         name="ClassDetails" 
         component={ClassDetailsScreen}
-        options={{ title: 'Detalhes da Turma' }}
+        options={{ 
+          title: 'Detalhes da Turma',
+          headerRight: () => <LogoutButton />
+        }}
       />
       <Stack.Screen 
         name="StudentDetails" 
         component={StudentDetailsScreen}
-        options={{ title: 'Detalhes do Aluno' }}
+        options={{ 
+          title: 'Detalhes do Aluno',
+          headerRight: () => <LogoutButton />
+        }}
       />
       <Stack.Screen 
         name="StudentProfile" 
         component={StudentDetailsScreen}
-        options={{ title: 'Perfil do Aluno' }}
+        options={{ 
+          title: 'Perfil do Aluno',
+          headerRight: () => <LogoutButton />
+        }}
       />
       
       {/* Telas de Gestão */}
       <Stack.Screen 
         name="CheckIns" 
         component={LoadingScreen} // Temporário
-        options={{ title: 'Check-ins' }}
+        options={{ 
+          title: 'Check-ins',
+          headerRight: () => <LogoutButton />
+        }}
       />
       <Stack.Screen 
         name="AddGraduation" 
         component={LoadingScreen} // Temporário
-        options={{ title: 'Adicionar Graduação' }}
+        options={{ 
+          title: 'Adicionar Graduação',
+          headerRight: () => <LogoutButton />
+        }}
       />
       <Stack.Screen 
         name="AddClass" 
-        component={LoadingScreen} // Temporário
-        options={{ title: 'Adicionar Turma' }}
+        component={AddClassScreen}
+        options={{ 
+          title: 'Adicionar Turma',
+          headerRight: () => <LogoutButton />
+        }}
       />
       <Stack.Screen 
         name="EditClass" 
-        component={LoadingScreen} // Temporário
-        options={{ title: 'Editar Turma' }}
+        component={EditClassScreen}
+        options={{ 
+          title: 'Editar Turma',
+          headerRight: () => <LogoutButton />
+        }}
       />
       <Stack.Screen 
         name="AddStudent" 
-        component={LoadingScreen} // Temporário
-        options={{ title: 'Adicionar Aluno' }}
+        component={AddStudentScreen}
+        options={{ 
+          title: 'Adicionar Aluno',
+          headerRight: () => <LogoutButton />
+        }}
       />
       <Stack.Screen 
         name="EditStudent" 
-        component={LoadingScreen} // Temporário
-        options={{ title: 'Editar Aluno' }}
+        component={EditStudentScreen}
+        options={{ 
+          title: 'Editar Aluno',
+          headerRight: () => <LogoutButton />
+        }}
       />
       
       {/* Telas de Relatórios e Configurações */}
       <Stack.Screen 
         name="Relatórios" 
-        component={LoadingScreen} // Temporário
-        options={{ title: 'Relatórios' }}
+        component={ReportsScreen}
+        options={{ 
+          title: 'Relatórios',
+          headerRight: () => <LogoutButton />
+        }}
       />
       <Stack.Screen 
         name="Configurações" 
         component={SettingsScreen}
-        options={{ title: 'Configurações' }}
+        options={{ 
+          title: 'Configurações',
+          headerRight: () => <LogoutButton />
+        }}
       />
       <Stack.Screen 
         name="AdminSettings" 

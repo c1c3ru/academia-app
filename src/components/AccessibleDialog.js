@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Platform, Modal } from 'react-native';
+import { View, StyleSheet, Platform, Modal, Pressable } from 'react-native';
 import { Overlay } from 'react-native-elements';
 
 const AccessibleDialog = ({ visible, onDismiss, children, style, ...props }) => {
