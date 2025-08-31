@@ -94,3 +94,7 @@ yarn-error.*
  
 # Google Services inside native folders (keep only the root-managed file)
  android/app/google-services.json
+# Expo
+.expo
+dist/
+web-build/
