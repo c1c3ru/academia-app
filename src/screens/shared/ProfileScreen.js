@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity } from 'react-native';
 import { 
   Card, 
   Text, 
@@ -52,10 +52,9 @@ const ProfileScreen = ({ navigation }) => {
       'Sair',
       'Tem certeza que deseja sair da sua conta?',
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Cancelar' },
         { 
           text: 'Sair', 
-          style: 'destructive',
           onPress: logout
         }
       ]
@@ -182,39 +181,59 @@ const ProfileScreen = ({ navigation }) => {
               </View>
             ) : (
               <View>
-                <List.Item
-                  title="Nome"
-                  description={userProfile?.name || 'Não informado'}
-                  left={() => <List.Icon icon="account" />}
-                />
+                <View style={styles.listItem}>
+                  <View style={styles.listItemLeft}>
+                    <Ionicons name="account" size={24} color="#666" />
+                  </View>
+                  <View style={styles.listItemContent}>
+                    <Text style={styles.listItemTitle}>Nome</Text>
+                    <Text style={styles.listItemDescription}>{userProfile?.name || 'Não informado'}</Text>
+                  </View>
+                </View>
                 <Divider />
                 
-                <List.Item
-                  title="Telefone"
-                  description={userProfile?.phone || 'Não informado'}
-                  left={() => <List.Icon icon="phone" />}
-                />
+                <View style={styles.listItem}>
+                  <View style={styles.listItemLeft}>
+                    <Ionicons name="phone" size={24} color="#666" />
+                  </View>
+                  <View style={styles.listItemContent}>
+                    <Text style={styles.listItemTitle}>Telefone</Text>
+                    <Text style={styles.listItemDescription}>{userProfile?.phone || 'Não informado'}</Text>
+                  </View>
+                </View>
                 <Divider />
                 
-                <List.Item
-                  title="Endereço"
-                  description={userProfile?.address || 'Não informado'}
-                  left={() => <List.Icon icon="map-marker" />}
-                />
+                <View style={styles.listItem}>
+                  <View style={styles.listItemLeft}>
+                    <Ionicons name="map-marker" size={24} color="#666" />
+                  </View>
+                  <View style={styles.listItemContent}>
+                    <Text style={styles.listItemTitle}>Endereço</Text>
+                    <Text style={styles.listItemDescription}>{userProfile?.address || 'Não informado'}</Text>
+                  </View>
+                </View>
                 <Divider />
                 
-                <List.Item
-                  title="Contato de Emergência"
-                  description={userProfile?.emergencyContact || 'Não informado'}
-                  left={() => <List.Icon icon="phone-alert" />}
-                />
+                <View style={styles.listItem}>
+                  <View style={styles.listItemLeft}>
+                    <Ionicons name="phone-alert" size={24} color="#666" />
+                  </View>
+                  <View style={styles.listItemContent}>
+                    <Text style={styles.listItemTitle}>Contato de Emergência</Text>
+                    <Text style={styles.listItemDescription}>{userProfile?.emergencyContact || 'Não informado'}</Text>
+                  </View>
+                </View>
                 <Divider />
                 
-                <List.Item
-                  title="Informações Médicas"
-                  description={userProfile?.medicalInfo || 'Não informado'}
-                  left={() => <List.Icon icon="medical-bag" />}
-                />
+                <View style={styles.listItem}>
+                  <View style={styles.listItemLeft}>
+                    <Ionicons name="medical-bag" size={24} color="#666" />
+                  </View>
+                  <View style={styles.listItemContent}>
+                    <Text style={styles.listItemTitle}>Informações Médicas</Text>
+                    <Text style={styles.listItemDescription}>{userProfile?.medicalInfo || 'Não informado'}</Text>
+                  </View>
+                </View>
               </View>
             )}
           </Card.Content>
@@ -226,31 +245,43 @@ const ProfileScreen = ({ navigation }) => {
             <Card.Content>
               <View style={styles.cardHeader}>
                 <Ionicons name="school-outline" size={24} color="#4CAF50" />
-                <Title style={styles.cardTitle}>Informações da Academia</Title>
+                <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Informações da Academia</Text>
               </View>
 
-              <List.Item
-                title="Graduação Atual"
-                description={userProfile?.currentGraduation || 'Iniciante'}
-                left={() => <List.Icon icon="trophy" color="#FFD700" />}
-              />
+              <View style={styles.listItem}>
+                <View style={styles.listItemLeft}>
+                  <Ionicons name="trophy" size={24} color="#FFD700" />
+                </View>
+                <View style={styles.listItemContent}>
+                  <Text style={styles.listItemTitle}>Graduação Atual</Text>
+                  <Text style={styles.listItemDescription}>{userProfile?.currentGraduation || 'Iniciante'}</Text>
+                </View>
+              </View>
               <Divider />
               
-              <List.Item
-                title="Plano Atual"
-                description={userProfile?.currentPlan || 'Não definido'}
-                left={() => <List.Icon icon="card-membership" />}
-              />
+              <View style={styles.listItem}>
+                <View style={styles.listItemLeft}>
+                  <Ionicons name="card-membership" size={24} color="#666" />
+                </View>
+                <View style={styles.listItemContent}>
+                  <Text style={styles.listItemTitle}>Plano Atual</Text>
+                  <Text style={styles.listItemDescription}>{userProfile?.currentPlan || 'Não definido'}</Text>
+                </View>
+              </View>
               <Divider />
               
-              <List.Item
-                title="Data de Início"
-                description={userProfile?.startDate ? 
-                  new Date(userProfile.startDate).toLocaleDateString('pt-BR') : 
-                  'Não informado'
-                }
-                left={() => <List.Icon icon="calendar-start" />}
-              />
+              <View style={styles.listItem}>
+                <View style={styles.listItemLeft}>
+                  <Ionicons name="calendar-start" size={24} color="#666" />
+                </View>
+                <View style={styles.listItemContent}>
+                  <Text style={styles.listItemTitle}>Data de Início</Text>
+                  <Text style={styles.listItemDescription}>{userProfile?.startDate ? 
+                    new Date(userProfile.startDate).toLocaleDateString('pt-BR') : 
+                    'Não informado'
+                  }</Text>
+                </View>
+              </View>
             </Card.Content>
           </Card>
         )}
@@ -260,34 +291,49 @@ const ProfileScreen = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="settings-outline" size={24} color="#666" />
-              <Title style={styles.cardTitle}>Configurações da Conta</Title>
+                              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Configurações da Conta</Text>
             </View>
 
-            <List.Item
-              title="Alterar Senha"
-              description="Clique para alterar sua senha"
-              left={() => <List.Icon icon="lock" />}
-              right={() => <List.Icon icon="chevron-right" />}
-              onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}
-            />
+            <TouchableOpacity style={styles.listItem} onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}>
+              <View style={styles.listItemLeft}>
+                <Ionicons name="lock" size={24} color="#666" />
+              </View>
+              <View style={styles.listItemContent}>
+                <Text style={styles.listItemTitle}>Alterar Senha</Text>
+                <Text style={styles.listItemDescription}>Clique para alterar sua senha</Text>
+              </View>
+              <View style={styles.listItemRight}>
+                <Ionicons name="chevron-right" size={24} color="#666" />
+              </View>
+            </TouchableOpacity>
             <Divider />
             
-            <List.Item
-              title="Notificações"
-              description="Configurar notificações do app"
-              left={() => <List.Icon icon="bell" />}
-              right={() => <List.Icon icon="chevron-right" />}
-              onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}
-            />
+            <TouchableOpacity style={styles.listItem} onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}>
+              <View style={styles.listItemLeft}>
+                <Ionicons name="bell" size={24} color="#666" />
+              </View>
+              <View style={styles.listItemContent}>
+                <Text style={styles.listItemTitle}>Notificações</Text>
+                <Text style={styles.listItemDescription}>Configurar notificações do app</Text>
+              </View>
+              <View style={styles.listItemRight}>
+                <Ionicons name="chevron-right" size={24} color="#666" />
+              </View>
+            </TouchableOpacity>
             <Divider />
             
-            <List.Item
-              title="Privacidade"
-              description="Configurações de privacidade"
-              left={() => <List.Icon icon="shield" />}
-              right={() => <List.Icon icon="chevron-right" />}
-              onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}
-            />
+            <TouchableOpacity style={styles.listItem} onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}>
+              <View style={styles.listItemLeft}>
+                <Ionicons name="shield" size={24} color="#666" />
+              </View>
+              <View style={styles.listItemContent}>
+                <Text style={styles.listItemTitle}>Privacidade</Text>
+                <Text style={styles.listItemDescription}>Configurações de privacidade</Text>
+              </View>
+              <View style={styles.listItemRight}>
+                <Ionicons name="chevron-right" size={24} color="#666" />
+              </View>
+            </TouchableOpacity>
           </Card.Content>
         </Card>
 
@@ -295,11 +341,11 @@ const ProfileScreen = ({ navigation }) => {
         <Card style={styles.card}>
           <Card.Content>
             <Button 
-              mode="outlined" 
+              type="outline"
               onPress={handleLogout}
-              style={styles.logoutButton}
-              icon="logout"
-              textColor="#F44336"
+              buttonStyle={styles.logoutButton}
+              icon={<Icon name="logout" size={20} color="#F44336" />}
+              titleStyle={{ color: "#F44336" }}
             >
               Sair da Conta
             </Button>
@@ -375,6 +421,31 @@ const styles = StyleSheet.create({
   logoutButton: {
     borderColor: '#F44336',
     marginTop: 8,
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  listItemLeft: {
+    marginRight: 16,
+  },
+  listItemContent: {
+    flex: 1,
+  },
+  listItemTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  listItemDescription: {
+    fontSize: 14,
+    color: '#666',
+  },
+  listItemRight: {
+    marginLeft: 8,
   },
 });
 

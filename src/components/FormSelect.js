@@ -42,7 +42,7 @@ const FormSelect = ({
         onDismiss={closeMenu}
         anchor={
           <Button
-            mode="outlined"
+            type="outline"
             onPress={openMenu}
             disabled={disabled}
             style={[
