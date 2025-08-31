@@ -2,16 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { 
   Card, 
-  Title, 
-  Paragraph, 
+  Text, 
   Button, 
   Avatar,
-  Chip,
+  Badge,
   Divider,
-  Text
-} from 'react-native-paper';
+  Icon
+} from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, classService, paymentService, announcementService } from '../../services/firestoreService';
 
@@ -116,182 +114,213 @@ const StudentDashboard = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView 
-        style={styles.scrollView}
+        style={styles.container}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {/* Header com informações do usuário */}
-        <Card style={styles.headerCard}>
-          <Card.Content style={styles.headerContent}>
-            <Avatar.Text 
+        <Card containerStyle={styles.userCard}>
+          <View style={styles.userHeader}>
+            <Avatar 
               size={60} 
-              label={userProfile?.name?.charAt(0) || 'U'} 
-              style={styles.avatar}
+              title={userProfile?.name?.charAt(0) || 'U'}
+              containerStyle={styles.avatar}
+              titleStyle={styles.avatarText}
             />
-            <View style={styles.headerText}>
-              <Title style={styles.welcomeText}>
-                Olá, {userProfile?.name?.split(' ')[0] || 'Usuário'}!
-              </Title>
-              <Paragraph style={styles.graduationText}>
-                {userProfile?.currentGraduation || 'Iniciante'}
-              </Paragraph>
+            <View style={styles.userInfo}>
+              <Text h3 style={styles.userName}>{userProfile?.name || 'Usuário'}</Text>
+              <Text style={styles.userEmail}>{user?.email}</Text>
+              <Badge 
+                value="Aluno"
+                status="primary"
+                containerStyle={styles.userTypeChip}
+                textStyle={styles.chipText}
+              />
             </View>
-          </Card.Content>
+          </View>
         </Card>
 
         {/* Status de Pagamento */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="card-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Status do Pagamento</Title>
+        <Card containerStyle={styles.paymentCard}>
+          <View style={styles.cardHeader}>
+            <Icon name="payment" type="material" size={24} color="#4CAF50" />
+            <Text h4 style={styles.cardTitle}>Status de Pagamento</Text>
+          </View>
+          
+          {dashboardData.paymentStatus ? (
+            <View style={styles.paymentInfo}>
+              <Badge 
+                value={dashboardData.paymentStatus.status === 'paid' ? 'Em dia' : 'Pendente'}
+                status={dashboardData.paymentStatus.status === 'paid' ? 'success' : 'warning'}
+                containerStyle={styles.statusChip}
+                textStyle={styles.statusChipText}
+              />
+              <Text style={styles.paymentDetails}>
+                Vencimento: {dashboardData.paymentStatus.dueDate}
+              </Text>
+              {dashboardData.paymentStatus.status !== 'paid' && (
+                <Button 
+                  title="Ver Detalhes"
+                  type="outline" 
+                  onPress={() => navigation.navigate('StudentPayments')}
+                  buttonStyle={styles.paymentButton}
+                />
+              )}
             </View>
-            <View style={styles.paymentStatus}>
-              <Chip 
-                mode="outlined"
-                style={[
-                  styles.statusChip, 
-                  { borderColor: getPaymentStatusColor(dashboardData.paymentStatus) }
-                ]}
-                textStyle={{ color: getPaymentStatusColor(dashboardData.paymentStatus) }}
-              >
-                {getPaymentStatusText(dashboardData.paymentStatus)}
-              </Chip>
-              <Button 
-                mode="outlined" 
-                onPress={() => navigation.navigate('Pagamentos')}
-                style={styles.paymentButton}
-              >
-                Ver Detalhes
-              </Button>
-            </View>
-          </Card.Content>
+          ) : (
+            <Text>Carregando informações de pagamento...</Text>
+          )}
         </Card>
 
         {/* Check-in Rápido */}
         {dashboardData.checkInAvailable && (
-          <Card style={styles.card}>
-            <Card.Content>
-              <View style={styles.cardHeader}>
-                <Ionicons name="checkmark-circle-outline" size={24} color="#4CAF50" />
-                <Title style={styles.cardTitle}>Check-in Disponível</Title>
-              </View>
-              <Paragraph style={styles.checkInText}>
-                Você tem uma aula começando em breve!
-              </Paragraph>
-              <Button 
-                mode="contained" 
-                onPress={handleCheckIn}
-                style={styles.checkInButton}
-                icon="check"
-              >
-                Fazer Check-in
-              </Button>
-            </Card.Content>
+          <Card containerStyle={styles.card}>
+            <View style={styles.cardHeader}>
+              <Icon name="check-circle" type="material" size={24} color="#4CAF50" />
+              <Text h4 style={styles.cardTitle}>Check-in Disponível</Text>
+            </View>
+            <Text style={styles.checkInText}>
+              Você tem uma aula começando em breve!
+            </Text>
+            <Button 
+              title="Fazer Check-in"
+              onPress={handleCheckIn}
+              buttonStyle={styles.checkInButton}
+              icon={<Icon name="check" type="material" size={20} color="#fff" />}
+            />
           </Card>
         )}
 
         {/* Próximas Aulas */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="calendar-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Próximas Aulas</Title>
-            </View>
-            {dashboardData.nextClasses.length > 0 ? (
-              dashboardData.nextClasses.map((classItem, index) => (
-                <View key={index} style={styles.classItem}>
+        <Card containerStyle={styles.classesCard}>
+          <View style={styles.cardHeader}>
+            <Icon name="event" type="material" size={24} color="#2196F3" />
+            <Text h4 style={styles.cardTitle}>Próximas Aulas</Text>
+          </View>
+          
+          {dashboardData.nextClasses.length > 0 ? (
+            dashboardData.nextClasses.map((classItem, index) => (
+              <View key={index} style={styles.classItem}>
+                <View style={styles.classInfo}>
                   <Text style={styles.className}>{classItem.name}</Text>
                   <Text style={styles.classTime}>
-                    {classItem.instructor} • {classItem.modality}
+                    {classItem.schedule?.day} - {classItem.schedule?.time}
                   </Text>
-                  {index < dashboardData.nextClasses.length - 1 && (
-                    <Divider style={styles.divider} />
-                  )}
+                  <Text style={styles.classInstructor}>
+                    Prof. {classItem.instructorName}
+                  </Text>
                 </View>
-              ))
-            ) : (
-              <Paragraph>Nenhuma aula agendada</Paragraph>
-            )}
-            <Button 
-              mode="outlined" 
-              onPress={() => navigation.navigate('Calendário')}
-              style={styles.viewAllButton}
-            >
-              Ver Calendário Completo
-            </Button>
-          </Card.Content>
+                <Button 
+                  title="Ver Detalhes"
+                  size="sm"
+                  onPress={() => navigation.navigate('StudentCalendar')}
+                  buttonStyle={styles.classButton}
+                />
+              </View>
+            ))
+          ) : (
+            <Text>Nenhuma aula agendada</Text>
+          )}
+          
+          <Divider style={styles.divider} />
+          
+          <Button 
+            title="Ver Calendário Completo"
+            type="outline"
+            onPress={() => navigation.navigate('StudentCalendar')}
+            buttonStyle={styles.viewAllButton}
+            icon={<Icon name="event" type="material" size={20} color="#2196F3" />}
+          />
         </Card>
 
         {/* Avisos Recentes */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="notifications-outline" size={24} color="#FF9800" />
-              <Title style={styles.cardTitle}>Avisos Recentes</Title>
-            </View>
-            {dashboardData.recentAnnouncements.length > 0 ? (
-              dashboardData.recentAnnouncements.map((announcement, index) => (
-                <View key={index} style={styles.announcementItem}>
-                  <Text style={styles.announcementTitle}>{announcement.title}</Text>
-                  <Text style={styles.announcementContent} numberOfLines={2}>
-                    {announcement.content}
-                  </Text>
-                  {index < dashboardData.recentAnnouncements.length - 1 && (
-                    <Divider style={styles.divider} />
-                  )}
-                </View>
-              ))
-            ) : (
-              <Paragraph>Nenhum aviso recente</Paragraph>
-            )}
-            <Button 
-              mode="outlined" 
-              onPress={() => navigation.navigate('Avisos')}
-              style={styles.viewAllButton}
-            >
-              Ver Todos os Avisos
-            </Button>
-          </Card.Content>
+        <Card containerStyle={styles.card}>
+          <View style={styles.cardHeader}>
+            <Icon name="notifications" type="material" size={24} color="#FF9800" />
+            <Text h4 style={styles.cardTitle}>Avisos Recentes</Text>
+          </View>
+          
+          {dashboardData.recentAnnouncements.length > 0 ? (
+            dashboardData.recentAnnouncements.map((announcement, index) => (
+              <View key={index} style={styles.announcementItem}>
+                <Text style={styles.announcementTitle}>{announcement.title}</Text>
+                <Text style={styles.announcementContent} numberOfLines={2}>
+                  {announcement.content}
+                </Text>
+                {index < dashboardData.recentAnnouncements.length - 1 && (
+                  <Divider style={styles.divider} />
+                )}
+              </View>
+            ))
+          ) : (
+            <Text>Nenhum aviso recente</Text>
+          )}
+          
+        </Card>
+
+        {/* Avisos Recentes */}
+        <Card containerStyle={styles.card}>
+          <View style={styles.cardHeader}>
+            <Icon name="notifications" type="material" size={24} color="#FF9800" />
+            <Text h4 style={styles.cardTitle}>Avisos Recentes</Text>
+          </View>
+          
+          {dashboardData.recentAnnouncements.length > 0 ? (
+            dashboardData.recentAnnouncements.map((announcement, index) => (
+              <View key={index} style={styles.announcementItem}>
+                <Text style={styles.announcementTitle}>{announcement.title}</Text>
+                <Text style={styles.announcementContent} numberOfLines={2}>
+                  {announcement.content}
+                </Text>
+                {index < dashboardData.recentAnnouncements.length - 1 && (
+                  <Divider style={styles.divider} />
+                )}
+              </View>
+            ))
+          ) : (
+            <Text>Nenhum aviso recente</Text>
+          )}
+          
+          <Button 
+            title="Ver Todos os Avisos"
+            type="outline"
+            onPress={() => navigation.navigate('StudentAnnouncements')}
+            buttonStyle={styles.viewAllButton}
+            icon={<Icon name="notifications" type="material" size={20} color="#FF9800" />}
+          />
         </Card>
 
         {/* Acesso Rápido */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title style={styles.cardTitle}>Acesso Rápido</Title>
-            <View style={styles.quickActions}>
-              <Button 
-                mode="outlined" 
-                onPress={() => navigation.navigate('Evolução')}
-                style={styles.quickActionButton}
-                icon="trending-up"
-              >
-                Minha Evolução
-              </Button>
-              <Button 
-                mode="outlined" 
-                onPress={() => navigation.navigate('Pagamentos')}
-                style={styles.quickActionButton}
-                icon="credit-card"
-              >
-                Pagamentos
-              </Button>
-            </View>
-            
-            <View style={styles.logoutContainer}>
-              <Button 
-                mode="outlined" 
-                onPress={handleLogout}
-                style={styles.logoutButton}
-                icon="logout"
-                buttonColor="#FFEBEE"
-                textColor="#F44336"
-              >
-                Sair
-              </Button>
-            </View>
-          </Card.Content>
+        <Card containerStyle={styles.card}>
+          <Text h4 style={styles.cardTitle}>Acesso Rápido</Text>
+          <View style={styles.quickActions}>
+            <Button 
+              title="Minha Evolução"
+              type="outline" 
+              onPress={() => navigation.navigate('StudentEvolution')}
+              buttonStyle={styles.quickActionButton}
+              icon={<Icon name="trending-up" type="material" size={20} color="#2196F3" />}
+            />
+            <Button 
+              title="Pagamentos"
+              type="outline" 
+              onPress={() => navigation.navigate('StudentPayments')}
+              buttonStyle={styles.quickActionButton}
+              icon={<Icon name="payment" type="material" size={20} color="#2196F3" />}
+            />
+          </View>
+          
+          <View style={styles.logoutContainer}>
+            <Button 
+              title="Sair"
+              type="outline" 
+              onPress={handleLogout}
+              buttonStyle={styles.logoutButton}
+              titleStyle={styles.logoutButtonText}
+              icon={<Icon name="logout" type="material" size={20} color="#F44336" />}
+            />
+          </View>
         </Card>
       </ScrollView>
     </SafeAreaView>
@@ -306,108 +335,145 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  headerCard: {
+  userCard: {
     margin: 16,
     marginBottom: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   },
-  headerContent: {
+  userHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  avatar: {
-    backgroundColor: '#2196F3',
-  },
-  headerText: {
+  userInfo: {
     marginLeft: 16,
     flex: 1,
   },
-  welcomeText: {
+  userName: {
     fontSize: 20,
-    marginBottom: 4,
+    fontWeight: '600',
+    color: '#333',
   },
-  graduationText: {
+  userEmail: {
+    fontSize: 14,
     color: '#666',
+    marginTop: 2,
   },
-  card: {
+  userTypeChip: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  chipText: {
+    fontSize: 12,
+  },
+  paymentCard: {
     margin: 16,
     marginTop: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  paymentInfo: {
+    marginTop: 8,
+  },
+  statusChip: {
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+  },
+  statusChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  paymentDetails: {
+    fontSize: 14,
+    color: '#666',
     marginBottom: 12,
   },
-  cardTitle: {
-    marginLeft: 8,
-    fontSize: 18,
+  paymentButton: {
+    alignSelf: 'flex-start',
   },
-  paymentStatus: {
+  classesCard: {
+    margin: 16,
+    marginTop: 8,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+  },
+  classItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
-  statusChip: {
-    borderWidth: 1,
-  },
-  paymentButton: {
-    marginLeft: 8,
-  },
-  checkInText: {
-    marginBottom: 12,
-    color: '#666',
-  },
-  checkInButton: {
-    backgroundColor: '#4CAF50',
-  },
-  classItem: {
-    marginBottom: 8,
+  classInfo: {
+    flex: 1,
   },
   className: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontWeight: '600',
+    color: '#333',
   },
   classTime: {
+    fontSize: 14,
     color: '#666',
-    marginBottom: 8,
+    marginTop: 2,
+  },
+  classInstructor: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  classButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  divider: {
+    marginVertical: 12,
+  },
+  viewAllButton: {
+    marginTop: 12,
+  },
+  checkInText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  checkInButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 25,
   },
   announcementItem: {
-    marginBottom: 8,
+    paddingVertical: 8,
   },
   announcementTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#333',
     marginBottom: 4,
   },
   announcementContent: {
+    fontSize: 14,
     color: '#666',
-    marginBottom: 8,
-  },
-  divider: {
-    marginVertical: 8,
-  },
-  viewAllButton: {
-    marginTop: 8,
   },
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 12,
   },
   quickActionButton: {
-    flex: 1,
-    marginHorizontal: 4,
+    flex: 0.48,
   },
   logoutContainer: {
-    marginTop: 16,
+    marginTop: 20,
     alignItems: 'center',
   },
   logoutButton: {
-    width: '60%',
     borderColor: '#F44336',
+    borderRadius: 25,
+  },
+  logoutButtonText: {
+    color: '#F44336',
+  },
+  avatarText: {
+    color: 'white',
+    fontWeight: '600',
   },
 });
-
-export default StudentDashboard;

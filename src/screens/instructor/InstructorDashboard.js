@@ -2,18 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { 
   Card, 
-  Title, 
-  Paragraph, 
+  Text, 
   Button, 
   Avatar,
-  Chip,
+  Badge,
   Divider,
-  Text,
-  Surface,
-  List
-} from 'react-native-paper';
+  Icon,
+  ListItem
+} from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, classService, studentService } from '../../services/firestoreService';
 
@@ -112,238 +109,227 @@ const InstructorDashboard = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Header do Professor */}
-        <Card style={styles.headerCard}>
-          <Card.Content style={styles.headerContent}>
-            <Avatar.Text 
+        {/* Header com informações do instrutor */}
+        <Card containerStyle={styles.userCard}>
+          <View style={styles.userHeader}>
+            <Avatar 
               size={60} 
-              label={userProfile?.name?.charAt(0) || 'P'} 
-              style={styles.avatar}
+              title={userProfile?.name?.charAt(0) || 'I'}
+              containerStyle={styles.avatar}
+              titleStyle={styles.avatarText}
             />
-            <View style={styles.headerText}>
-              <Title style={styles.welcomeText}>
-                Professor {userProfile?.name?.split(' ')[0] || 'Usuário'}
-              </Title>
-              <Paragraph style={styles.roleText}>
-                {userProfile?.specialties?.join(', ') || 'Instrutor'}
-              </Paragraph>
+            <View style={styles.userInfo}>
+              <Text h3 style={styles.userName}>{userProfile?.name || 'Instrutor'}</Text>
+              <Text style={styles.userEmail}>{user?.email}</Text>
+              <Badge 
+                value="Instrutor"
+                status="warning"
+                containerStyle={styles.userTypeChip}
+                textStyle={styles.chipText}
+              />
             </View>
-          </Card.Content>
+          </View>
         </Card>
 
         {/* Estatísticas Rápidas */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="analytics-outline" size={24} color="#4CAF50" />
-              <Title style={styles.cardTitle}>Visão Geral</Title>
-            </View>
+        <Card containerStyle={styles.card}>
+          <View style={styles.cardHeader}>
+            <Icon name="analytics" type="material" size={24} color="#4CAF50" />
+            <Text h4 style={styles.cardTitle}>Visão Geral</Text>
+          </View>
+          
+          <View style={styles.statsContainer}>
+            <Card containerStyle={[styles.statCard, { backgroundColor: '#E3F2FD' }]}>
+              <Icon name="people" type="material" size={32} color="#2196F3" />
+              <Text style={styles.statNumber}>{dashboardData.totalStudents}</Text>
+              <Text style={styles.statLabel}>Total de Alunos</Text>
+            </Card>
             
-            <View style={styles.statsGrid}>
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.myClasses.length}</Text>
-                <Text style={styles.statLabel}>Minhas Turmas</Text>
-              </Surface>
-              
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.totalStudents}</Text>
-                <Text style={styles.statLabel}>Total Alunos</Text>
-              </Surface>
-              
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.todayClasses.length}</Text>
-                <Text style={styles.statLabel}>Aulas Hoje</Text>
-              </Surface>
-              
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.activeCheckIns}</Text>
-                <Text style={styles.statLabel}>Check-ins Ativos</Text>
-              </Surface>
-            </View>
-          </Card.Content>
+            <Card containerStyle={[styles.statCard, { backgroundColor: '#E8F5E8' }]}>
+              <Icon name="check-circle" type="material" size={32} color="#4CAF50" />
+              <Text style={styles.statNumber}>{dashboardData.activeCheckIns}</Text>
+              <Text style={styles.statLabel}>Check-ins Hoje</Text>
+            </Card>
+            
+            <Card containerStyle={[styles.statCard, { backgroundColor: '#FFF3E0' }]}>
+              <Icon name="event" type="material" size={32} color="#FF9800" />
+              <Text style={styles.statNumber}>{dashboardData.todayClasses.length}</Text>
+              <Text style={styles.statLabel}>Aulas Hoje</Text>
+            </Card>
+            
+            <Card containerStyle={[styles.statCard, { backgroundColor: '#F3E5F5' }]}>
+              <Icon name="emoji-events" type="material" size={32} color="#9C27B0" />
+              <Text style={styles.statNumber}>{dashboardData.recentGraduations.length}</Text>
+              <Text style={styles.statLabel}>Graduações Recentes</Text>
+            </Card>
+          </View>
         </Card>
 
         {/* Aulas de Hoje */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="today-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Aulas de Hoje</Title>
-            </View>
-            
-            {dashboardData.todayClasses.length > 0 ? (
-              dashboardData.todayClasses.map((classItem, index) => (
-                <View key={index} style={styles.classItem}>
-                  <View style={styles.classHeader}>
-                    <Text style={styles.className}>{classItem.name}</Text>
-                    <Chip mode="outlined" style={styles.modalityChip}>
-                      {classItem.modality}
-                    </Chip>
-                  </View>
-                  
-                  <View style={styles.classDetails}>
-                    <Text style={styles.classTime}>
-                      {classItem.schedule?.map(s => 
-                        `${getDayName(s.dayOfWeek)} ${formatTime(s.hour, s.minute)}`
-                      ).join(', ')}
-                    </Text>
-                    <Text style={styles.classCapacity}>
-                      Capacidade: {classItem.currentStudents || 0}/{classItem.maxCapacity || 'N/A'}
-                    </Text>
-                  </View>
-                  
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => navigation.navigate('Turmas', { classId: classItem.id })}
-                    style={styles.classButton}
-                    icon="eye"
-                  >
-                    Ver Detalhes
-                  </Button>
-                  
-                  {index < dashboardData.todayClasses.length - 1 && (
-                    <Divider style={styles.divider} />
-                  )}
+        <Card containerStyle={styles.card}>
+          <View style={styles.cardHeader}>
+            <Icon name="today" type="material" size={24} color="#2196F3" />
+            <Text h4 style={styles.cardTitle}>Aulas de Hoje</Text>
+          </View>
+          
+          {dashboardData.todayClasses.length > 0 ? (
+            dashboardData.todayClasses.map((classItem, index) => (
+              <View key={index} style={styles.classItem}>
+                <View style={styles.classHeader}>
+                  <Text style={styles.className}>{classItem.name}</Text>
+                  <Badge 
+                    value={classItem.modality}
+                    status="primary"
+                    containerStyle={styles.modalityChip}
+                  />
                 </View>
-              ))
-            ) : (
-              <Paragraph style={styles.emptyText}>
-                Nenhuma aula agendada para hoje
-              </Paragraph>
-            )}
-          </Card.Content>
+                
+                <View style={styles.classDetails}>
+                  <Text style={styles.classTime}>
+                    {classItem.schedule?.map(s => 
+                      `${getDayName(s.dayOfWeek)} ${formatTime(s.hour, s.minute)}`
+                    ).join(', ')}
+                  </Text>
+                  <Text style={styles.classCapacity}>
+                    Capacidade: {classItem.currentStudents || 0}/{classItem.maxCapacity || 'N/A'}
+                  </Text>
+                </View>
+                
+                <Button 
+                  type="outline" 
+                  onPress={() => navigation.navigate('Turmas', { classId: classItem.id })}
+                  buttonStyle={styles.classButton}
+                  icon={<Icon name="visibility" type="material" size={16} color="#2196F3" />}
+                  title="Ver Detalhes"
+                />
+                
+                {index < dashboardData.todayClasses.length - 1 && (
+                  <Divider style={styles.divider} />
+                )}
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>
+              Nenhuma aula agendada para hoje
+            </Text>
+          )}
         </Card>
 
         {/* Ações Rápidas */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title style={styles.cardTitle}>Ações Rápidas</Title>
+        <Card containerStyle={styles.card}>
+          <View style={styles.cardHeader}>
+            <Icon name="flash-on" type="material" size={24} color="#FF9800" />
+            <Text h4 style={styles.cardTitle}>Ações Rápidas</Text>
+          </View>
+          
+          <View style={styles.quickActionsGrid}>
+            <Button
+              title="Gerenciar Turmas"
+              onPress={() => navigation.navigate('Turmas')}
+              buttonStyle={[styles.quickActionButton, { backgroundColor: '#2196F3' }]}
+              icon={<Icon name="school" type="material" size={20} color="white" />}
+            />
             
-            <View style={styles.quickActions}>
-              <Button 
-                mode="contained" 
-                onPress={() => navigation.navigate('Turmas')}
-                style={[styles.quickActionButton, { backgroundColor: '#4CAF50' }]}
-                icon="school"
-              >
-                Minhas Turmas
-              </Button>
-              
-              <Button 
-                mode="contained" 
-                onPress={() => navigation.navigate('Alunos')}
-                style={[styles.quickActionButton, { backgroundColor: '#2196F3' }]}
-                icon="account"
-              >
-                Meus Alunos
-              </Button>
-            </View>
+            <Button
+              title="Ver Alunos"
+              onPress={() => navigation.navigate('Alunos')}
+              buttonStyle={[styles.quickActionButton, { backgroundColor: '#4CAF50' }]}
+              icon={<Icon name="group" type="material" size={20} color="white" />}
+            />
             
-            <View style={styles.quickActions}>
-              <Button 
-                mode="outlined" 
-                onPress={() => {/* Implementar graduação rápida */}}
-                style={styles.quickActionButton}
-                icon="trophy"
-              >
-                Registrar Graduação
-              </Button>
-              
-              <Button 
-                mode="outlined" 
-                onPress={() => {/* Implementar check-in */}}
-                style={styles.quickActionButton}
-                icon="check"
-              >
-                Ver Check-ins
-              </Button>
-            </View>
+            <Button
+              title="Relatórios"
+              onPress={() => navigation.navigate('Relatórios')}
+              buttonStyle={[styles.quickActionButton, { backgroundColor: '#FF9800' }]}
+              icon={<Icon name="bar-chart" type="material" size={20} color="white" />}
+            />
             
-            <View style={styles.logoutContainer}>
-              <Button 
-                mode="outlined" 
-                onPress={handleLogout}
-                style={styles.logoutButton}
-                icon="logout"
-                buttonColor="#FFEBEE"
-                textColor="#F44336"
-              >
-                Sair
-              </Button>
-            </View>
-          </Card.Content>
+            <Button
+              title="Configurações"
+              onPress={() => navigation.navigate('Configurações')}
+              buttonStyle={[styles.quickActionButton, { backgroundColor: '#9C27B0' }]}
+              icon={<Icon name="settings" type="material" size={20} color="white" />}
+            />
+          </View>
         </Card>
 
         {/* Graduações Recentes */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="trophy-outline" size={24} color="#FFD700" />
-              <Title style={styles.cardTitle}>Graduações Recentes</Title>
-            </View>
-            
-            {dashboardData.recentGraduations.length > 0 ? (
-              dashboardData.recentGraduations.map((graduation, index) => (
-                <List.Item
-                  key={index}
-                  title={`${graduation.studentName} - ${graduation.graduation}`}
-                  description={`${graduation.modality} • ${graduation.date.toLocaleDateString('pt-BR')}`}
-                  left={() => <List.Icon icon="trophy" color="#FFD700" />}
-                />
-              ))
-            ) : (
-              <Paragraph style={styles.emptyText}>
-                Nenhuma graduação recente
-              </Paragraph>
-            )}
-            
-            <Button 
-              mode="text" 
-              onPress={() => {/* Implementar histórico completo */}}
-              style={styles.viewAllButton}
-            >
-              Ver Todas as Graduações
-            </Button>
-          </Card.Content>
+        <Card containerStyle={styles.card}>
+          <View style={styles.cardHeader}>
+            <Icon name="emoji-events" type="material" size={24} color="#FFD700" />
+            <Text h4 style={styles.cardTitle}>Graduações Recentes</Text>
+          </View>
+          
+          {dashboardData.recentGraduations.length > 0 ? (
+            dashboardData.recentGraduations.map((graduation, index) => (
+              <ListItem key={index} bottomDivider>
+                <Icon name="emoji-events" type="material" color="#FFD700" />
+                <ListItem.Content>
+                  <ListItem.Title>{`${graduation.studentName} - ${graduation.graduation}`}</ListItem.Title>
+                  <ListItem.Subtitle>{`${graduation.modality} • ${graduation.date.toLocaleDateString('pt-BR')}`}</ListItem.Subtitle>
+                </ListItem.Content>
+              </ListItem>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>
+              Nenhuma graduação recente
+            </Text>
+          )}
+          
+          <Button 
+            type="clear" 
+            onPress={() => {/* Implementar histórico completo */}}
+            buttonStyle={styles.viewAllButton}
+            title="Ver Todas as Graduações"
+          />
         </Card>
 
         {/* Próximas Aulas */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="calendar-outline" size={24} color="#FF9800" />
-              <Title style={styles.cardTitle}>Próximas Aulas</Title>
-            </View>
-            
-            {dashboardData.upcomingClasses.length > 0 ? (
-              dashboardData.upcomingClasses.map((classItem, index) => (
-                <View key={index} style={styles.upcomingClass}>
-                  <Text style={styles.upcomingClassName}>{classItem.name}</Text>
-                  <Text style={styles.upcomingClassInfo}>
-                    {classItem.modality} • {classItem.schedule?.[0] ? 
-                      `${getDayName(classItem.schedule[0].dayOfWeek)} ${formatTime(classItem.schedule[0].hour)}` 
-                      : 'Horário não definido'}
-                  </Text>
-                  {index < dashboardData.upcomingClasses.length - 1 && (
-                    <Divider style={styles.divider} />
-                  )}
-                </View>
-              ))
-            ) : (
-              <Paragraph style={styles.emptyText}>
-                Nenhuma aula próxima
-              </Paragraph>
-            )}
-            
-            <Button 
-              mode="outlined" 
-              onPress={() => navigation.navigate('Turmas')}
-              style={styles.viewAllButton}
-            >
-              Ver Todas as Turmas
-            </Button>
-          </Card.Content>
+        <Card containerStyle={styles.card}>
+          <View style={styles.cardHeader}>
+            <Icon name="event" type="material" size={24} color="#FF9800" />
+            <Text h4 style={styles.cardTitle}>Próximas Aulas</Text>
+          </View>
+          
+          {dashboardData.upcomingClasses.length > 0 ? (
+            dashboardData.upcomingClasses.map((classItem, index) => (
+              <View key={index} style={styles.upcomingClass}>
+                <Text style={styles.upcomingClassName}>{classItem.name}</Text>
+                <Text style={styles.upcomingClassInfo}>
+                  {classItem.modality} • {classItem.schedule?.[0] ? 
+                    `${getDayName(classItem.schedule[0].dayOfWeek)} ${formatTime(classItem.schedule[0].hour)}` 
+                    : 'Horário não definido'}
+                </Text>
+                {index < dashboardData.upcomingClasses.length - 1 && (
+                  <Divider style={styles.divider} />
+                )}
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>
+              Nenhuma aula próxima
+            </Text>
+          )}
+          
+          <Button 
+            type="outline" 
+            onPress={() => navigation.navigate('Turmas')}
+            buttonStyle={styles.viewAllButton}
+            title="Ver Todas as Turmas"
+          />
         </Card>
+
+        {/* Logout */}
+        <View style={styles.logoutContainer}>
+          <Button
+            type="outline"
+            title="Sair"
+            onPress={logout}
+            buttonStyle={styles.logoutButton}
+            titleStyle={styles.logoutButtonText}
+            icon={<Icon name="logout" type="material" size={20} color="#F44336" />}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -357,33 +343,45 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  headerCard: {
+  userCard: {
     margin: 16,
     marginBottom: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   },
-  headerContent: {
+  userHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   avatar: {
     backgroundColor: '#4CAF50',
   },
-  headerText: {
+  avatarText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  userInfo: {
     marginLeft: 16,
     flex: 1,
   },
-  welcomeText: {
+  userName: {
     fontSize: 20,
     marginBottom: 4,
+    color: '#333',
   },
-  roleText: {
+  userEmail: {
     color: '#666',
+    marginBottom: 8,
+  },
+  userTypeChip: {
+    alignSelf: 'flex-start',
+  },
+  chipText: {
+    fontSize: 12,
   },
   card: {
     margin: 16,
     marginTop: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -394,17 +392,17 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 18,
   },
-  statsGrid: {
+  statsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  statItem: {
+  statCard: {
     width: '48%',
     alignItems: 'center',
     padding: 16,
     borderRadius: 8,
-    elevation: 1,
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
     backgroundColor: '#fff',
     marginBottom: 8,
   },
@@ -450,25 +448,19 @@ const styles = StyleSheet.create({
   classButton: {
     marginTop: 8,
   },
-  quickActions: {
+  quickActionsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginTop: 16,
   },
   quickActionButton: {
-    flex: 1,
-    marginHorizontal: 4,
-  },
-  logoutContainer: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  logoutButton: {
-    width: '60%',
-    borderColor: '#F44336',
+    width: '48%',
+    marginBottom: 12,
+    borderRadius: 12,
   },
   upcomingClass: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
   upcomingClassName: {
     fontSize: 16,
@@ -476,14 +468,28 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   upcomingClassInfo: {
+    fontSize: 14,
     color: '#666',
-    marginBottom: 8,
   },
   emptyText: {
     textAlign: 'center',
-    color: '#666',
+    color: '#999',
     fontStyle: 'italic',
-    marginVertical: 16,
+    marginTop: 16,
+  },
+  viewAllButton: {
+    marginTop: 16,
+  },
+  logoutContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  logoutButton: {
+    borderColor: '#F44336',
+    borderRadius: 25,
+  },
+  logoutButtonText: {
+    color: '#F44336',
   },
   divider: {
     marginVertical: 8,

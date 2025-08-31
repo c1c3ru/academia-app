@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { Button } from 'react-native-elements';
 
 import { useAuth } from '../contexts/AuthContext';
 
@@ -30,6 +31,9 @@ import AdminModalities from '../screens/admin/AdminModalities';
 // Telas Compartilhadas
 import ProfileScreen from '../screens/shared/ProfileScreen';
 import LoadingScreen from '../screens/shared/LoadingScreen';
+import ClassDetailsScreen from '../screens/shared/ClassDetailsScreen';
+import StudentDetailsScreen from '../screens/shared/StudentDetailsScreen';
+import SettingsScreen from '../screens/shared/SettingsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -148,18 +152,116 @@ const MainNavigator = ({ userType }) => {
   }
 
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: '#2196F3',
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
       <Stack.Screen 
         name="MainTabs" 
         component={TabNavigator} 
-        options={{ headerShown: false }}
+        options={({ navigation }) => ({
+          headerShown: true,
+          title: 'Academia App',
+          headerRight: () => (
+            <Button
+              onPress={() => navigation.navigate('Profile')}
+              title="Perfil"
+              color="#fff"
+              type="clear"
+            />
+          ),
+        })}
       />
       <Stack.Screen 
         name="Profile" 
         component={ProfileScreen}
         options={{ title: 'Perfil' }}
       />
-      {/* Adicionar outras telas modais aqui */}
+      
+      {/* Telas de Detalhes */}
+      <Stack.Screen 
+        name="ClassDetails" 
+        component={ClassDetailsScreen}
+        options={{ title: 'Detalhes da Turma' }}
+      />
+      <Stack.Screen 
+        name="StudentDetails" 
+        component={StudentDetailsScreen}
+        options={{ title: 'Detalhes do Aluno' }}
+      />
+      <Stack.Screen 
+        name="StudentProfile" 
+        component={StudentDetailsScreen}
+        options={{ title: 'Perfil do Aluno' }}
+      />
+      
+      {/* Telas de Gestão */}
+      <Stack.Screen 
+        name="CheckIns" 
+        component={LoadingScreen} // Temporário
+        options={{ title: 'Check-ins' }}
+      />
+      <Stack.Screen 
+        name="AddGraduation" 
+        component={LoadingScreen} // Temporário
+        options={{ title: 'Adicionar Graduação' }}
+      />
+      <Stack.Screen 
+        name="AddClass" 
+        component={LoadingScreen} // Temporário
+        options={{ title: 'Adicionar Turma' }}
+      />
+      <Stack.Screen 
+        name="EditClass" 
+        component={LoadingScreen} // Temporário
+        options={{ title: 'Editar Turma' }}
+      />
+      <Stack.Screen 
+        name="AddStudent" 
+        component={LoadingScreen} // Temporário
+        options={{ title: 'Adicionar Aluno' }}
+      />
+      <Stack.Screen 
+        name="EditStudent" 
+        component={LoadingScreen} // Temporário
+        options={{ title: 'Editar Aluno' }}
+      />
+      
+      {/* Telas de Relatórios e Configurações */}
+      <Stack.Screen 
+        name="Relatórios" 
+        component={LoadingScreen} // Temporário
+        options={{ title: 'Relatórios' }}
+      />
+      <Stack.Screen 
+        name="Configurações" 
+        component={SettingsScreen}
+        options={{ title: 'Configurações' }}
+      />
+      <Stack.Screen 
+        name="AdminSettings" 
+        component={SettingsScreen}
+        options={{ title: 'Configurações Admin' }}
+      />
+      
+      {/* Telas Específicas */}
+      <Stack.Screen 
+        name="StudentAnnouncements" 
+        component={LoadingScreen} // Temporário
+        options={{ title: 'Avisos' }}
+      />
+      <Stack.Screen 
+        name="ClassStudents" 
+        component={LoadingScreen} // Temporário
+        options={{ title: 'Alunos da Turma' }}
+      />
     </Stack.Navigator>
   );
 };

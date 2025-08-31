@@ -1,21 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert, Animated, Easing } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert, Animated, Easing, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { 
   Card, 
-  Title, 
-  Paragraph, 
-  Button, 
-  Chip,
+  Text, 
+  Button,
+  Badge,
+  Avatar,
+  Icon,
+  ListItem,
   Divider,
-  Text,
-  List,
-  FAB,
-  Searchbar,
-  Menu,
-  IconButton,
-  ActivityIndicator,
-  Snackbar
-} from 'react-native-paper';
+  SearchBar
+} from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -46,11 +41,11 @@ const AdminClasses = ({ navigation }) => {
 
   useEffect(() => {
     // anima entrada da lista
-    Animated.timing(listIntro, {
+    Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 400,
       easing: Easing.out(Easing.ease),
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
 
     // animação per-item
@@ -58,7 +53,7 @@ const AdminClasses = ({ navigation }) => {
     Animated.stagger(
       60,
       itemAnimations.current.map(v =>
-        Animated.timing(v, { toValue: 1, duration: 350, easing: Easing.out(Easing.ease), useNativeDriver: true })
+        Animated.timing(v, { toValue: 1, duration: 350, easing: Easing.out(Easing.ease), useNativeDriver: false })
       )
     ).start();
   }, [filteredClasses]);
@@ -219,7 +214,7 @@ const AdminClasses = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Searchbar
+        <SearchBar
           placeholder="Buscar turmas..."
           onChangeText={setSearchQuery}
           value={searchQuery}
@@ -254,6 +249,9 @@ const AdminClasses = ({ navigation }) => {
 
       <ScrollView 
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -488,7 +486,6 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1f2937',
   },
   searchbar: {
-    elevation: 0,
     backgroundColor: '#111827',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: '#1f2937',
@@ -504,10 +501,13 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 100,
+  },
   classCard: {
     margin: 16,
     marginBottom: 8,
-    elevation: 6,
+    boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
     backgroundColor: '#111827',
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     margin: 16,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     backgroundColor: '#0b1220',
     borderRadius: 16,
   },
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
   statsCard: {
     margin: 16,
     marginTop: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     backgroundColor: '#0b1220',
     borderRadius: 16,
   },

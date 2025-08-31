@@ -2,18 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Dimensions } from 'react-native';
 import { 
   Card, 
-  Title, 
-  Paragraph, 
+  Text, 
   Button, 
   Avatar,
-  Chip,
+  Badge,
   Divider,
-  Text,
-  Surface,
-  List
-} from 'react-native-paper';
+  Icon,
+  ListItem
+} from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, paymentService, announcementService } from '../../services/firestoreService';
 
@@ -76,13 +73,13 @@ const AdminDashboard = ({ navigation }) => {
           type: 'payment',
           message: 'Pagamento recebido',
           time: '4 horas atrás',
-          icon: 'card'
+          icon: 'credit-card'
         },
         {
           type: 'graduation',
           message: 'Graduação registrada',
           time: '1 dia atrás',
-          icon: 'trophy'
+          icon: 'emoji-events'
         }
       ];
 
@@ -130,12 +127,12 @@ const AdminDashboard = ({ navigation }) => {
   const getActivityIcon = (type) => {
     const icons = {
       'new_student': 'person-add',
-      'payment': 'card',
-      'graduation': 'trophy',
+      'payment': 'credit-card',
+      'graduation': 'emoji-events',
       'class': 'school',
-      'announcement': 'megaphone'
+      'announcement': 'campaign'
     };
-    return icons[type] || 'information-circle';
+    return icons[type] || 'info';
   };
 
   const getActivityColor = (type) => {
@@ -152,69 +149,73 @@ const AdminDashboard = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView 
-        style={styles.scrollView}
+        style={styles.container}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Header de Boas-vindas */}
-        <Card style={styles.headerCard}>
-          <Card.Content style={styles.headerContent}>
-            <Avatar.Text 
+        {/* Header com informações do admin */}
+        <Card containerStyle={styles.userCard}>
+          <View style={styles.userHeader}>
+            <Avatar 
               size={60} 
-              label={userProfile?.name?.charAt(0) || 'A'} 
-              style={styles.avatar}
+              title={userProfile?.name?.charAt(0) || 'A'}
+              containerStyle={styles.avatar}
+              titleStyle={styles.avatarText}
             />
-            <View style={styles.headerText}>
-              <Title style={styles.welcomeText}>
-                Olá, {userProfile?.name?.split(' ')[0] || 'Admin'}!
-              </Title>
-              <Paragraph style={styles.roleText}>
-                Administrador da Academia
-              </Paragraph>
+            <View style={styles.userInfo}>
+              <Text h3 style={styles.userName}>{userProfile?.name || 'Administrador'}</Text>
+              <Text style={styles.userEmail}>{user?.email}</Text>
+              <Badge 
+                value="Administrador"
+                status="error"
+                containerStyle={styles.userTypeChip}
+                textStyle={styles.chipText}
+              />
             </View>
-          </Card.Content>
+          </View>
         </Card>
 
         {/* Estatísticas Principais */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="analytics-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Visão Geral</Title>
-            </View>
-            
-            <View style={styles.statsGrid}>
-              <Surface style={styles.statItem}>
+        <Card containerStyle={styles.card}>
+          <View style={styles.cardHeader}>
+            <Icon name="analytics" type="material" size={24} color="#2196F3" />
+            <Text h4 style={styles.cardTitle}>Visão Geral</Text>
+          </View>
+            {/* Estatísticas Rápidas */}
+            <View style={styles.statsContainer}>
+              <Card containerStyle={[styles.statCard, { backgroundColor: '#E3F2FD' }]}>
+                <Icon name="people" type="material" size={32} color="#2196F3" />
                 <Text style={styles.statNumber}>{dashboardData.totalStudents}</Text>
                 <Text style={styles.statLabel}>Total de Alunos</Text>
-              </Surface>
+              </Card>
               
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.activeStudents}</Text>
-                <Text style={styles.statLabel}>Alunos Ativos</Text>
-              </Surface>
-              
-              <Surface style={styles.statItem}>
+              <Card containerStyle={[styles.statCard, { backgroundColor: '#E8F5E8' }]}>
+                <Icon name="fitness-center" type="material" size={32} color="#4CAF50" />
                 <Text style={styles.statNumber}>{dashboardData.totalClasses}</Text>
-                <Text style={styles.statLabel}>Turmas</Text>
-              </Surface>
+                <Text style={styles.statLabel}>Turmas Ativas</Text>
+              </Card>
               
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.quickStats.instructors}</Text>
-                <Text style={styles.statLabel}>Professores</Text>
-              </Surface>
+              <Card containerStyle={[styles.statCard, { backgroundColor: '#FFF3E0' }]}>
+                <Icon name="attach-money" type="material" size={32} color="#FF9800" />
+                <Text style={styles.statNumber}>R$ {dashboardData.monthlyRevenue}</Text>
+                <Text style={styles.statLabel}>Receita Mensal</Text>
+              </Card>
+              
+              <Card containerStyle={[styles.statCard, { backgroundColor: '#FFEBEE' }]}>
+                <Icon name="warning" type="material" size={32} color="#F44336" />
+                <Text style={styles.statNumber}>{dashboardData.pendingPayments}</Text>
+                <Text style={styles.statLabel}>Pagamentos Pendentes</Text>
+              </Card>
             </View>
-          </Card.Content>
         </Card>
 
         {/* Financeiro */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="cash-outline" size={24} color="#4CAF50" />
-              <Title style={styles.cardTitle}>Financeiro do Mês</Title>
-            </View>
+        <Card containerStyle={styles.card}>
+          <View style={styles.cardHeader}>
+            <Icon name="attach-money" type="material" size={24} color="#4CAF50" />
+            <Text h4 style={styles.cardTitle}>Financeiro do Mês</Text>
+          </View>
             
             <View style={styles.financialInfo}>
               <View style={styles.revenueItem}>
@@ -242,131 +243,107 @@ const AdminDashboard = ({ navigation }) => {
             </View>
             
             <Button 
-              mode="outlined" 
+              title="Ver Relatórios Completos"
+              type="outline" 
               onPress={() => navigation.navigate('Relatórios')}
-              style={styles.viewReportsButton}
-              icon="chart-line"
-            >
-              Ver Relatórios Completos
-            </Button>
-          </Card.Content>
+              buttonStyle={styles.viewReportsButton}
+              icon={<Icon name="trending-up" type="material" size={20} color="#4CAF50" />}
+            />
         </Card>
 
         {/* Ações Rápidas */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title style={styles.cardTitle}>Ações Rápidas</Title>
+        <Card containerStyle={styles.card}>
+          <Text h4 style={styles.cardTitle}>Ações Rápidas</Text>
+          
+          <View style={styles.quickActionsGrid}>
+            <Button 
+              title="Gerenciar Alunos"
+              onPress={() => navigation.navigate('Alunos')}
+              buttonStyle={[styles.quickActionButton, { backgroundColor: '#2196F3' }]}
+              icon={<Icon name="people" type="material" size={20} color="white" />}
+            />
             
-            <View style={styles.quickActionsGrid}>
-              <Button 
-                mode="contained" 
-                onPress={() => navigation.navigate('Alunos')}
-                style={[styles.quickActionButton, { backgroundColor: '#2196F3' }]}
-                icon="account"
-                contentStyle={styles.quickActionContent}
-              >
-                Gerenciar Alunos
-              </Button>
-              
-              <Button 
-                mode="contained" 
-                onPress={() => navigation.navigate('Turmas')}
-                style={[styles.quickActionButton, { backgroundColor: '#4CAF50' }]}
-                icon="school"
-                contentStyle={styles.quickActionContent}
-              >
-                Gerenciar Turmas
-              </Button>
-              
-              <Button 
-                mode="contained" 
-                onPress={() => navigation.navigate('Gestão')}
-                style={[styles.quickActionButton, { backgroundColor: '#FF9800' }]}
-                icon="settings"
-                contentStyle={styles.quickActionContent}
-              >
-                Configurações
-              </Button>
-              
-              <Button 
-                mode="contained" 
-                onPress={() => navigation.navigate('Modalidades')}
-                style={[styles.quickActionButton, { backgroundColor: '#9C27B0' }]}
-                icon="fitness"
-                contentStyle={styles.quickActionContent}
-              >
-                Modalidades
-              </Button>
-            </View>
+            <Button 
+              title="Gerenciar Turmas"
+              onPress={() => navigation.navigate('Turmas')}
+              buttonStyle={[styles.quickActionButton, { backgroundColor: '#4CAF50' }]}
+              icon={<Icon name="school" type="material" size={20} color="white" />}
+            />
             
-            <View style={styles.logoutContainer}>
-              <Button 
-                mode="outlined" 
-                onPress={handleLogout}
-                style={styles.logoutButton}
-                icon="logout"
-                buttonColor="#FFEBEE"
-                textColor="#F44336"
-              >
-                Sair
-              </Button>
-            </View>
-          </Card.Content>
+            <Button 
+              title="Configurações"
+              onPress={() => navigation.navigate('AdminSettings')}
+              buttonStyle={[styles.quickActionButton, { backgroundColor: '#FF9800' }]}
+              icon={<Icon name="settings" type="material" size={20} color="white" />}
+            />
+            
+            <Button 
+              title="Modalidades"
+              onPress={() => navigation.navigate('Gestão')}
+              buttonStyle={[styles.quickActionButton, { backgroundColor: '#9C27B0' }]}
+              icon={<Icon name="fitness-center" type="material" size={20} color="white" />}
+            />
+          </View>
+          
+          <View style={styles.logoutContainer}>
+            <Button 
+              title="Sair"
+              type="outline" 
+              onPress={handleLogout}
+              buttonStyle={styles.logoutButton}
+              titleStyle={styles.logoutButtonText}
+              icon={<Icon name="logout" type="material" size={20} color="#F44336" />}
+            />
+          </View>
         </Card>
 
         {/* Atividades Recentes */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="time-outline" size={24} color="#666" />
-              <Title style={styles.cardTitle}>Atividades Recentes</Title>
-            </View>
+        <Card containerStyle={styles.card}>
+          <View style={styles.cardHeader}>
+            <Icon name="history" type="material" size={24} color="#666" />
+            <Text h4 style={styles.cardTitle}>Atividades Recentes</Text>
+          </View>
             
-            {dashboardData.recentActivities.map((activity, index) => (
-              <List.Item
-                key={index}
-                title={activity.message}
-                description={activity.time}
-                left={() => (
-                  <List.Icon 
-                    icon={getActivityIcon(activity.type)} 
-                    color={getActivityColor(activity.type)}
-                  />
-                )}
+          {dashboardData.recentActivities.map((activity, index) => (
+            <ListItem key={`activity-${index}`} bottomDivider>
+              <Icon 
+                name={getActivityIcon(activity.type)} 
+                type="material"
+                color={getActivityColor(activity.type)}
               />
-            ))}
-            
-            <Button 
-              mode="text" 
-              onPress={() => {/* Implementar histórico completo */}}
-              style={styles.viewAllButton}
-            >
-              Ver Todas as Atividades
-            </Button>
-          </Card.Content>
+              <ListItem.Content>
+                <ListItem.Title>{activity.message}</ListItem.Title>
+                <ListItem.Subtitle>{activity.time}</ListItem.Subtitle>
+              </ListItem.Content>
+            </ListItem>
+          ))}
+          
+          {dashboardData.recentActivities.length === 0 && (
+            <Text style={styles.noActivities}>
+              Nenhuma atividade recente
+            </Text>
+          )}
         </Card>
 
         {/* Alertas e Notificações */}
         {(dashboardData.overduePayments > 0 || dashboardData.pendingPayments > 5) && (
-          <Card style={[styles.card, styles.alertCard]}>
-            <Card.Content>
-              <View style={styles.cardHeader}>
-                <Ionicons name="warning-outline" size={24} color="#FF9800" />
-                <Title style={styles.cardTitle}>Alertas</Title>
-              </View>
-              
-              {dashboardData.overduePayments > 0 && (
-                <Paragraph style={styles.alertText}>
-                  • {dashboardData.overduePayments} pagamento(s) em atraso
-                </Paragraph>
-              )}
-              
-              {dashboardData.pendingPayments > 5 && (
-                <Paragraph style={styles.alertText}>
-                  • Muitos pagamentos pendentes ({dashboardData.pendingPayments})
-                </Paragraph>
-              )}
-            </Card.Content>
+          <Card containerStyle={[styles.card, styles.alertCard]}>
+            <View style={styles.cardHeader}>
+              <Icon name="warning" type="material" size={24} color="#FF9800" />
+              <Text h4 style={styles.cardTitle}>Alertas</Text>
+            </View>
+            
+            {dashboardData.overduePayments > 0 && (
+              <Text style={styles.alertText}>
+                • {dashboardData.overduePayments} pagamento(s) em atraso
+              </Text>
+            )}
+            
+            {dashboardData.pendingPayments > 5 && (
+              <Text style={styles.alertText}>
+                • Muitos pagamentos pendentes ({dashboardData.pendingPayments})
+              </Text>
+            )}
           </Card>
         )}
       </ScrollView>
@@ -379,36 +356,47 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  scrollView: {
-    flex: 1,
-  },
-  headerCard: {
+  userCard: {
     margin: 16,
     marginBottom: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   },
-  headerContent: {
+  userHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  userInfo: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+  },
+  userEmail: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  userTypeChip: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  chipText: {
+    fontSize: 12,
   },
   avatar: {
     backgroundColor: '#FF9800',
   },
-  headerText: {
-    marginLeft: 16,
-    flex: 1,
-  },
-  welcomeText: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
-  roleText: {
-    color: '#666',
+  avatarText: {
+    color: 'white',
+    fontWeight: '600',
   },
   card: {
     margin: 16,
     marginTop: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   },
   alertCard: {
     backgroundColor: '#FFF3E0',
@@ -422,51 +410,54 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 18,
   },
-  statsGrid: {
+  statsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    marginTop: 16,
   },
-  statItem: {
+  statCard: {
     width: '48%',
-    alignItems: 'center',
     padding: 16,
-    borderRadius: 8,
-    elevation: 1,
-    backgroundColor: '#fff',
-    marginBottom: 8,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
   },
   statNumber: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#2196F3',
+    marginTop: 8,
+    color: '#333',
   },
   statLabel: {
     fontSize: 12,
     color: '#666',
-    marginTop: 4,
     textAlign: 'center',
+    marginTop: 4,
   },
   financialInfo: {
-    marginBottom: 16,
+    marginTop: 16,
   },
   revenueItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   revenueLabel: {
     fontSize: 16,
-    color: '#666',
+    color: '#333',
   },
   revenueValue: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#4CAF50',
   },
   paymentsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 16,
+    marginTop: 8,
   },
   paymentItem: {
     alignItems: 'center',
@@ -479,40 +470,49 @@ const styles = StyleSheet.create({
   paymentLabel: {
     fontSize: 12,
     color: '#666',
-  },
-  divider: {
-    marginVertical: 8,
-  },
-  viewReportsButton: {
-    marginTop: 8,
+    marginTop: 4,
   },
   quickActionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 16,
   },
   quickActionButton: {
     width: '48%',
-    marginBottom: 8,
+    marginBottom: 12,
+    borderRadius: 12,
   },
-  quickActionContent: {
-    height: 40,
+  noActivities: {
+    textAlign: 'center',
+    color: '#999',
+    fontStyle: 'italic',
+    marginTop: 16,
+  },
+  viewReportsButton: {
+    marginTop: 16,
+  },
+  viewAllButton: {
+    marginTop: 12,
   },
   logoutContainer: {
-    marginTop: 16,
+    marginTop: 20,
     alignItems: 'center',
   },
   logoutButton: {
-    width: '60%',
     borderColor: '#F44336',
+    borderRadius: 25,
   },
-  viewAllButton: {
-    marginTop: 8,
+  logoutButtonText: {
+    color: '#F44336',
   },
   alertText: {
+    fontSize: 14,
     color: '#FF9800',
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  divider: {
+    marginVertical: 12,
   },
 });
 

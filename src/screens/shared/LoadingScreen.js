@@ -1,14 +1,14 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { ActivityIndicator, Text, Title } from 'react-native-paper';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { Text } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const LoadingScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <ActivityIndicator size="large" color="#2196F3" style={styles.spinner} />
-        <Title style={styles.title}>Academia App</Title>
+        <ActivityIndicator size="large" color="#2196F3" />
+        <Text h2 style={styles.title}>Academia App</Text>
         <Text style={styles.subtitle}>Carregando...</Text>
       </View>
     </SafeAreaView>

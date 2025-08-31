@@ -1,16 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Alert, ScrollView, Animated, Easing } from 'react-native';
 import { 
-  TextInput, 
-  Button, 
-  Text, 
-  Card, 
-  Title, 
-  Paragraph,
+  Input,
+  Button,
+  Text,
+  Card,
   Divider,
-  ActivityIndicator,
-  Snackbar
-} from 'react-native-paper';
+  Icon
+} from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,8 +17,7 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMsg, setSnackbarMsg] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerTranslate = useRef(new Animated.Value(20)).current;
@@ -33,13 +29,13 @@ const LoginScreen = ({ navigation }) => {
       Animated.timing(headerOpacity, {
         toValue: 1,
         duration: 500,
-        useNativeDriver: true,
+        useNativeDriver: false,
         easing: Easing.out(Easing.ease)
       }),
       Animated.timing(headerTranslate, {
         toValue: 0,
         duration: 500,
-        useNativeDriver: true,
+        useNativeDriver: false,
         easing: Easing.out(Easing.ease)
       })
     ]).start();
@@ -47,18 +43,17 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      setSnackbarMsg('Por favor, preencha todos os campos');
-      setSnackbarVisible(true);
+      setErrorMessage('Por favor, preencha todos os campos');
       return;
     }
 
     setLoading(true);
+    setErrorMessage('');
     try {
       await signIn(email, password);
     } catch (error) {
       console.error('Erro no login:', error);
-      setSnackbarMsg('Email ou senha incorretos');
-      setSnackbarVisible(true);
+      setErrorMessage('Email ou senha incorretos');
     } finally {
       setLoading(false);
     }
@@ -90,8 +85,7 @@ const LoginScreen = ({ navigation }) => {
       }
       */
       
-      setSnackbarMsg('Login com Google requer configuração OAuth (ver instruções)');
-      setSnackbarVisible(true);
+      setErrorMessage('Login com Google requer configuração OAuth (ver instruções)');
     } catch (error) {
       console.error('Erro no login com Google:', error);
       Alert.alert('Erro', 'Falha no login com Google');
@@ -105,94 +99,87 @@ const LoginScreen = ({ navigation }) => {
       <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           <Animated.View style={[styles.header, { opacity: headerOpacity, transform: [{ translateY: headerTranslate }] }]}>
-            <Title style={styles.title}>Academia App</Title>
-            <Paragraph style={styles.subtitle}>
+            <Text h1 style={styles.title}>Academia App</Text>
+            <Text style={styles.subtitle}>
               Gerencie sua academia de lutas
-            </Paragraph>
+            </Text>
           </Animated.View>
 
           <Animated.View style={{ width: '100%', opacity: headerOpacity }}>
-            <Card style={styles.card}>
-              <Card.Content>
-                <Title style={styles.cardTitle}>Entrar</Title>
-                
-                <TextInput
-                  label="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  mode="outlined"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  left={<TextInput.Icon icon="email-outline" />}
-                  style={styles.input}
-                  disabled={loading}
-                />
+            <Card containerStyle={styles.card}>
+              <Text h3 style={styles.cardTitle}>Entrar</Text>
+              
+              {errorMessage ? (
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              ) : null}
+              
+              <Input
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                leftIcon={<Icon name="email" type="material" size={20} color="#666" />}
+                containerStyle={styles.inputContainer}
+                inputStyle={styles.inputText}
+                disabled={loading}
+              />
 
-                <TextInput
-                  label="Senha"
-                  value={password}
-                  onChangeText={setPassword}
-                  mode="outlined"
-                  secureTextEntry={!showPassword}
-                  right={
-                    <TextInput.Icon 
-                      icon={showPassword ? "eye-off" : "eye"} 
-                      onPress={() => setShowPassword(!showPassword)}
-                    />
-                  }
-                  left={<TextInput.Icon icon="lock-outline" />}
-                  style={styles.input}
-                  disabled={loading}
-                />
+              <Input
+                placeholder="Senha"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                rightIcon={
+                  <Icon 
+                    name={showPassword ? "visibility-off" : "visibility"} 
+                    type="material"
+                    size={20} 
+                    color="#666"
+                    onPress={() => setShowPassword(!showPassword)}
+                  />
+                }
+                leftIcon={<Icon name="lock" type="material" size={20} color="#666" />}
+                containerStyle={styles.inputContainer}
+                inputStyle={styles.inputText}
+                disabled={loading}
+              />
 
+              <Button
+                title={loading ? "Entrando..." : "Entrar"}
+                onPress={handleLogin}
+                buttonStyle={styles.button}
+                titleStyle={styles.buttonText}
+                icon={!loading ? <Icon name="login" type="material" size={20} color="white" /> : undefined}
+                disabled={loading}
+                loading={loading}
+              />
+
+              <Divider style={styles.divider} />
+
+              <Button
+                title="Entrar com Google"
+                onPress={handleGoogleLogin}
+                buttonStyle={styles.googleButton}
+                titleStyle={styles.googleButtonText}
+                icon={<Icon name="google" type="font-awesome" size={16} color="#4285F4" />}
+                disabled={loading}
+                type="outline"
+              />
+
+              <View style={styles.registerContainer}>
+                <Text style={styles.registerText}>Não tem uma conta? </Text>
                 <Button
-                  mode="contained"
-                  onPress={handleLogin}
-                  style={styles.button}
-                  buttonColor="#2563eb"
-                  textColor="#fff"
-                  icon={loading ? undefined : 'login'}
+                  title="Cadastre-se"
+                  onPress={() => navigation.navigate('Register')}
                   disabled={loading}
-                >
-                  {loading ? <ActivityIndicator color="white" /> : 'Entrar'}
-                </Button>
-
-                <Divider style={styles.divider} />
-
-                <Button
-                  mode="outlined"
-                  onPress={handleGoogleLogin}
-                  style={styles.googleButton}
-                  icon="google"
-                  disabled={loading}
-                >
-                  Entrar com Google
-                </Button>
-
-                <View style={styles.registerContainer}>
-                  <Text style={{ color: '#6b7280' }}>Não tem uma conta? </Text>
-                  <Button
-                    mode="text"
-                    onPress={() => navigation.navigate('Register')}
-                    disabled={loading}
-                  >
-                    Cadastre-se
-                  </Button>
-                </View>
-              </Card.Content>
+                  type="clear"
+                  titleStyle={styles.registerButtonText}
+                />
+              </View>
             </Card>
           </Animated.View>
         </ScrollView>
-
-        <Snackbar
-          visible={snackbarVisible}
-          onDismiss={() => setSnackbarVisible(false)}
-          duration={3000}
-          style={styles.snackbar}
-          action={{ label: 'OK', onPress: () => setSnackbarVisible(false) }}
-        >
-          {snackbarMsg}
-        </Snackbar>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -220,6 +207,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#e5e7eb',
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
@@ -227,33 +215,55 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   card: {
-    elevation: 8,
     borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: '#111827',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#1f2937',
+    backgroundColor: '#ffffff',
+    padding: 20,
+    margin: 0,
   },
   cardTitle: {
     textAlign: 'center',
     marginBottom: 20,
-    color: '#e5e7eb',
+    color: '#333',
+    fontSize: 24,
+    fontWeight: '600',
   },
-  input: {
+  errorText: {
+    color: '#F44336',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontSize: 14,
+  },
+  inputContainer: {
     marginBottom: 16,
   },
+  inputText: {
+    color: '#333',
+    fontSize: 16,
+  },
   button: {
-    marginTop: 8,
-    paddingVertical: 8,
+    backgroundColor: '#2563eb',
     borderRadius: 12,
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   divider: {
     marginVertical: 20,
-    backgroundColor: '#1f2937',
+    backgroundColor: '#e0e0e0',
   },
   googleButton: {
-    marginBottom: 16,
+    borderColor: '#4285F4',
     borderRadius: 12,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  googleButtonText: {
+    color: '#4285F4',
+    fontSize: 16,
+    fontWeight: '600',
   },
   registerContainer: {
     flexDirection: 'row',
@@ -261,10 +271,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
-  snackbar: {
-    backgroundColor: '#111827',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#1f2937',
+  registerText: {
+    color: '#6b7280',
+    fontSize: 14,
+  },
+  registerButtonText: {
+    color: '#2563eb',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

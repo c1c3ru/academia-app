@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity } from 'react-native';
 import { 
   Card, 
-  Title, 
-  Paragraph, 
-  Button, 
-  Chip,
-  Text,
-  List,
-  FAB,
-  Searchbar
-} from 'react-native-paper';
+  Text, 
+  Button,
+  Badge,
+  Icon
+} from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
@@ -175,13 +171,15 @@ const StudentCalendar = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {/* Calendário */}
-        <Card style={styles.calendarCard}>
-          <Card.Content>
+        <Card containerStyle={styles.calendarCard}>
             <Calendar
               onDayPress={onDayPress}
               markedDates={markedDates}
@@ -207,17 +205,15 @@ const StudentCalendar = ({ navigation }) => {
                 textDayHeaderFontSize: 13
               }}
             />
-          </Card.Content>
         </Card>
 
         {/* Aulas do Dia Selecionado */}
-        <Card style={styles.card}>
-          <Card.Content>
+        <Card containerStyle={styles.card}>
             <View style={styles.cardHeader}>
-              <Ionicons name="calendar-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>
+              <Icon name="calendar-outline" type="ionicon" size={24} color="#2196F3" />
+              <Text h4 style={styles.cardTitle}>
                 Aulas - {formatDate(selectedDate)}
-              </Title>
+              </Text>
             </View>
             
             {dayClasses.length > 0 ? (
@@ -225,22 +221,20 @@ const StudentCalendar = ({ navigation }) => {
                 <View key={index} style={styles.classItem}>
                   <View style={styles.classHeader}>
                     <Text style={styles.className}>{classItem.name}</Text>
-                    <Chip mode="outlined" style={styles.modalityChip}>
-                      {classItem.modality}
-                    </Chip>
+                    <Badge value={classItem.modality} badgeStyle={styles.modalityChip} textStyle={styles.modalityText} />
                   </View>
                   
                   {classItem.todaySchedule.map((schedule, scheduleIndex) => (
                     <View key={scheduleIndex} style={styles.scheduleItem}>
                       <View style={styles.timeInfo}>
-                        <Ionicons name="time-outline" size={16} color="#666" />
+                        <Icon name="time-outline" type="ionicon" size={16} color="#666" />
                         <Text style={styles.timeText}>
                           {formatTime(schedule.hour, schedule.minute)}
                         </Text>
                       </View>
                       
                       <View style={styles.instructorInfo}>
-                        <Ionicons name="person-outline" size={16} color="#666" />
+                        <Icon name="person-outline" type="ionicon" size={16} color="#666" />
                         <Text style={styles.instructorText}>
                           {classItem.instructorName || 'Professor não definido'}
                         </Text>
@@ -248,7 +242,7 @@ const StudentCalendar = ({ navigation }) => {
                       
                       {classItem.location && (
                         <View style={styles.locationInfo}>
-                          <Ionicons name="location-outline" size={16} color="#666" />
+                          <Icon name="location-outline" type="ionicon" size={16} color="#666" />
                           <Text style={styles.locationText}>{classItem.location}</Text>
                         </View>
                       )}
@@ -257,22 +251,19 @@ const StudentCalendar = ({ navigation }) => {
                   
                   <View style={styles.classActions}>
                     <Button 
-                      mode="outlined" 
+                      type="outline" 
                       onPress={() => navigation.navigate('ClassDetails', { classId: classItem.id })}
-                      style={styles.actionButton}
-                      icon="eye"
-                    >
-                      Detalhes
-                    </Button>
+                      buttonStyle={styles.actionButton}
+                      icon={<Icon name="eye" type="ionicon" size={16} color="#2196F3" />}
+                      title="Detalhes"
+                    />
                     
                     <Button 
-                      mode="contained" 
                       onPress={() => handleCheckIn(classItem)}
-                      style={styles.actionButton}
-                      icon="check"
-                    >
-                      Check-in
-                    </Button>
+                      buttonStyle={styles.actionButton}
+                      icon={<Icon name="checkmark" type="ionicon" size={16} color="white" />}
+                      title="Check-in"
+                    />
                   </View>
                   
                   {index < dayClasses.length - 1 && (
@@ -282,21 +273,19 @@ const StudentCalendar = ({ navigation }) => {
               ))
             ) : (
               <View style={styles.emptyState}>
-                <Ionicons name="calendar-clear-outline" size={48} color="#ccc" />
-                <Paragraph style={styles.emptyText}>
+                <Icon name="calendar-clear-outline" type="ionicon" size={48} color="#ccc" />
+                <Text style={styles.emptyText}>
                   Nenhuma aula agendada para este dia
-                </Paragraph>
+                </Text>
               </View>
             )}
-          </Card.Content>
         </Card>
 
         {/* Resumo Semanal */}
-        <Card style={styles.card}>
-          <Card.Content>
+        <Card containerStyle={styles.card}>
             <View style={styles.cardHeader}>
-              <Ionicons name="stats-chart-outline" size={24} color="#4CAF50" />
-              <Title style={styles.cardTitle}>Resumo Semanal</Title>
+              <Icon name="stats-chart-outline" type="ionicon" size={24} color="#4CAF50" />
+              <Text h4 style={styles.cardTitle}>Resumo Semanal</Text>
             </View>
             
             <View style={styles.weeklyStats}>
@@ -319,7 +308,6 @@ const StudentCalendar = ({ navigation }) => {
                 <Text style={styles.statLabel}>Modalidades</Text>
               </View>
             </View>
-          </Card.Content>
         </Card>
       </ScrollView>
     </SafeAreaView>
@@ -334,15 +322,18 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 100,
+  },
   calendarCard: {
     margin: 16,
     marginBottom: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   },
   card: {
     margin: 16,
     marginTop: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -368,7 +359,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalityChip: {
+    backgroundColor: '#2196F3',
     marginLeft: 8,
+  },
+  modalityText: {
+    color: 'white',
+    fontSize: 12,
   },
   scheduleItem: {
     backgroundColor: '#f8f9fa',

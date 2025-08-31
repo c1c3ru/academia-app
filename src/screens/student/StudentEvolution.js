@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { 
   Card, 
-  Title, 
-  Paragraph, 
-  Button, 
+  Text, 
+  Button,
+  Badge,
   Avatar,
-  Chip,
-  Divider,
-  Text,
-  List,
-  Surface
-} from 'react-native-paper';
+  Icon,
+  ListItem,
+  Divider
+} from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -113,6 +111,9 @@ const StudentEvolution = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -286,16 +287,19 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 100,
+  },
   statsCard: {
     margin: 16,
     marginBottom: 8,
-    elevation: 4,
+    boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
     backgroundColor: '#E8F5E8',
   },
   card: {
     margin: 16,
     marginTop: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -315,7 +319,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderRadius: 8,
-    elevation: 1,
+    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
     backgroundColor: '#fff',
   },
   statNumber: {
@@ -347,7 +351,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 12,
     borderRadius: 8,
-    elevation: 1,
+    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
   },
   timelineHeader: {
     flexDirection: 'row',

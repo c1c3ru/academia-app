@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Snackbar, Portal } from 'react-native-paper';
+import { View, StyleSheet, Animated, TouchableOpacity } from 'react-native';
+import { Text, Button } from 'react-native-elements';
 
 const NotificationContext = createContext();
 
@@ -88,29 +88,27 @@ export const NotificationProvider = ({ children }) => {
   return (
     <NotificationContext.Provider value={value}>
       {children}
-      <Portal>
-        <View style={styles.container}>
-          {notifications.map((notification) => (
-            <Snackbar
+      <View style={styles.container}>
+        {notifications.map((notification) => (
+          notification.visible && (
+            <View
               key={notification.id}
-              visible={notification.visible}
-              onDismiss={() => hideNotification(notification.id)}
-              duration={notification.duration}
               style={[
                 styles.snackbar,
                 { backgroundColor: getSnackbarColor(notification.type) }
               ]}
-              action={{
-                label: 'Fechar',
-                onPress: () => hideNotification(notification.id),
-                textColor: 'white'
-              }}
             >
-              {notification.message}
-            </Snackbar>
-          ))}
-        </View>
-      </Portal>
+              <Text style={styles.snackbarText}>{notification.message}</Text>
+              <TouchableOpacity
+                onPress={() => hideNotification(notification.id)}
+                style={styles.closeButton}
+              >
+                <Text style={styles.closeButtonText}>Fechar</Text>
+              </TouchableOpacity>
+            </View>
+          )
+        ))}
+      </View>
     </NotificationContext.Provider>
   );
 };
@@ -124,8 +122,29 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   snackbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
     marginBottom: 8,
     marginHorizontal: 16,
+    borderRadius: 8,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+  },
+  snackbarText: {
+    color: 'white',
+    flex: 1,
+    fontSize: 14,
+  },
+  closeButton: {
+    marginLeft: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
   },
 });
 

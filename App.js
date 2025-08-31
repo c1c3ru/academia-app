@@ -1,69 +1,92 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Provider as PaperProvider } from 'react-native-paper';
+import { ThemeProvider } from 'react-native-elements';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/contexts/AuthContext';
+import { NotificationProvider } from './src/components/NotificationManager';
 import AppNavigator from './src/navigation/AppNavigator';
 import ErrorBoundary from './src/components/ErrorBoundary';
-import { NotificationProvider } from './src/components/NotificationManager';
 
-// Tema personalizado para o React Native Paper v5
+// Tema personalizado para React Native Elements
 const theme = {
   colors: {
     primary: '#2196F3',
-    onPrimary: '#ffffff',
-    primaryContainer: '#E3F2FD',
-    onPrimaryContainer: '#0D47A1',
     secondary: '#4CAF50',
-    onSecondary: '#ffffff',
-    secondaryContainer: '#E8F5E8',
-    onSecondaryContainer: '#1B5E20',
-    tertiary: '#FF9800',
-    onTertiary: '#ffffff',
-    tertiaryContainer: '#FFF3E0',
-    onTertiaryContainer: '#E65100',
+    success: '#4CAF50',
+    warning: '#FF9800',
     error: '#F44336',
-    onError: '#ffffff',
-    errorContainer: '#FFEBEE',
-    onErrorContainer: '#B71C1C',
-    background: '#f5f5f5',
-    onBackground: '#333333',
-    surface: '#ffffff',
-    onSurface: '#333333',
-    surfaceVariant: '#F5F5F5',
-    onSurfaceVariant: '#666666',
-    outline: '#CCCCCC',
-    outlineVariant: '#E0E0E0',
-    shadow: '#000000',
-    scrim: '#000000',
-    inverseSurface: '#333333',
-    inverseOnSurface: '#ffffff',
-    inversePrimary: '#90CAF9',
-    elevation: {
-      level0: 'transparent',
-      level1: '#ffffff',
-      level2: '#f8f8f8',
-      level3: '#f0f0f0',
-      level4: '#eeeeee',
-      level5: '#e8e8e8',
+    text: '#333333',
+    grey0: '#ffffff',
+    grey1: '#f5f5f5',
+    grey2: '#e0e0e0',
+    grey3: '#bdbdbd',
+    grey4: '#9e9e9e',
+    grey5: '#757575',
+    searchBg: '#f5f5f5',
+    platform: {
+      ios: {
+        primary: '#2196F3',
+        secondary: '#4CAF50',
+        grey: '#f5f5f5',
+        searchBg: '#dcdce1',
+        success: '#4CAF50',
+        error: '#F44336',
+        warning: '#FF9800',
+      },
+      android: {
+        primary: '#2196F3',
+        secondary: '#4CAF50',
+        grey: '#f5f5f5',
+        searchBg: '#dcdce1',
+        success: '#4CAF50',
+        error: '#F44336',
+        warning: '#FF9800',
+      },
+      web: {
+        primary: '#2196F3',
+        secondary: '#4CAF50',
+        grey: '#f5f5f5',
+        searchBg: '#dcdce1',
+        success: '#4CAF50',
+        error: '#F44336',
+        warning: '#FF9800',
+      },
     },
-    surfaceDisabled: 'rgba(0, 0, 0, 0.12)',
-    onSurfaceDisabled: 'rgba(0, 0, 0, 0.38)',
-    backdrop: 'rgba(0, 0, 0, 0.5)',
+  },
+  Button: {
+    buttonStyle: {
+      borderRadius: 12,
+    },
+    titleStyle: {
+      fontWeight: '600',
+    },
+  },
+  Input: {
+    inputContainerStyle: {
+      borderRadius: 8,
+    },
+  },
+  Card: {
+    containerStyle: {
+      borderRadius: 12,
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    },
   },
 };
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <PaperProvider theme={theme}>
-        <NotificationProvider>
-          <AuthProvider>
-            <StatusBar style="auto" />
-            <AppNavigator />
-          </AuthProvider>
-        </NotificationProvider>
-      </PaperProvider>
-    </ErrorBoundary>
+    <SafeAreaProvider>
+      <ErrorBoundary>
+        <ThemeProvider theme={theme}>
+          <NotificationProvider>
+            <AuthProvider>
+              <StatusBar style="auto" />
+              <AppNavigator />
+            </AuthProvider>
+          </NotificationProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }
-

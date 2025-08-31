@@ -1,24 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { 
+  View, 
+  StyleSheet, 
+  ScrollView, 
+  RefreshControl, 
+  Alert,
+  TouchableOpacity
+} from 'react-native';
 import { 
   Card, 
-  Title, 
-  Paragraph, 
-  Button, 
-  Chip,
-  Divider,
-  Text,
-  List,
-  FAB,
-  Searchbar,
-  TextInput,
-  Dialog,
-  Portal
-} from 'react-native-paper';
+  Text, 
+  Button,
+  Input,
+  Badge,
+  Icon,
+  ListItem,
+  Divider
+} from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService } from '../../services/firestoreService';
+import AccessibleDialog from '../../components/AccessibleDialog';
 
 const AdminModalities = ({ navigation }) => {
   const { user } = useAuth();
@@ -224,6 +227,9 @@ const AdminModalities = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -233,7 +239,7 @@ const AdminModalities = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="fitness-outline" size={24} color="#4CAF50" />
-              <Title style={styles.cardTitle}>Modalidades de Luta</Title>
+              <Text h4 style={styles.cardTitle}>Modalidades de Luta</Text>
               <Button 
                 mode="contained" 
                 onPress={() => setModalityDialogVisible(true)}
@@ -277,7 +283,7 @@ const AdminModalities = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="card-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Planos de Pagamento</Title>
+              <Text h4 style={styles.cardTitle}>Planos de Pagamento</Text>
               <Button 
                 mode="contained" 
                 onPress={() => setPlanDialogVisible(true)}
@@ -321,7 +327,7 @@ const AdminModalities = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="megaphone-outline" size={24} color="#FF9800" />
-              <Title style={styles.cardTitle}>Mural de Avisos</Title>
+              <Text h4 style={styles.cardTitle}>Mural de Avisos</Text>
               <Button 
                 mode="contained" 
                 onPress={() => setAnnouncementDialogVisible(true)}
@@ -366,7 +372,7 @@ const AdminModalities = ({ navigation }) => {
         {/* Estatísticas */}
         <Card style={styles.statsCard}>
           <Card.Content>
-            <Title style={styles.statsTitle}>Resumo</Title>
+            <Text h4 style={styles.statsTitle}>Resumo</Text>
             
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
@@ -389,34 +395,50 @@ const AdminModalities = ({ navigation }) => {
       </ScrollView>
 
       {/* Diálogos */}
-      <Portal>
-        {/* Diálogo para adicionar modalidade */}
-        <Dialog visible={modalityDialogVisible} onDismiss={() => setModalityDialogVisible(false)}>
-          <Dialog.Title>Nova Modalidade</Dialog.Title>
-          <Dialog.Content>
-            <TextInput
-              label="Nome da Modalidade"
-              value={newModality.name}
-              onChangeText={(text) => setNewModality({...newModality, name: text})}
-              mode="outlined"
-              style={styles.dialogInput}
-            />
-            <TextInput
-              label="Descrição (opcional)"
-              value={newModality.description}
-              onChangeText={(text) => setNewModality({...newModality, description: text})}
-              mode="outlined"
-              multiline
-              numberOfLines={3}
-              style={styles.dialogInput}
-            />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setModalityDialogVisible(false)}>Cancelar</Button>
-            <Button onPress={handleAddModality}>Criar</Button>
-          </Dialog.Actions>
-        </Dialog>
+      <AccessibleDialog 
+        visible={modalityDialogVisible} 
+        onDismiss={() => setModalityDialogVisible(false)}
+      >
+        <Dialog.Title>Nova Modalidade</Dialog.Title>
+        <Dialog.Content>
+          <TextInput
+            label="Nome da Modalidade"
+            value={newModality.name}
+            onChangeText={(text) => setNewModality({...newModality, name: text})}
+            mode="outlined"
+            style={styles.dialogInput}
+            accessibilityLabel="Nome da modalidade"
+            accessibilityHint="Digite o nome da nova modalidade"
+          />
+          <TextInput
+            label="Descrição (opcional)"
+            value={newModality.description}
+            onChangeText={(text) => setNewModality({...newModality, description: text})}
+            mode="outlined"
+            multiline
+            numberOfLines={3}
+            style={styles.dialogInput}
+            accessibilityLabel="Descrição da modalidade"
+            accessibilityHint="Digite uma descrição opcional para a modalidade"
+          />
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button 
+            onPress={() => setModalityDialogVisible(false)}
+            accessibilityLabel="Cancelar criação de modalidade"
+          >
+            Cancelar
+          </Button>
+          <Button 
+            onPress={handleAddModality}
+            accessibilityLabel="Criar nova modalidade"
+          >
+            Criar
+          </Button>
+        </Dialog.Actions>
+      </AccessibleDialog>
 
+      <Portal>
         {/* Diálogo para adicionar plano */}
         <Dialog visible={planDialogVisible} onDismiss={() => setPlanDialogVisible(false)}>
           <Dialog.Title>Novo Plano</Dialog.Title>
@@ -507,10 +529,13 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 100,
+  },
   card: {
     margin: 16,
     marginBottom: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -541,7 +566,7 @@ const styles = StyleSheet.create({
   statsCard: {
     margin: 16,
     marginTop: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     backgroundColor: '#E8F5E8',
   },
   statsTitle: {

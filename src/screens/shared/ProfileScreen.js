@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { 
   Card, 
-  Title, 
-  Paragraph, 
-  Button, 
+  Text, 
+  Button,
+  Badge,
   Avatar,
-  TextInput,
-  Divider,
-  Text,
-  Chip,
-  List
-} from 'react-native-paper';
+  Icon,
+  ListItem,
+  Divider
+} from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -84,7 +82,15 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {/* Header do Perfil */}
         <Card style={styles.headerCard}>
           <Card.Content style={styles.headerContent}>
@@ -317,10 +323,13 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 100,
+  },
   headerCard: {
     margin: 16,
     marginBottom: 8,
-    elevation: 4,
+    boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
   },
   headerContent: {
     flexDirection: 'row',
@@ -349,7 +358,7 @@ const styles = StyleSheet.create({
   card: {
     margin: 16,
     marginTop: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   },
   cardHeader: {
     flexDirection: 'row',

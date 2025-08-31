@@ -1,20 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity } from 'react-native';
 import { 
   Card, 
-  Title, 
-  Paragraph, 
-  Button, 
+  Text, 
+  Button,
+  Badge,
   Avatar,
-  Chip,
+  Icon,
+  ListItem,
   Divider,
-  Text,
-  List,
-  FAB,
-  Searchbar,
-  Menu,
-  IconButton
-} from 'react-native-paper';
+  SearchBar
+} from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -158,6 +154,9 @@ const InstructorStudents = ({ navigation }) => {
 
       <ScrollView 
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -321,7 +320,7 @@ const InstructorStudents = ({ navigation }) => {
 
       <FAB
         style={styles.fab}
-        icon="account-plus"
+        icon="person-add"
         label="Novo Aluno"
         onPress={() => Alert.alert('Info', 'Funcionalidade disponível apenas para administradores')}
       />
@@ -337,12 +336,13 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     backgroundColor: '#fff',
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   },
   searchbar: {
-    elevation: 0,
     backgroundColor: '#f5f5f5',
     marginBottom: 8,
+    borderTopWidth: 0,
+    borderBottomWidth: 0,
   },
   filterRow: {
     flexDirection: 'row',
@@ -354,10 +354,13 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 100,
+  },
   studentCard: {
     margin: 16,
     marginBottom: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   },
   studentHeader: {
     flexDirection: 'row',
@@ -440,7 +443,7 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     margin: 16,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   },
   emptyContent: {
     alignItems: 'center',
@@ -457,7 +460,7 @@ const styles = StyleSheet.create({
   statsCard: {
     margin: 16,
     marginTop: 8,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     backgroundColor: '#E8F5E8',
   },
   statsTitle: {

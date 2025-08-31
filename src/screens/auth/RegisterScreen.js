@@ -1,23 +1,27 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, Alert, ScrollView, Animated, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { 
-  TextInput, 
-  Button, 
-  Text, 
-  Card, 
-  Title, 
-  Paragraph,
-  Divider,
-  ActivityIndicator,
-  RadioButton,
-  Chip,
-  Snackbar,
-  HelperText
-} from 'react-native-paper';
+  View, 
+  StyleSheet, 
+  ScrollView, 
+  Alert, 
+  Animated, 
+  Platform,
+  KeyboardAvoidingView,
+  TouchableOpacity 
+} from 'react-native';
+import { 
+  Input,
+  Button,
+  Text,
+  Card,
+  CheckBox,
+  Icon,
+  Divider
+} from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Dimensions } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -49,17 +53,17 @@ const RegisterScreen = ({ navigation }) => {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 800,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 800,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(scaleAnim, {
         toValue: 1,
         duration: 800,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
     ]).start();
   }, []);
@@ -116,12 +120,12 @@ const RegisterScreen = ({ navigation }) => {
         Animated.timing(scaleAnim, {
           toValue: 1.05,
           duration: 200,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(scaleAnim, {
           toValue: 1,
           duration: 200,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]).start();
     } catch (error) {
@@ -140,10 +144,10 @@ const RegisterScreen = ({ navigation }) => {
       
       // Animação de erro (shake)
       Animated.sequence([
-        Animated.timing(slideAnim, { toValue: -10, duration: 100, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: -5, duration: 100, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
+        Animated.timing(slideAnim, { toValue: -10, duration: 100, useNativeDriver: false }),
+        Animated.timing(slideAnim, { toValue: 10, duration: 100, useNativeDriver: false }),
+        Animated.timing(slideAnim, { toValue: -5, duration: 100, useNativeDriver: false }),
+        Animated.timing(slideAnim, { toValue: 0, duration: 100, useNativeDriver: false }),
       ]).start();
     } finally {
       setLoading(false);
@@ -161,9 +165,9 @@ const RegisterScreen = ({ navigation }) => {
   const getUserTypeIcon = (type) => {
     switch (type) {
       case 'student': return 'school';
-      case 'instructor': return 'account-tie';
-      case 'admin': return 'shield-account';
-      default: return 'account';
+      case 'instructor': return 'person';
+      case 'admin': return 'admin-panel-settings';
+      default: return 'account-circle';
     }
   };
 
@@ -182,7 +186,16 @@ const RegisterScreen = ({ navigation }) => {
       style={styles.gradient}
     >
       <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <KeyboardAvoidingView 
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <ScrollView 
+            contentContainerStyle={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
+          >
           <Animated.View 
             style={[
               styles.header,
@@ -192,16 +205,17 @@ const RegisterScreen = ({ navigation }) => {
               }
             ]}
           >
-            <MaterialCommunityIcons 
-              name="account-plus" 
+            <Icon 
+              name="person-add" 
+              type="material"
               size={60} 
               color="white" 
-              style={styles.headerIcon}
+              containerStyle={styles.headerIcon}
             />
-            <Title style={styles.title}>Criar Conta</Title>
-            <Paragraph style={styles.subtitle}>
+            <Text h1 style={styles.title}>Criar Conta</Text>
+            <Text style={styles.subtitle}>
               Preencha os dados para se cadastrar
-            </Paragraph>
+            </Text>
           </Animated.View>
 
           <Animated.View
@@ -209,65 +223,54 @@ const RegisterScreen = ({ navigation }) => {
               { transform: [{ scale: scaleAnim }, { translateX: slideAnim }] }
             ]}
           >
-            <Card style={styles.card}>
-          <Card.Content>
-            <Title style={styles.cardTitle}>Dados Pessoais</Title>
-            
-            <TextInput
-              label="Nome Completo *"
-              value={formData.name}
-              onChangeText={(text) => updateFormData('name', text)}
-              mode="outlined"
-              style={styles.input}
-              disabled={loading}
-              error={!!errors.name}
-              left={<TextInput.Icon icon="account" />}
-            />
-            {errors.name && (
-              <HelperText type="error" visible={!!errors.name}>
-                {errors.name}
-              </HelperText>
-            )}
+            <Card containerStyle={styles.card}>
+              <Text h3 style={styles.cardTitle}>Dados Pessoais</Text>
+              
+              <Input
+                placeholder="Nome Completo *"
+                value={formData.name}
+                onChangeText={(text) => updateFormData('name', text)}
+                containerStyle={styles.inputContainer}
+                inputStyle={styles.inputText}
+                disabled={loading}
+                errorMessage={errors.name}
+                leftIcon={<Icon name="person" type="material" size={20} color="#666" />}
+              />
 
-            <TextInput
-              label="Email *"
-              value={formData.email}
-              onChangeText={(text) => updateFormData('email', text)}
-              mode="outlined"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              style={styles.input}
-              disabled={loading}
-              error={!!errors.email}
-              left={<TextInput.Icon icon="email" />}
-            />
-            {errors.email && (
-              <HelperText type="error" visible={!!errors.email}>
-                {errors.email}
-              </HelperText>
-            )}
+              <Input
+                placeholder="Email *"
+                value={formData.email}
+                onChangeText={(text) => updateFormData('email', text)}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                containerStyle={styles.inputContainer}
+                inputStyle={styles.inputText}
+                disabled={loading}
+                errorMessage={errors.email}
+                leftIcon={<Icon name="email" type="material" size={20} color="#666" />}
+              />
 
-            <TextInput
-              label="Telefone/WhatsApp"
+            <Input
+              placeholder="Telefone/WhatsApp"
               value={formData.phone}
               onChangeText={(text) => updateFormData('phone', text)}
-              mode="outlined"
               keyboardType="phone-pad"
-              style={styles.input}
+              containerStyle={styles.inputContainer}
+              inputStyle={styles.inputText}
               disabled={loading}
-              left={<TextInput.Icon icon="phone" />}
+              leftIcon={<Icon name="phone" type="material" size={20} color="#666" />}
             />
 
             <Divider style={styles.divider} />
 
-            <Title style={styles.sectionTitle}>Tipo de Usuário</Title>
+            <Text h4 style={styles.sectionTitle}>Tipo de Usuário</Text>
             <View style={styles.userTypeContainer}>
               {[
                 { value: 'student', label: 'Aluno', description: 'Acesso às aulas e evolução' },
                 { value: 'instructor', label: 'Professor', description: 'Gerenciar turmas e alunos' },
                 { value: 'admin', label: 'Administrador', description: 'Controle total do sistema' }
               ].map((type) => (
-                <Card 
+                <TouchableOpacity 
                   key={type.value}
                   style={[
                     styles.userTypeCard,
@@ -279,10 +282,11 @@ const RegisterScreen = ({ navigation }) => {
                   ]}
                   onPress={() => updateFormData('userType', type.value)}
                 >
-                  <Card.Content style={styles.userTypeCardContent}>
+                  <View style={styles.userTypeCardContent}>
                     <View style={styles.userTypeInfo}>
-                      <MaterialCommunityIcons 
+                      <Icon 
                         name={getUserTypeIcon(type.value)} 
+                        type="material"
                         size={24} 
                         color={getUserTypeColor(type.value)}
                       />
@@ -291,119 +295,105 @@ const RegisterScreen = ({ navigation }) => {
                         <Text style={styles.userTypeDescription}>{type.description}</Text>
                       </View>
                     </View>
-                    <RadioButton
-                      value={type.value}
-                      status={formData.userType === type.value ? 'checked' : 'unchecked'}
+                    <CheckBox
+                      checked={formData.userType === type.value}
                       onPress={() => updateFormData('userType', type.value)}
                       disabled={loading}
                     />
-                  </Card.Content>
-                </Card>
+                  </View>
+                </TouchableOpacity>
               ))}
             </View>
 
             <Divider style={styles.divider} />
 
-            <Title style={styles.sectionTitle}>Senha</Title>
+            <Text h4 style={styles.sectionTitle}>Senha</Text>
 
-            <TextInput
-              label="Senha *"
+            <Input
+              placeholder="Senha *"
               value={formData.password}
               onChangeText={(text) => updateFormData('password', text)}
-              mode="outlined"
               secureTextEntry={!showPassword}
-              left={<TextInput.Icon icon="lock" />}
-              right={
-                <TextInput.Icon 
-                  icon={showPassword ? "eye-off" : "eye"} 
+              containerStyle={styles.inputContainer}
+              inputStyle={styles.inputText}
+              disabled={loading}
+              errorMessage={errors.password}
+              leftIcon={<Icon name="lock" type="material" size={20} color="#666" />}
+              rightIcon={
+                <Icon 
+                  name={showPassword ? "visibility-off" : "visibility"} 
+                  type="material"
+                  size={20} 
+                  color="#666"
                   onPress={() => setShowPassword(!showPassword)}
                 />
               }
-              style={styles.input}
-              disabled={loading}
-              error={!!errors.password}
             />
-            {errors.password && (
-              <HelperText type="error" visible={!!errors.password}>
-                {errors.password}
-              </HelperText>
-            )}
 
-            <TextInput
-              label="Confirmar Senha *"
+            <Input
+              placeholder="Confirmar Senha *"
               value={formData.confirmPassword}
               onChangeText={(text) => updateFormData('confirmPassword', text)}
-              mode="outlined"
               secureTextEntry={!showConfirmPassword}
-              left={<TextInput.Icon icon="lock-check" />}
-              right={
-                <TextInput.Icon 
-                  icon={showConfirmPassword ? "eye-off" : "eye"} 
+              containerStyle={styles.inputContainer}
+              inputStyle={styles.inputText}
+              disabled={loading}
+              errorMessage={errors.confirmPassword}
+              leftIcon={<Icon name="lock" type="material" size={20} color="#666" />}
+              rightIcon={
+                <Icon 
+                  name={showConfirmPassword ? "visibility-off" : "visibility"} 
+                  type="material"
+                  size={20} 
+                  color="#666"
                   onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                 />
               }
-              style={styles.input}
-              disabled={loading}
-              error={!!errors.confirmPassword}
             />
-            {errors.confirmPassword && (
-              <HelperText type="error" visible={!!errors.confirmPassword}>
-                {errors.confirmPassword}
-              </HelperText>
-            )}
 
             <Text style={styles.passwordHint}>
-              * A senha deve ter pelo menos 6 caracteres
+              * Campos obrigatórios
             </Text>
 
             <Button
-              mode="contained"
+              title={loading ? "Criando conta..." : "Criar Conta"}
               onPress={handleRegister}
-              style={styles.button}
+              buttonStyle={styles.button}
+              titleStyle={styles.buttonText}
               disabled={loading}
-              icon={loading ? undefined : "account-plus"}
-              contentStyle={styles.buttonContent}
-            >
-              {loading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator color="white" size="small" />
-                  <Text style={styles.loadingText}>Criando conta...</Text>
-                </View>
-              ) : (
-                'Criar Conta'
-              )}
-            </Button>
+              loading={loading}
+              icon={!loading ? <Icon name="person-add" type="material" size={20} color="white" /> : undefined}
+            />
 
             <View style={styles.loginContainer}>
-              <Text>Já tem uma conta? </Text>
+              <Text style={styles.loginText}>Já tem uma conta? </Text>
               <Button
-                mode="text"
+                title="Fazer Login"
                 onPress={() => navigation.navigate('Login')}
                 disabled={loading}
-              >
-                Fazer Login
-              </Button>
+                type="clear"
+                titleStyle={styles.loginButtonText}
+              />
             </View>
-          </Card.Content>
-            </Card>
+          </Card>
           </Animated.View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
         
-        <Snackbar
-          visible={snackbar.visible}
-          onDismiss={() => setSnackbar({ ...snackbar, visible: false })}
-          duration={4000}
-          style={[
+        {snackbar.visible && (
+          <View style={[
             styles.snackbar,
             snackbar.type === 'success' ? styles.successSnackbar : styles.errorSnackbar
-          ]}
-          action={{
-            label: 'OK',
-            onPress: () => setSnackbar({ ...snackbar, visible: false }),
-          }}
-        >
-          {snackbar.message}
-        </Snackbar>
+          ]}>
+            <Text style={styles.snackbarText}>{snackbar.message}</Text>
+            <Button
+              title="OK"
+              onPress={() => setSnackbar({ ...snackbar, visible: false })}
+              type="clear"
+              titleStyle={styles.snackbarButton}
+            />
+          </View>
+        )}
       </SafeAreaView>
     </LinearGradient>
   );
@@ -419,8 +409,8 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
     padding: 20,
+    paddingBottom: 40,
   },
   header: {
     alignItems: 'center',
@@ -428,43 +418,25 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     color: 'white',
     marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    textShadow: '1px 1px 3px rgba(0, 0, 0, 0.3)',
   },
   subtitle: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)',
   },
   card: {
-    elevation: 8,
     borderRadius: 20,
     backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
+    boxShadow: '0px 4px 4.65px rgba(0, 0, 0, 0.3)',
   },
   cardTitle: {
     textAlign: 'center',
@@ -492,9 +464,9 @@ const styles = StyleSheet.create({
   },
   userTypeCard: {
     marginBottom: 12,
-    elevation: 2,
     borderRadius: 12,
     backgroundColor: 'white',
+    boxShadow: '0px 2px 2px rgba(0, 0, 0, 0.1)',
   },
   userTypeCardContent: {
     flexDirection: 'row',
@@ -532,20 +504,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingVertical: 4,
     borderRadius: 25,
-    elevation: 3,
+    boxShadow: '0px 3px 3px rgba(0, 0, 0, 0.15)',
   },
-  buttonContent: {
-    paddingVertical: 8,
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
+  buttonText: {
     color: 'white',
-    marginLeft: 8,
     fontSize: 16,
+    fontWeight: '600',
   },
   loginContainer: {
     flexDirection: 'row',
@@ -554,14 +518,32 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   snackbar: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
     borderRadius: 8,
-    marginBottom: 20,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
   },
   successSnackbar: {
     backgroundColor: '#4CAF50',
   },
   errorSnackbar: {
     backgroundColor: '#F44336',
+  },
+  snackbarText: {
+    color: 'white',
+    fontSize: 14,
+    flex: 1,
+  },
+  snackbarButton: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 
