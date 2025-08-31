@@ -110,7 +110,7 @@ Execute estes comandos no **Console do Firebase** (aba Console):
 // 1. Criar modalidade padrão de Judô
 db.collection('modalities').add({
   name: 'Judô',
-  description: 'Arte marcial japonesa focada em técnicas de projeção e imobilização',
+  description: 'Arte marcial japonesa focada em técnicas de projeção e imobilização ',
   graduationLevels: ['Branca', 'Amarela', 'Laranja', 'Verde', 'Roxa', 'Marrom', 'Preta'],
   monthlyPrice: 150.00,
   isActive: true,

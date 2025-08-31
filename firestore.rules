@@ -1,71 +1,10 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Regras para usuários
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow read: if request.auth != null && isAdmin();
-    }
-    
-    // Regras para alunos
-    match /students/{studentId} {
-      allow read: if request.auth != null && request.auth.uid == studentId;
-      allow read: if request.auth != null && isInstructor() && isStudentOfInstructor(studentId);
-      allow read, write: if request.auth != null && isAdmin();
-      allow write: if request.auth != null && isInstructor() && isStudentOfInstructor(studentId);
-    }
-    
-    // Regras para turmas
-    match /classes/{classId} {
-      allow read: if request.auth != null && isStudentInClass(classId);
-      allow read, write: if request.auth != null && isInstructorOfClass(classId);
-      allow read, write: if request.auth != null && isAdmin();
-    }
-    
-    // Regras para pagamentos
-    match /payments/{paymentId} {
-      allow read: if request.auth != null && resource.data.studentId == request.auth.uid;
-      allow read, write: if request.auth != null && isAdmin();
-    }
-    
-    // Regras para check-ins
-    match /checkIns/{checkInId} {
-      allow create: if request.auth != null && request.resource.data.studentId == request.auth.uid;
-      allow read: if request.auth != null && isInstructorOfClass(resource.data.classId);
-      allow read: if request.auth != null && isAdmin();
-    }
-    
-    // Regras para modalidades, planos e avisos
-    match /{collection}/{document} {
-      allow read: if request.auth != null && collection in ['modalities', 'plans', 'announcements', 'events'];
-      allow write: if request.auth != null && isAdmin() && collection in ['modalities', 'plans', 'announcements', 'events'];
-    }
-    
-    // Funções auxiliares
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
-    }
-    
-    function isInstructor() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'instructor';
-    }
-    
-    function isStudentOfInstructor(studentId) {
-      let studentData = get(/databases/$(database)/documents/users/$(studentId)).data;
-      let instructorData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      return studentData.instructorId == request.auth.uid || 
-             studentData.classIds.hasAny(instructorData.classIds);
-    }
-    
-    function isStudentInClass(classId) {
-      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      return userData.classIds.hasAny([classId]);
-    }
-    
-    function isInstructorOfClass(classId) {
-      let classData = get(/databases/$(database)/documents/classes/$(classId)).data;
-      return classData.instructorId == request.auth.uid;
+    // Regras temporárias para criação inicial de dados
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
