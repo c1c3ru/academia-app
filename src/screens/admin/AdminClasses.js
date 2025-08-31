@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert, Animated, Easing } from 'react-native';
 import { 
   Card, 
   Title, 
@@ -12,7 +12,9 @@ import {
   FAB,
   Searchbar,
   Menu,
-  IconButton
+  IconButton,
+  ActivityIndicator,
+  Snackbar
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,6 +30,11 @@ const AdminClasses = ({ navigation }) => {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMsg, setSnackbarMsg] = useState('');
+
+  const listIntro = useRef(new Animated.Value(0)).current;
+  const itemAnimations = useRef([]);
 
   useEffect(() => {
     loadClasses();
@@ -36,6 +43,25 @@ const AdminClasses = ({ navigation }) => {
   useEffect(() => {
     filterClasses();
   }, [searchQuery, selectedFilter, classes]);
+
+  useEffect(() => {
+    // anima entrada da lista
+    Animated.timing(listIntro, {
+      toValue: 1,
+      duration: 400,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+
+    // animação per-item
+    itemAnimations.current = filteredClasses.map(() => new Animated.Value(0));
+    Animated.stagger(
+      60,
+      itemAnimations.current.map(v =>
+        Animated.timing(v, { toValue: 1, duration: 350, easing: Easing.out(Easing.ease), useNativeDriver: true })
+      )
+    ).start();
+  }, [filteredClasses]);
 
   const loadClasses = async () => {
     try {
@@ -75,7 +101,8 @@ const AdminClasses = ({ navigation }) => {
       setClasses(classesWithDetails);
     } catch (error) {
       console.error('Erro ao carregar turmas:', error);
-      Alert.alert('Erro', 'Não foi possível carregar as turmas');
+      setSnackbarMsg('Não foi possível carregar as turmas');
+      setSnackbarVisible(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -148,9 +175,11 @@ const AdminClasses = ({ navigation }) => {
             try {
               await firestoreService.delete('classes', classItem.id);
               loadClasses();
-              Alert.alert('Sucesso', 'Turma excluída com sucesso');
+              setSnackbarMsg('Turma excluída com sucesso');
+              setSnackbarVisible(true);
             } catch (error) {
-              Alert.alert('Erro', 'Não foi possível excluir a turma');
+              setSnackbarMsg('Não foi possível excluir a turma');
+              setSnackbarVisible(true);
             }
           }
         }
@@ -229,139 +258,155 @@ const AdminClasses = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {filteredClasses.length > 0 ? (
+        {loading && (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator animating size={28} />
+          </View>
+        )}
+
+        {!loading && filteredClasses.length > 0 ? (
           filteredClasses.map((classItem, index) => (
-            <Card key={classItem.id || index} style={styles.classCard}>
-              <Card.Content>
-                <View style={styles.classHeader}>
-                  <View style={styles.classInfo}>
-                    <Title style={styles.className}>{classItem.name}</Title>
-                    <Chip mode="outlined" style={styles.modalityChip}>
-                      {classItem.modality}
-                    </Chip>
-                  </View>
-                  
-                  <Menu
-                    visible={false}
-                    onDismiss={() => {}}
-                    anchor={
-                      <IconButton
-                        icon="dots-vertical"
-                        onPress={() => handleClassPress(classItem)}
-                      />
-                    }
-                  >
-                    <Menu.Item onPress={() => handleEditClass(classItem)} title="Editar" />
-                    <Menu.Item onPress={() => handleDeleteClass(classItem)} title="Excluir" />
-                  </Menu>
-                </View>
-
-                <View style={styles.classDetails}>
-                  <View style={styles.detailRow}>
-                    <Ionicons name="person-outline" size={16} color="#666" />
-                    <Text style={styles.detailText}>
-                      Professor: {classItem.instructorName}
-                    </Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <Ionicons name="time-outline" size={16} color="#666" />
-                    <Text style={styles.detailText}>
-                      {formatSchedule(classItem.schedule)}
-                    </Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <Ionicons name="people-outline" size={16} color="#666" />
-                    <Text style={[
-                      styles.detailText,
-                      { color: getCapacityColor(classItem.currentStudents, classItem.maxCapacity) }
-                    ]}>
-                      {classItem.currentStudents}/{classItem.maxCapacity || 'N/A'} alunos
-                    </Text>
-                  </View>
-
-                  {classItem.location && (
-                    <View style={styles.detailRow}>
-                      <Ionicons name="location-outline" size={16} color="#666" />
-                      <Text style={styles.detailText}>{classItem.location}</Text>
+            <Animated.View
+              key={classItem.id || index}
+              style={{
+                opacity: itemAnimations.current[index] || 1,
+                transform: [{ translateY: (itemAnimations.current[index] ? itemAnimations.current[index].interpolate({ inputRange: [0,1], outputRange: [12,0] }) : 0) }]
+              }}
+            >
+              <Card style={styles.classCard}>
+                <Card.Content>
+                  <View style={styles.classHeader}>
+                    <View style={styles.classInfo}>
+                      <Title style={styles.className}>{classItem.name}</Title>
+                      <Chip mode="outlined" style={styles.modalityChip}>
+                        {classItem.modality}
+                      </Chip>
                     </View>
-                  )}
-                </View>
+                    
+                    <Menu
+                      visible={false}
+                      onDismiss={() => {}}
+                      anchor={
+                        <IconButton
+                          icon="dots-vertical"
+                          onPress={() => handleClassPress(classItem)}
+                        />
+                      }
+                    >
+                      <Menu.Item onPress={() => handleEditClass(classItem)} title="Editar" />
+                      <Menu.Item onPress={() => handleDeleteClass(classItem)} title="Excluir" />
+                    </Menu>
+                  </View>
 
-                <View style={styles.statusRow}>
-                  <Chip 
-                    mode="outlined"
-                    style={[
-                      styles.statusChip,
-                      { borderColor: classItem.isActive !== false ? '#4CAF50' : '#F44336' }
-                    ]}
-                    textStyle={{ 
-                      color: classItem.isActive !== false ? '#4CAF50' : '#F44336',
-                      fontSize: 12
-                    }}
-                  >
-                    {classItem.isActive !== false ? 'Ativa' : 'Inativa'}
-                  </Chip>
+                  <View style={styles.classDetails}>
+                    <View style={styles.detailRow}>
+                      <Ionicons name="person-outline" size={16} color="#9ca3af" />
+                      <Text style={styles.detailText}>
+                        Professor: {classItem.instructorName}
+                      </Text>
+                    </View>
 
-                  {classItem.currentStudents >= (classItem.maxCapacity || 999) && (
+                    <View style={styles.detailRow}>
+                      <Ionicons name="time-outline" size={16} color="#9ca3af" />
+                      <Text style={styles.detailText}>
+                        {formatSchedule(classItem.schedule)}
+                      </Text>
+                    </View>
+
+                    <View style={styles.detailRow}>
+                      <Ionicons name="people-outline" size={16} color="#9ca3af" />
+                      <Text style={[
+                        styles.detailText,
+                        { color: getCapacityColor(classItem.currentStudents, classItem.maxCapacity) }
+                      ]}>
+                        {classItem.currentStudents}/{classItem.maxCapacity || 'N/A'} alunos
+                      </Text>
+                    </View>
+
+                    {classItem.location && (
+                      <View style={styles.detailRow}>
+                        <Ionicons name="location-outline" size={16} color="#9ca3af" />
+                        <Text style={styles.detailText}>{classItem.location}</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.statusRow}>
                     <Chip 
                       mode="outlined"
-                      style={[styles.statusChip, { borderColor: '#F44336' }]}
-                      textStyle={{ color: '#F44336', fontSize: 12 }}
+                      style={[
+                        styles.statusChip,
+                        { borderColor: classItem.isActive !== false ? '#34d399' : '#f87171' }
+                      ]}
+                      textStyle={{ 
+                        color: classItem.isActive !== false ? '#34d399' : '#f87171',
+                        fontSize: 12
+                      }}
                     >
-                      Lotada
+                      {classItem.isActive !== false ? 'Ativa' : 'Inativa'}
                     </Chip>
-                  )}
 
-                  {!classItem.instructorId && (
-                    <Chip 
-                      mode="outlined"
-                      style={[styles.statusChip, { borderColor: '#FF9800' }]}
-                      textStyle={{ color: '#FF9800', fontSize: 12 }}
+                    {classItem.currentStudents >= (classItem.maxCapacity || 999) && (
+                      <Chip 
+                        mode="outlined"
+                        style={[styles.statusChip, { borderColor: '#f87171' }]}
+                        textStyle={{ color: '#f87171', fontSize: 12 }}
+                      >
+                        Lotada
+                      </Chip>
+                    )}
+
+                    {!classItem.instructorId && (
+                      <Chip 
+                        mode="outlined"
+                        style={[styles.statusChip, { borderColor: '#f59e0b' }]}
+                        textStyle={{ color: '#f59e0b', fontSize: 12 }}
+                      >
+                        Sem Professor
+                      </Chip>
+                    )}
+                  </View>
+
+                  <Divider style={styles.divider} />
+
+                  <View style={styles.classActions}>
+                    <Button 
+                      mode="outlined" 
+                      onPress={() => handleClassPress(classItem)}
+                      style={styles.actionButton}
+                      icon="eye"
                     >
-                      Sem Professor
-                    </Chip>
-                  )}
-                </View>
+                      Ver Detalhes
+                    </Button>
 
-                <Divider style={styles.divider} />
+                    <Button 
+                      mode="outlined" 
+                      onPress={() => handleEditClass(classItem)}
+                      style={styles.actionButton}
+                      icon="pencil"
+                    >
+                      Editar
+                    </Button>
 
-                <View style={styles.classActions}>
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => handleClassPress(classItem)}
-                    style={styles.actionButton}
-                    icon="eye"
-                  >
-                    Ver Detalhes
-                  </Button>
-
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => handleEditClass(classItem)}
-                    style={styles.actionButton}
-                    icon="pencil"
-                  >
-                    Editar
-                  </Button>
-
-                  <Button 
-                    mode="contained" 
-                    onPress={() => navigation.navigate('ClassStudents', { classId: classItem.id })}
-                    style={styles.actionButton}
-                    icon="account"
-                  >
-                    Alunos
-                  </Button>
-                </View>
-              </Card.Content>
-            </Card>
+                    <Button 
+                      mode="contained" 
+                      onPress={() => navigation.navigate('ClassStudents', { classId: classItem.id })}
+                      style={styles.actionButton}
+                      buttonColor="#2563eb"
+                      textColor="#fff"
+                      icon="account"
+                    >
+                      Alunos
+                    </Button>
+                  </View>
+                </Card.Content>
+              </Card>
+            </Animated.View>
           ))
         ) : (
           <Card style={styles.emptyCard}>
             <Card.Content style={styles.emptyContent}>
-              <Ionicons name="school-outline" size={48} color="#ccc" />
+              <Ionicons name="school-outline" size={48} color="#6b7280" />
               <Title style={styles.emptyTitle}>Nenhuma turma encontrada</Title>
               <Paragraph style={styles.emptyText}>
                 {searchQuery ? 
@@ -417,6 +462,16 @@ const AdminClasses = ({ navigation }) => {
         label="Nova Turma"
         onPress={handleAddClass}
       />
+
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={3000}
+        style={styles.snackbar}
+        action={{ label: 'OK', onPress: () => setSnackbarVisible(false) }}
+      >
+        {snackbarMsg}
+      </Snackbar>
     </SafeAreaView>
   );
 };
@@ -424,16 +479,19 @@ const AdminClasses = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#0f172a',
   },
   header: {
     padding: 16,
-    backgroundColor: '#fff',
-    elevation: 2,
+    backgroundColor: '#0b1220',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#1f2937',
   },
   searchbar: {
     elevation: 0,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#111827',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#1f2937',
     marginBottom: 8,
   },
   filterRow: {
@@ -441,7 +499,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   filterButton: {
-    borderColor: '#FF9800',
+    borderColor: '#2563eb',
   },
   scrollView: {
     flex: 1,
@@ -449,7 +507,11 @@ const styles = StyleSheet.create({
   classCard: {
     margin: 16,
     marginBottom: 8,
-    elevation: 2,
+    elevation: 6,
+    backgroundColor: '#111827',
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#1f2937',
   },
   classHeader: {
     flexDirection: 'row',
@@ -465,6 +527,7 @@ const styles = StyleSheet.create({
   className: {
     fontSize: 18,
     flex: 1,
+    color: '#e5e7eb',
   },
   modalityChip: {
     marginLeft: 8,
@@ -479,7 +542,7 @@ const styles = StyleSheet.create({
   },
   detailText: {
     marginLeft: 8,
-    color: '#666',
+    color: '#9ca3af',
     flex: 1,
   },
   statusRow: {
@@ -494,6 +557,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     marginVertical: 12,
+    backgroundColor: '#1f2937',
   },
   classActions: {
     flexDirection: 'row',
@@ -506,6 +570,8 @@ const styles = StyleSheet.create({
   emptyCard: {
     margin: 16,
     elevation: 2,
+    backgroundColor: '#0b1220',
+    borderRadius: 16,
   },
   emptyContent: {
     alignItems: 'center',
@@ -514,20 +580,23 @@ const styles = StyleSheet.create({
   emptyTitle: {
     marginTop: 16,
     textAlign: 'center',
+    color: '#e5e7eb',
   },
   emptyText: {
     textAlign: 'center',
-    color: '#666',
+    color: '#9ca3af',
   },
   statsCard: {
     margin: 16,
     marginTop: 8,
     elevation: 2,
-    backgroundColor: '#FFF3E0',
+    backgroundColor: '#0b1220',
+    borderRadius: 16,
   },
   statsTitle: {
     textAlign: 'center',
     marginBottom: 16,
+    color: '#e5e7eb',
   },
   statsGrid: {
     flexDirection: 'row',
@@ -539,11 +608,11 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FF9800',
+    color: '#2563eb',
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
+    color: '#9ca3af',
     textAlign: 'center',
   },
   fab: {
@@ -551,7 +620,16 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 0,
-    backgroundColor: '#FF9800',
+    backgroundColor: '#2563eb',
+  },
+  loadingWrap: {
+    paddingVertical: 24,
+    alignItems: 'center',
+  },
+  snackbar: {
+    backgroundColor: '#111827',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#1f2937',
   },
 });
 
