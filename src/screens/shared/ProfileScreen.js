@@ -100,15 +100,15 @@ const ProfileScreen = ({ navigation }) => {
               style={[styles.avatar, { backgroundColor: getUserTypeColor(userProfile?.userType) }]}
             />
             <View style={styles.headerText}>
-              <Title style={styles.userName}>{userProfile?.name || 'Usuário'}</Title>
+              <Text style={[styles.userName, { fontSize: 24, fontWeight: 'bold' }]}>{userProfile?.name || 'Usuário'}</Text>
               <Text style={styles.userEmail}>{user?.email}</Text>
-              <Chip 
-                mode="outlined"
-                style={[styles.userTypeChip, { borderColor: getUserTypeColor(userProfile?.userType) }]}
-                textStyle={{ color: getUserTypeColor(userProfile?.userType) }}
-              >
-                {getUserTypeText(userProfile?.userType)}
-              </Chip>
+                              <View 
+                  style={[styles.userTypeChip, { borderColor: getUserTypeColor(userProfile?.userType) }]}
+                >
+                  <Text style={{ color: getUserTypeColor(userProfile?.userType) }}>
+                    {getUserTypeText(userProfile?.userType)}
+                  </Text>
+                </View>
             </View>
           </Card.Content>
         </Card>
@@ -118,11 +118,11 @@ const ProfileScreen = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="person-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Informações Pessoais</Title>
+              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Informações Pessoais</Text>
               <Button 
-                mode="text" 
+                type="clear"
                 onPress={() => setEditing(!editing)}
-                icon={editing ? "close" : "pencil"}
+                icon={<Icon name={editing ? "close" : "pencil"} size={20} color="#666" />}
               >
                 {editing ? 'Cancelar' : 'Editar'}
               </Button>
@@ -130,57 +130,52 @@ const ProfileScreen = ({ navigation }) => {
 
             {editing ? (
               <View>
-                <TextInput
+                <Input
                   label="Nome Completo"
                   value={formData.name}
                   onChangeText={(text) => setFormData({...formData, name: text})}
-                  mode="outlined"
-                  style={styles.input}
+                  containerStyle={styles.input}
                 />
                 
-                <TextInput
+                <Input
                   label="Telefone/WhatsApp"
                   value={formData.phone}
                   onChangeText={(text) => setFormData({...formData, phone: text})}
-                  mode="outlined"
+                  containerStyle={styles.input}
                   keyboardType="phone-pad"
-                  style={styles.input}
                 />
                 
-                <TextInput
+                <Input
                   label="Endereço"
                   value={formData.address}
                   onChangeText={(text) => setFormData({...formData, address: text})}
-                  mode="outlined"
+                  containerStyle={styles.input}
                   multiline
                   numberOfLines={2}
-                  style={styles.input}
                 />
                 
-                <TextInput
+                <Input
                   label="Contato de Emergência"
                   value={formData.emergencyContact}
                   onChangeText={(text) => setFormData({...formData, emergencyContact: text})}
-                  mode="outlined"
-                  style={styles.input}
+                  containerStyle={styles.input}
                 />
                 
-                <TextInput
+                <Input
                   label="Informações Médicas"
                   value={formData.medicalInfo}
                   onChangeText={(text) => setFormData({...formData, medicalInfo: text})}
-                  mode="outlined"
+                  containerStyle={styles.input}
                   multiline
                   numberOfLines={3}
-                  style={styles.input}
                   placeholder="Alergias, medicamentos, condições médicas..."
                 />
 
                 <Button 
-                  mode="contained" 
+                  type="solid"
                   onPress={handleSave}
-                  style={styles.saveButton}
-                  icon="check"
+                  buttonStyle={styles.saveButton}
+                  icon={<Icon name="check" size={20} color="white" />}
                 >
                   Salvar Alterações
                 </Button>
