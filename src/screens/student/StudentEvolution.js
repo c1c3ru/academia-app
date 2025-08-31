@@ -315,6 +315,9 @@ const styles = StyleSheet.create({
       android: {
         elevation: 8,
       },
+      web: {
+        boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+      },
     }),
   },
   card: {
@@ -329,6 +332,9 @@ const styles = StyleSheet.create({
       },
       android: {
         elevation: 4,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
       },
     }),
   },
@@ -360,6 +366,9 @@ const styles = StyleSheet.create({
       },
       android: {
         elevation: 2,
+      },
+      web: {
+        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
       },
     }),
   },
@@ -401,6 +410,9 @@ const styles = StyleSheet.create({
       },
       android: {
         elevation: 2,
+      },
+      web: {
+        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
       },
     }),
   },

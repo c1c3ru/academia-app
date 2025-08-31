@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Dimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Dimensions, Platform } from 'react-native';
 import { 
   Card, 
   Text, 
@@ -305,7 +305,7 @@ const AdminDashboard = ({ navigation }) => {
           </View>
             
           {dashboardData.recentActivities.map((activity, index) => (
-            <ListItem key={`activity-${index}`} bottomDivider>
+            <ListItem key={`activity-${activity.type}-${index}`} bottomDivider>
               <Icon 
                 name={getActivityIcon(activity.type)} 
                 type="material"
@@ -359,7 +359,20 @@ const styles = StyleSheet.create({
   userCard: {
     margin: 16,
     marginBottom: 8,
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+      },
+    }),
   },
   userHeader: {
     flexDirection: 'row',
@@ -396,7 +409,20 @@ const styles = StyleSheet.create({
   card: {
     margin: 16,
     marginTop: 8,
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+      },
+    }),
   },
   alertCard: {
     backgroundColor: '#FFF3E0',
@@ -422,7 +448,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 16,
-    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+      },
+    }),
   },
   statNumber: {
     fontSize: 24,

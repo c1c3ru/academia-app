@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Modal, StyleSheet, Platform } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
 
 const CustomMenu = ({ visible, onDismiss, anchor, children, style }) => {
@@ -54,14 +54,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 8,
     minWidth: 150,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      },
+      android: {
+        elevation: 5,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
+      },
+    }),
   },
   menuItem: {
     paddingVertical: 12,

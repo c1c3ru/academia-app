@@ -218,14 +218,14 @@ const StudentCalendar = ({ navigation }) => {
             
             {dayClasses.length > 0 ? (
               dayClasses.map((classItem, index) => (
-                <View key={index} style={styles.classItem}>
+                <View key={`class-${classItem.id || index}`} style={styles.classItem}>
                   <View style={styles.classHeader}>
                     <Text style={styles.className}>{classItem.name}</Text>
                     <Badge value={classItem.modality} badgeStyle={styles.modalityChip} textStyle={styles.modalityText} />
                   </View>
                   
                   {classItem.todaySchedule.map((schedule, scheduleIndex) => (
-                    <View key={scheduleIndex} style={styles.scheduleItem}>
+                    <View key={`schedule-${scheduleIndex}-${schedule.hour}-${schedule.minute}`} style={styles.scheduleItem}>
                       <View style={styles.timeInfo}>
                         <Icon name="time-outline" type="ionicon" size={16} color="#666" />
                         <Text style={styles.timeText}>
