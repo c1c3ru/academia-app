@@ -338,7 +338,33 @@ const styles = StyleSheet.create({
   userCard: {
     margin: 16,
     marginBottom: 8,
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+
+      },
+
+    }),
   },
   userHeader: {
     flexDirection: 'row',
@@ -368,7 +394,33 @@ const styles = StyleSheet.create({
   paymentCard: {
     margin: 16,
     marginTop: 8,
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+
+      },
+
+    }),
   },
   paymentInfo: {
     marginTop: 8,
@@ -392,7 +444,33 @@ const styles = StyleSheet.create({
   classesCard: {
     margin: 16,
     marginTop: 8,
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+
+      },
+
+    }),
   },
   classItem: {
     flexDirection: 'row',

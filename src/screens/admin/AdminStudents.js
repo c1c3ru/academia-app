@@ -266,36 +266,32 @@ const AdminStudents = ({ navigation }) => {
                 <View style={styles.studentStats}>
                   <View style={styles.statColumn}>
                     <Text style={styles.statLabel}>Status</Text>
-                    <Chip 
-                      mode="outlined"
-                      style={[
+                    <Badge
+                      value={student.isActive ? 'Ativo' : 'Inativo'}
+                      badgeStyle={[
                         styles.statusChip,
-                        { borderColor: student.isActive !== false ? '#4CAF50' : '#F44336' }
+                        { backgroundColor: student.isActive ? '#34d399' : '#f87171' }
                       ]}
                       textStyle={{ 
-                        color: student.isActive !== false ? '#4CAF50' : '#F44336',
+                        color: 'white',
                         fontSize: 12
                       }}
-                    >
-                      {student.isActive !== false ? 'Ativo' : 'Inativo'}
-                    </Chip>
+                    />
                   </View>
 
                   <View style={styles.statColumn}>
                     <Text style={styles.statLabel}>Pagamento</Text>
-                    <Chip 
-                      mode="outlined"
-                      style={[
-                        styles.statusChip,
-                        { borderColor: getPaymentStatusColor(student.paymentStatus) }
+                    <Badge
+                      value={getPaymentStatusText(student.paymentStatus)}
+                      badgeStyle={[
+                        styles.paymentChip,
+                        { backgroundColor: getPaymentStatusColor(student.paymentStatus) }
                       ]}
-                      textStyle={{ 
-                        color: getPaymentStatusColor(student.paymentStatus),
+                      textStyle={{
+                        color: 'white',
                         fontSize: 12
                       }}
-                    >
-                      {getPaymentStatusText(student.paymentStatus)}
-                    </Chip>
+                    />
                   </View>
 
                   <View style={styles.statColumn}>
@@ -408,9 +404,10 @@ const AdminStudents = ({ navigation }) => {
 
       <FAB
         style={styles.fab}
-        icon="plus"
-        label="Novo Aluno"
+        icon={{ name: 'add', color: 'white' }}
+        title="Novo Aluno"
         onPress={handleAddStudent}
+        color="#2196F3"
       />
     </SafeAreaView>
   );
@@ -424,7 +421,33 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     backgroundColor: '#fff',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+
+      },
+
+    }),
   },
   searchbar: {
     backgroundColor: '#f5f5f5',
@@ -448,7 +471,33 @@ const styles = StyleSheet.create({
   studentCard: {
     margin: 16,
     marginBottom: 8,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+
+      },
+
+    }),
   },
   studentHeader: {
     flexDirection: 'row',
@@ -527,7 +576,33 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     margin: 16,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+
+      },
+
+    }),
   },
   emptyContent: {
     alignItems: 'center',
@@ -544,7 +619,33 @@ const styles = StyleSheet.create({
   statsCard: {
     margin: 16,
     marginTop: 8,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+
+      },
+
+    }),
     backgroundColor: '#FFF3E0',
   },
   statsTitle: {

@@ -238,7 +238,33 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     backgroundColor: '#fff',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+
+      },
+
+    }),
   },
   searchbar: {
     backgroundColor: '#f5f5f5',
@@ -257,7 +283,33 @@ const styles = StyleSheet.create({
   classCard: {
     margin: 16,
     marginBottom: 8,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+
+      },
+
+    }),
   },
   modalityChip: {
     backgroundColor: '#2196F3',
@@ -329,7 +381,33 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     margin: 16,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+
+      },
+
+    }),
   },
   emptyContent: {
     alignItems: 'center',
@@ -346,7 +424,33 @@ const styles = StyleSheet.create({
   statsCard: {
     margin: 16,
     marginTop: 8,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+
+      },
+
+    }),
     backgroundColor: '#E8F5E8',
   },
   statsTitle: {

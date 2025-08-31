@@ -10,10 +10,7 @@ import {
   ListItem,
   Divider,
   SearchBar,
-  IconButton,
-  Chip,
-  Title,
-  Paragraph
+  FAB
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -281,9 +278,11 @@ const AdminClasses = ({ navigation }) => {
                   <View style={styles.classHeader}>
                     <View style={styles.classInfo}>
                       <Title style={styles.className}>{classItem.name}</Title>
-                      <Chip mode="outlined" style={styles.modalityChip}>
-                        {classItem.modality}
-                      </Chip>
+                      <Badge
+                        value={classItem.modality}
+                        badgeStyle={styles.modalityChip}
+                        textStyle={styles.modalityText}
+                      />
                     </View>
                     
                     <CustomMenu
@@ -335,38 +334,43 @@ const AdminClasses = ({ navigation }) => {
                   </View>
 
                   <View style={styles.statusRow}>
-                    <Chip 
-                      mode="outlined"
-                      style={[
-                        styles.statusChip,
-                        { borderColor: classItem.isActive !== false ? '#34d399' : '#f87171' }
+                    <Badge
+                      value={`${classItem.currentStudents}/${classItem.maxStudents}`}
+                      badgeStyle={[
+                        styles.capacityChip,
+                        { backgroundColor: getCapacityColor(classItem.currentStudents, classItem.maxStudents) }
                       ]}
-                      textStyle={{ 
-                        color: classItem.isActive !== false ? '#34d399' : '#f87171',
+                      textStyle={{
+                        color: 'white',
                         fontSize: 12
                       }}
-                    >
-                      {classItem.isActive !== false ? 'Ativa' : 'Inativa'}
-                    </Chip>
+                    /> 
+                    <Badge
+                      value={classItem.isActive !== false ? 'Ativa' : 'Inativa'}
+                      badgeStyle={[
+                        styles.statusChip,
+                        { backgroundColor: classItem.isActive !== false ? '#34d399' : '#f87171' }
+                      ]}
+                      textStyle={{ 
+                        color: 'white',
+                        fontSize: 12
+                      }}
+                    />
 
                     {classItem.currentStudents >= (classItem.maxCapacity || 999) && (
-                      <Chip 
-                        mode="outlined"
-                        style={[styles.statusChip, { borderColor: '#f87171' }]}
-                        textStyle={{ color: '#f87171', fontSize: 12 }}
-                      >
-                        Lotada
-                      </Chip>
+                      <Badge
+                        value="Lotada"
+                        badgeStyle={[styles.statusChip, { backgroundColor: '#f87171' }]}
+                        textStyle={{ color: 'white', fontSize: 12 }}
+                      />
                     )}
 
                     {!classItem.instructorId && (
-                      <Chip 
-                        mode="outlined"
-                        style={[styles.statusChip, { borderColor: '#f59e0b' }]}
-                        textStyle={{ color: '#f59e0b', fontSize: 12 }}
-                      >
-                        Sem Professor
-                      </Chip>
+                      <Badge
+                        value="Sem Professor"
+                        badgeStyle={[styles.statusChip, { backgroundColor: '#f59e0b' }]}
+                        textStyle={{ color: 'white', fontSize: 12 }}
+                      />
                     )}
                   </View>
 
@@ -461,20 +465,23 @@ const AdminClasses = ({ navigation }) => {
 
       <FAB
         style={styles.fab}
-        icon="plus"
-        label="Nova Turma"
+        icon={{ name: 'add', color: 'white' }}
+        title="Nova Turma"
         onPress={handleAddClass}
+        color="#2196F3"
       />
 
-      <Snackbar
-        visible={snackbarVisible}
-        onDismiss={() => setSnackbarVisible(false)}
-        duration={3000}
-        style={styles.snackbar}
-        action={{ label: 'OK', onPress: () => setSnackbarVisible(false) }}
-      >
-        {snackbarMsg}
-      </Snackbar>
+      {snackbarVisible && (
+        <View style={styles.snackbar}>
+          <Text style={styles.snackbarText}>{snackbarMsg}</Text>
+          <Button
+            title="OK"
+            onPress={() => setSnackbarVisible(false)}
+            type="clear"
+            titleStyle={{ color: 'white' }}
+          />
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -512,7 +519,33 @@ const styles = StyleSheet.create({
   classCard: {
     margin: 16,
     marginBottom: 8,
-    boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
+
+      },
+
+    }),
     backgroundColor: '#111827',
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
@@ -574,7 +607,33 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     margin: 16,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+
+      },
+
+    }),
     backgroundColor: '#0b1220',
     borderRadius: 16,
   },
@@ -594,7 +653,33 @@ const styles = StyleSheet.create({
   statsCard: {
     margin: 16,
     marginTop: 8,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+
+      },
+
+    }),
     backgroundColor: '#0b1220',
     borderRadius: 16,
   },

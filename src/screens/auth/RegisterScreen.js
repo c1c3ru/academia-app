@@ -418,7 +418,33 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     marginBottom: 16,
-    boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
+
+      },
+
+    }),
   },
   title: {
     fontSize: 32,
@@ -436,7 +462,33 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     backgroundColor: 'white',
-    boxShadow: '0px 4px 4.65px rgba(0, 0, 0, 0.3)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0px 4px 4.65px rgba(0, 0, 0, 0.3)',
+
+      },
+
+    }),
   },
   cardTitle: {
     textAlign: 'center',
@@ -466,7 +518,33 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 12,
     backgroundColor: 'white',
-    boxShadow: '0px 2px 2px rgba(0, 0, 0, 0.1)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0px 2px 2px rgba(0, 0, 0, 0.1)',
+
+      },
+
+    }),
   },
   userTypeCardContent: {
     flexDirection: 'row',
@@ -504,7 +582,33 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingVertical: 4,
     borderRadius: 25,
-    boxShadow: '0px 3px 3px rgba(0, 0, 0, 0.15)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0px 3px 3px rgba(0, 0, 0, 0.15)',
+
+      },
+
+    }),
   },
   buttonText: {
     color: 'white',
@@ -527,7 +631,33 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderRadius: 8,
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
+    ...Platform.select({
+
+      ios: {
+
+        shadowColor: '#000',
+
+        shadowOffset: { width: 0, height: 2 },
+
+        shadowOpacity: 0.1,
+
+        shadowRadius: 4,
+
+      },
+
+      android: {
+
+        elevation: 4,
+
+      },
+
+      web: {
+
+        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
+
+      },
+
+    }),
   },
   successSnackbar: {
     backgroundColor: '#4CAF50',

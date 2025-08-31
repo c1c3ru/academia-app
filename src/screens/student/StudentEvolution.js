@@ -127,20 +127,20 @@ const StudentEvolution = ({ navigation }) => {
             </View>
             
             <View style={styles.statsGrid}>
-              <Surface style={styles.statItem}>
+              <Card containerStyle={styles.statItem}>
                 <Text style={styles.statNumber}>{stats.totalGraduations}</Text>
                 <Text style={styles.statLabel}>Graduações</Text>
-              </Surface>
+              </Card>
               
-              <Surface style={styles.statItem}>
+              <Card containerStyle={styles.statItem}>
                 <Text style={styles.statNumber}>{stats.modalities.length}</Text>
                 <Text style={styles.statLabel}>Modalidades</Text>
-              </Surface>
+              </Card>
               
-              <Surface style={styles.statItem}>
+              <Card containerStyle={styles.statItem}>
                 <Text style={styles.statNumber}>{stats.timeInCurrentGraduation}</Text>
                 <Text style={styles.statLabel}>Dias na Atual</Text>
-              </Surface>
+              </Card>
             </View>
             
             <View style={styles.currentGraduation}>
@@ -171,8 +171,8 @@ const StudentEvolution = ({ navigation }) => {
             </View>
             
             {graduations.length > 0 ? (
-              graduations.map((graduation, index) => (
-                <View key={index} style={styles.timelineItem}>
+              graduations.map((graduation) => (
+                <View key={`${graduation.date}-${graduation.graduation}-${graduation.modality}`} style={styles.timelineItem}>
                   <View style={styles.timelineContent}>
                     <View style={styles.timelineHeader}>
                       <View style={styles.graduationInfo}>
@@ -232,9 +232,9 @@ const StudentEvolution = ({ navigation }) => {
               </View>
               
               <View style={styles.modalitiesContainer}>
-                {stats.modalities.map((modality, index) => (
+                {stats.modalities.map((modality) => (
                   <View 
-                    key={index}
+                    key={modality}
                     style={styles.modalityChip}
                   >
                     <Ionicons name={getGraduationIcon(modality)} size={16} color="#666" />
@@ -321,8 +321,8 @@ const styles = StyleSheet.create({
     }),
   },
   card: {
-    margin: 16,
-    marginTop: 8,
+    marginVertical: 8,
+    borderRadius: 12,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -354,21 +354,22 @@ const styles = StyleSheet.create({
   },
   statItem: {
     alignItems: 'center',
-    padding: 12,
+    padding: 16,
     borderRadius: 8,
-    backgroundColor: '#fff',
+    margin: 4,
+    flex: 1,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
       },
       android: {
-        elevation: 2,
+        elevation: 4,
       },
       web: {
-        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
       },
     }),
   },
