@@ -5,6 +5,7 @@ import { AuthProvider } from './src/contexts/AuthContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { NotificationProvider } from './src/components/NotificationManager';
+import FirebaseInitializer from './src/components/FirebaseInitializer';
 
 // Tema personalizado para o React Native Paper v5
 const theme = {
@@ -55,14 +56,16 @@ const theme = {
 export default function App() {
   return (
     <ErrorBoundary>
-      <PaperProvider theme={theme}>
-        <NotificationProvider>
-          <AuthProvider>
-            <StatusBar style="auto" />
-            <AppNavigator />
-          </AuthProvider>
-        </NotificationProvider>
-      </PaperProvider>
+      <FirebaseInitializer>
+        <PaperProvider theme={theme}>
+          <NotificationProvider>
+            <AuthProvider>
+              <StatusBar style="auto" />
+              <AppNavigator />
+            </AuthProvider>
+          </NotificationProvider>
+        </PaperProvider>
+      </FirebaseInitializer>
     </ErrorBoundary>
   );
 }

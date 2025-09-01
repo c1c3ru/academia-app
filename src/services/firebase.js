@@ -2,29 +2,41 @@
 import { initializeApp } from 'firebase/app';
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-// import { getStorage } from 'firebase/storage'; // Removido - não necessário
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Configuração do Firebase usando variáveis de ambiente
+// Configuração do Firebase - usando valores do google-services.json
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID
+  apiKey: "AIzaSyA_hzFPt9hUITlMq9BrsJuxAdzycVR3AEI",
+  authDomain: "academia-app-5cf79.firebaseapp.com",
+  projectId: "academia-app-5cf79",
+  storageBucket: "academia-app-5cf79.firebasestorage.app",
+  messagingSenderId: "377489252583",
+  appId: "1:377489252583:android:87f2c3948511325769c242"
 };
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
+// Função para inicializar Firebase com tratamento de erro
+let app;
+let auth;
+let db;
 
-// Inicializar Auth com persistência AsyncStorage
-export const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage)
-});
+try {
+  // Inicializar Firebase
+  app = initializeApp(firebaseConfig);
+  
+  // Inicializar Auth com persistência AsyncStorage
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage)
+  });
+  
+  // Inicializar Firestore
+  db = getFirestore(app);
+  
+  console.log('Firebase inicializado com sucesso');
+} catch (error) {
+  console.error('Erro ao inicializar Firebase:', error);
+  throw error;
+}
 
-export const db = getFirestore(app);
-// export const storage = getStorage(app); // Removido - não necessário
-
+export { auth, db };
 export default app;
 
