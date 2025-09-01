@@ -1,17 +1,27 @@
 #!/usr/bin/env node
 
+// Load environment variables
+require('dotenv').config();
+
 // Script simplificado usando Firebase Web SDK
 const { initializeApp } = require('firebase/app');
 const { getFirestore, collection, addDoc, serverTimestamp } = require('firebase/firestore');
 
-// Configuração do Firebase (do seu google-services.json)
+// Validate required environment variables
+if (!process.env.EXPO_PUBLIC_FIREBASE_API_KEY) {
+  console.error('❌ Erro: Variáveis de ambiente do Firebase não encontradas no arquivo .env');
+  console.error('   Certifique-se de que o arquivo .env existe e contém as configurações do Firebase.');
+  process.exit(1);
+}
+
+// Configuração do Firebase usando variáveis de ambiente
 const firebaseConfig = {
-  apiKey: "AIzaSyDqL69c1jBsB7wsuFgOBqJGYQtTATdMirb",
-  authDomain: "academia-app-5cf79.firebaseapp.com",
-  projectId: "academia-app-5cf79",
-  storageBucket: "academia-app-5cf79.firebasestorage.app",
-  messagingSenderId: "377489252583",
-  appId: "1:377489252583:android:87f2c3948511325769c242"
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID
 };
 
 // Inicializar Firebase

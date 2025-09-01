@@ -1,0 +1,118 @@
+Objetivo do Projeto:
+Desenvolver a versão completa e final do aplicativo de gerenciamento para academias de lutas. O aplicativo deve ser uma solução completa, robusta e pronta para ser publicada na Google Play Store e na Apple App Store.
+
+Persona do Desenvolvedor (IA):
+Você atuará como um arquiteto de software e desenvolvedor full-stack sênior, especialista em React Native e Firebase. Seu foco é criar um aplicativo de alta qualidade, seguindo as melhores práticas de UI/UX, segurança e performance.
+
+Tecnologias Obrigatórias:
+
+Frontend: React Native
+
+Backend & Banco de Dados: Google Firebase (incluindo Firestore para banco de dados, Authentication para login e Cloud Functions para lógicas de servidor).
+
+Perfis de Usuário e Permissões:
+O sistema deve ter três níveis de acesso distintos:
+
+Administrador (Dono): Acesso total a todas as funcionalidades de gerenciamento.
+
+Professor (Instrutor): Acesso focado na gestão de suas turmas e alunos.
+
+Aluno: Acesso focado em sua própria jornada, informações e interações com a academia.
+
+Lista Completa de Funcionalidades a Serem Implementadas:
+
+Módulo 1: Autenticação e Perfis
+
+[ ] Sistema de login e cadastro utilizando e-mail/senha.
+
+[ ] Integração de login com Google (OAuth).
+
+[ ] Perfis de usuário (Aluno, Professor, Admin) editáveis com upload de foto de perfil.
+
+Módulo 2: Gestão de Alunos (Visão do Admin/Professor)
+
+[ ] Ferramenta para adicionar novos alunos com envio de um link de convite (via WhatsApp/Email) para que o próprio aluno complete seu cadastro.
+
+[ ] Listagem, busca e edição de todos os alunos cadastrados.
+
+[ ] Funcionalidade para registrar graduações na timeline de evolução de cada aluno.
+
+Módulo 3: Gestão da Academia (Visão do Admin)
+
+[ ] CRUD (Criar, Ler, Atualizar, Deletar) de Modalidades de Luta.
+
+[ ] CRUD de Planos de Pagamento (ex: Mensal, Trimestral).
+
+[ ] CRUD de Turmas, definindo horários, professor responsável e modalidade.
+
+[ ] Ferramenta para criar e publicar avisos no mural geral da academia.
+
+Módulo 4: Funcionalidades do Aluno (Core do App)
+
+[ ] Tela principal (Dashboard) com acesso rápido às principais funções.
+
+[ ] Sistema de check-in na aula feito pelo próprio aluno. O botão de check-in só deve ficar ativo próximo ao horário da aula.
+
+[ ] Tela "Meus Pagamentos" para visualizar o histórico e o status da mensalidade.
+
+[ ] Tela "Minha Evolução" com a timeline de graduações.
+
+[ ] Calendário/Agenda com os horários de todas as aulas, filtrável por modalidade.
+
+[ ] Mural de Avisos da academia (modo leitura).
+
+Módulo 5: Funcionalidades do Professor
+
+[ ] Painel para visualizar, em tempo real, a lista de alunos que fizeram check-in em sua aula atual.
+
+[ ] Acesso rápido para registrar graduações nos perfis de seus alunos.
+
+Módulo 6: Pagamentos e Financeiro
+
+[ ] (Admin) Ferramenta manual para registrar pagamentos e marcar mensalidades como "pagas".
+
+[ ] (V2 - Completo) Integração com sistema de pagamento via PIX para que o aluno pague diretamente pelo app, com baixa automática no sistema.
+
+Módulo 7: Comunicação e Engajamento
+
+[ ] Links de contato rápido para grupos de WhatsApp ou para falar diretamente com o professor.
+
+[ ] (V2 - Completo) Sistema de Notificações Push para:
+
+Lembrar o aluno sobre aulas que estão para começar.
+
+Avisar sobre vencimento de pagamentos.
+
+Notificar sobre novos avisos no mural.
+
+Módulo 8: Eventos e Captação de Novos Alunos
+
+[ ] (V2 - Completo) Ferramenta de Gerenciamento de Campeonatos:
+
+(Admin) Criar e divulgar eventos (campeonatos, seminários).
+
+(Aluno) Visualizar e se inscrever nos eventos.
+
+(Admin) Gerenciar lista de inscritos e publicar resultados.
+
+[ ] (V2 - Completo) Funcionalidade para Agendamento de Aulas Experimentais por novos interessados.
+
+Módulo 9: Relatórios (Visão do Admin)
+
+[ ] (V2 - Completo) Dashboard com relatórios visuais (gráficos) sobre:
+
+Faturamento mensal.
+
+Número de alunos ativos.
+
+Frequência média nas aulas.
+
+Requisitos Não-Funcionais:
+
+UI/UX: O design deve ser limpo, moderno e intuitivo (mobile-first).
+
+Segurança: Utilizar as regras de segurança do Firestore para garantir que cada perfil de usuário só possa acessar e modificar os dados permitidos.
+
+Performance: O aplicativo deve ser rápido e responsivo.
+
+Código: O código-fonte deve ser limpo, bem organizado em componentes e comentado.

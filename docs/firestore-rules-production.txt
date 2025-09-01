@@ -1,0 +1,135 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Regras para usuários
+    match /users/{userId} {
+      // Usuários podem ler e escrever apenas seus próprios dados
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Administradores podem ler todos os usuários
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+      
+      // Administradores podem criar/atualizar usuários
+      allow create, update: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
+
+    // Regras para modalidades
+    match /modalities/{modalityId} {
+      // Todos usuários autenticados podem ler modalidades
+      allow read: if request.auth != null;
+      
+      // Apenas administradores podem criar/atualizar/deletar modalidades
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
+
+    // Regras para turmas
+    match /classes/{classId} {
+      // Todos usuários autenticados podem ler turmas
+      allow read: if request.auth != null;
+      
+      // Instrutores podem criar/atualizar suas próprias turmas
+      allow create, update: if request.auth != null && 
+        (request.auth.uid == resource.data.instructorId ||
+         request.auth.uid == request.resource.data.instructorId);
+      
+      // Administradores podem fazer tudo com turmas
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
+
+    // Regras para pagamentos
+    match /payments/{paymentId} {
+      // Usuários podem ler apenas seus próprios pagamentos
+      allow read: if request.auth != null && 
+        request.auth.uid == resource.data.studentId;
+      
+      // Administradores podem ler todos os pagamentos
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+      
+      // Apenas administradores podem criar/atualizar pagamentos
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
+
+    // Regras para check-ins
+    match /checkins/{checkinId} {
+      // Usuários podem ler apenas seus próprios check-ins
+      allow read: if request.auth != null && 
+        request.auth.uid == resource.data.studentId;
+      
+      // Usuários podem criar seus próprios check-ins
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.studentId;
+      
+      // Instrutores podem ler check-ins de suas turmas
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
+        get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorId == request.auth.uid;
+      
+      // Administradores podem fazer tudo com check-ins
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
+
+    // Regras para graduações
+    match /graduations/{graduationId} {
+      // Usuários podem ler apenas suas próprias graduações
+      allow read: if request.auth != null && 
+        request.auth.uid == resource.data.studentId;
+      
+      // Instrutores podem criar graduações para seus alunos
+      allow create: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'instructor';
+      
+      // Administradores podem fazer tudo com graduações
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
+
+    // Regras para anúncios
+    match /announcements/{announcementId} {
+      // Todos usuários autenticados podem ler anúncios
+      allow read: if request.auth != null;
+      
+      // Apenas administradores podem criar/atualizar/deletar anúncios
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
+
+    // Regras para notificações
+    match /notifications/{notificationId} {
+      // Usuários podem ler apenas suas próprias notificações
+      allow read: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      
+      // Usuários podem atualizar suas próprias notificações (marcar como lida)
+      allow update: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      
+      // Administradores podem criar notificações para qualquer usuário
+      allow create: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+      
+      // Administradores podem fazer tudo com notificações
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
+  }
+}
