@@ -19,9 +19,9 @@
         "expo-build-properties",
         {
           "android": {
-            "compileSdkVersion": 34,
-            "targetSdkVersion": 34,
-            "buildToolsVersion": "34.0.0"
+            "compileSdkVersion": 33,
+            "targetSdkVersion": 33,
+            "buildToolsVersion": "33.0.0"
           }
         }
       ]
@@ -38,6 +38,8 @@
       },
       "package": "com.anonymous.academiaapp",
       "versionCode": 1,
+      "compileSdkVersion": 33,
+      "targetSdkVersion": 33,
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
