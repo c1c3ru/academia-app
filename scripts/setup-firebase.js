@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+// Load environment variables
+require('dotenv').config();
+
 const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
@@ -10,14 +13,21 @@ const serviceAccount = require('../google-services.json');
 // Extrair project_id do google-services.json
 const projectId = serviceAccount.project_info.project_id;
 
+// Validate required environment variables
+if (!process.env.FIREBASE_PRIVATE_KEY) {
+  console.error('❌ Erro: FIREBASE_PRIVATE_KEY não encontrada no arquivo .env');
+  console.error('   Certifique-se de que o arquivo .env existe e contém a chave privada do Firebase.');
+  process.exit(1);
+}
+
 admin.initializeApp({
   credential: admin.credential.cert({
     type: "service_account",
     project_id: projectId,
-    private_key_id: "dummy_key_id",
-    private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7VJTUt9Us8cKB\nxIuOAiOfHkMkfn2cpgfoFsO0fYH5FkJvNdFxQzfzdsKyhXjrd/uHswx5ofhsFez6\nkcj+rify/v7+mwdxjFteTdnSuVoYjey2coxHHE/nrboHxI1wIR4QTRTRHrEQDQVT\n9xtaqoz6QAjOBqJGYQtTATdMirbXvFD8AyFpHV+InfVg5SfuiNG2cxvwWQ8lBMdp\nEu4=\n-----END PRIVATE KEY-----\n",
+    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID || "dummy_key_id",
+    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
     client_email: `firebase-adminsdk@${projectId}.iam.gserviceaccount.com`,
-    client_id: "dummy_client_id",
+    client_id: process.env.FIREBASE_CLIENT_ID || "dummy_client_id",
     auth_uri: "https://accounts.google.com/o/oauth2/auth",
     token_uri: "https://oauth2.googleapis.com/token"
   }),
