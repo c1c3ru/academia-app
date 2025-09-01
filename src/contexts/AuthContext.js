@@ -73,10 +73,32 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
     try {
-      console.log('🔐 Tentando login com:', { email, password: password ? '***' : 'undefined' });
+      console.log('🔐 Tentando login com:', { 
+        email: email, 
+        emailType: typeof email,
+        emailLength: email ? email.length : 0,
+        password: password ? '***' : 'undefined',
+        passwordType: typeof password,
+        passwordLength: password ? password.length : 0
+      });
       console.log('📧 Email válido:', email && email.includes('@'));
+      console.log('📧 Email trim:', email ? email.trim() : 'undefined');
+      console.log('🔑 Senha trim:', password ? password.trim() : 'undefined');
       
-      const { user: firebaseUser } = await signInWithEmailAndPassword(auth, email, password);
+      // Limpar e validar dados
+      const cleanEmail = email ? email.trim().toLowerCase() : '';
+      const cleanPassword = password ? password.trim() : '';
+      
+      console.log('🧹 Dados limpos:', {
+        email: cleanEmail,
+        password: cleanPassword ? '***' : 'undefined'
+      });
+      
+      if (!cleanEmail || !cleanPassword) {
+        throw new Error('Email e senha são obrigatórios');
+      }
+      
+      const { user: firebaseUser } = await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
       console.log('✅ Login bem-sucedido:', firebaseUser.email);
       
       await fetchUserProfile(firebaseUser.uid);
@@ -86,7 +108,10 @@ export const AuthProvider = ({ children }) => {
         code: error.code,
         message: error.message,
         email: email,
-        passwordLength: password ? password.length : 0
+        emailType: typeof email,
+        passwordLength: password ? password.length : 0,
+        passwordType: typeof password,
+        stack: error.stack
       });
       throw error;
     }
