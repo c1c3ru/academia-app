@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Platform, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Platform, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { 
   Card, 
   Text, 
@@ -98,11 +98,30 @@ const InstructorDashboard = ({ navigation }) => {
   };
 
   const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-    }
+    Alert.alert(
+      'Confirmar Logout',
+      'Tem certeza que deseja sair da sua conta?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              Alert.alert('Sucesso', 'Logout realizado com sucesso!');
+            } catch (error) {
+              console.error('Erro ao fazer logout:', error);
+              Alert.alert('Erro', 'Não foi possível fazer logout. Tente novamente.');
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   return (

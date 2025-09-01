@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Platform, Dimensions, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Platform, TouchableOpacity, Alert, Dimensions } from 'react-native';
 import { 
   Card, 
   Text, 
@@ -7,13 +7,14 @@ import {
   Avatar,
   Badge,
   Divider,
-  Icon
+  Icon,
+  ListItem
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
-import { firestoreService, classService, paymentService, announcementService } from '../../services/firestoreService';
+import { firestoreService, paymentService, announcementService } from '../../services/firestoreService';
 
 const { width } = Dimensions.get('window');
 
@@ -90,11 +91,30 @@ const StudentDashboard = ({ navigation }) => {
   };
 
   const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-    }
+    Alert.alert(
+      'Confirmar Logout',
+      'Tem certeza que deseja sair da sua conta?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              Alert.alert('Sucesso', 'Logout realizado com sucesso!');
+            } catch (error) {
+              console.error('Erro ao fazer logout:', error);
+              Alert.alert('Erro', 'Não foi possível fazer logout. Tente novamente.');
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   const getPaymentStatusColor = (status) => {
