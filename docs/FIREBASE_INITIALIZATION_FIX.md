@@ -48,6 +48,10 @@
 ### 1. `src/services/firebase.js`
 ```javascript
 // Configuração hardcoded com tratamento de erro
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+
 const firebaseConfig = {
   apiKey: "AIzaSyA_hzFPt9hUITlMq9BrsJuxAdzycVR3AEI",
   authDomain: "academia-app-5cf79.firebaseapp.com",
@@ -59,9 +63,7 @@ const firebaseConfig = {
 
 try {
   app = initializeApp(firebaseConfig);
-  auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage)
-  });
+  auth = getAuth(app);
   db = getFirestore(app);
   console.log('Firebase inicializado com sucesso');
 } catch (error) {
@@ -177,6 +179,28 @@ export default function App() {
    - Storage (se necessário)
 
 ## Troubleshooting
+
+### Erro: `getReactNativePersistence is not a function`
+
+**Problema**: A função `getReactNativePersistence` não estava disponível na versão do Firebase v12.
+
+**Solução**: 
+- Simplificar a inicialização do Auth usando `getAuth` em vez de `initializeAuth` com persistência
+- Remover dependência do `getReactNativePersistence` e `AsyncStorage`
+
+```javascript
+// ❌ Problema com persistência
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage)
+});
+
+// ✅ Solução simplificada
+import { getAuth } from 'firebase/auth';
+auth = getAuth(app);
+```
+
+### Outros Problemas Comuns
 
 Se ainda houver problemas:
 

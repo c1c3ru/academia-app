@@ -73,10 +73,21 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
     try {
+      console.log('🔐 Tentando login com:', { email, password: password ? '***' : 'undefined' });
+      console.log('📧 Email válido:', email && email.includes('@'));
+      
       const { user: firebaseUser } = await signInWithEmailAndPassword(auth, email, password);
+      console.log('✅ Login bem-sucedido:', firebaseUser.email);
+      
       await fetchUserProfile(firebaseUser.uid);
       return firebaseUser;
     } catch (error) {
+      console.error('❌ Erro detalhado no login:', {
+        code: error.code,
+        message: error.message,
+        email: email,
+        passwordLength: password ? password.length : 0
+      });
       throw error;
     }
   };
