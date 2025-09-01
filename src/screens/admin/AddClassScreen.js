@@ -8,16 +8,12 @@ import {
 } from 'react-native';
 import { 
   Card, 
-  Title, 
-  TextInput, 
-  Button, 
   Text, 
-  Chip, 
-  HelperText,
-  RadioButton
-} from 'react-native-paper';
+  Button, 
+  Input
+} from 'react-native-elements'; // Migrado para react-native-elements
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Picker } from '@react-native-picker/picker';
+// import * as FileSystem from 'expo-file-system'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, classService } from '../../services/firestoreService';
 

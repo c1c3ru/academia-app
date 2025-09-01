@@ -12,7 +12,7 @@ import {
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+// import { LinearGradient } from 'expo-linear-gradient'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, classService, studentService } from '../../services/firestoreService';
 

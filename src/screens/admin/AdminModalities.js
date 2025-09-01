@@ -17,7 +17,7 @@ import {
   Divider
 } from 'react-native-elements';
 import { TextInput } from 'react-native';
-import { Card } from 'react-native-paper';
+import { Card } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';

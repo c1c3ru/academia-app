@@ -8,16 +8,12 @@ import {
 } from 'react-native';
 import { 
   Card, 
-  Title, 
-  TextInput, 
-  Button, 
   Text, 
-  Chip, 
-  HelperText,
-  RadioButton
-} from 'react-native-paper';
+  Button, 
+  Input
+} from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Picker } from '@react-native-picker/picker';
+// import { Picker } from '@react-native-picker/picker'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService } from '../../services/firestoreService';
 

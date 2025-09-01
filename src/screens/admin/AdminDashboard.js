@@ -11,7 +11,7 @@ import {
   ListItem
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+// import { LinearGradient } from 'expo-linear-gradient'; // Removido - dependência não disponível
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, paymentService, announcementService } from '../../services/firestoreService';

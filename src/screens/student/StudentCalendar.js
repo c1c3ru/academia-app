@@ -8,7 +8,7 @@ import {
   Icon
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Calendar } from 'react-native-calendars';
+// import { Calendar } from 'react-native-calendars'; // Removido - dependência não disponível
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, classService } from '../../services/firestoreService';

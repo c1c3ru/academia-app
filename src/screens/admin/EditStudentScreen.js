@@ -8,13 +8,10 @@ import {
 } from 'react-native';
 import { 
   Card, 
-  Title, 
-  TextInput, 
-  Button, 
   Text, 
-  HelperText,
-  RadioButton
-} from 'react-native-paper';
+  Button, 
+  Input
+} from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService } from '../../services/firestoreService';

@@ -10,7 +10,7 @@ import {
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
-import { LinearGradient } from 'expo-linear-gradient';
+// import { LinearGradient } from 'expo-linear-gradient'; // Removido - dependência não disponível
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');

@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl
 } from 'react-native';
-import { Card, Title, Paragraph, IconButton, Button, Chip, FAB, Text } from 'react-native-paper';
+// import { Card, Title, Paragraph, IconButton, Button, Chip, FAB, Text } from 'react-native-paper'; // Removido - dependência não disponível
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
