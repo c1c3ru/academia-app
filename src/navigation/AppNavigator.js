@@ -3,8 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { IconButton } from 'react-native-paper';
-import { Alert } from 'react-native';
+import { Alert, TouchableOpacity } from 'react-native';
+import { Icon } from 'react-native-elements';
 import { useAuth } from '../contexts/AuthContext';
 
 // Telas de Autenticação
@@ -61,8 +61,11 @@ const LogoutButton = () => {
           style: 'destructive',
           onPress: async () => {
             try {
+              console.log('Fazendo logout...');
               await logout();
+              console.log('Logout realizado com sucesso');
             } catch (error) {
+              console.error('Erro no logout:', error);
               Alert.alert('Erro', 'Não foi possível fazer logout');
             }
           }
@@ -72,12 +75,14 @@ const LogoutButton = () => {
   };
 
   return (
-    <IconButton
-      icon="logout"
-      iconColor="#fff"
-      size={24}
-      onPress={handleLogout}
-    />
+    <TouchableOpacity onPress={handleLogout} style={{ marginRight: 15 }}>
+      <Icon
+        name="logout"
+        type="material"
+        color="#fff"
+        size={24}
+      />
+    </TouchableOpacity>
   );
 };
 
@@ -106,7 +111,11 @@ const StudentTabNavigator = () => (
   >
     <Tab.Screen name="Dashboard" component={StudentDashboard} />
     <Tab.Screen name="Pagamentos" component={StudentPayments} />
-    <Tab.Screen name="Evolução" component={StudentEvolution} />
+    <Tab.Screen 
+      name="Evolução" 
+      component={StudentEvolution} 
+      options={{ headerShown: false }}
+    />
     <Tab.Screen name="Calendário" component={StudentCalendar} />
   </Tab.Navigator>
 );
@@ -326,7 +335,7 @@ const MainNavigator = ({ userType }) => {
       {/* Telas Específicas */}
       <Stack.Screen 
         name="StudentAnnouncements" 
-        component={LoadingScreen} // Temporário
+        component={StudentDashboard} // Redirecionamento temporário
         options={{ title: 'Avisos' }}
       />
       <Stack.Screen 

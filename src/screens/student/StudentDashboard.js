@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Platform, Dimensions, TouchableOpacity } from 'react-native';
 import { 
   Card, 
   Text, 
@@ -10,8 +10,12 @@ import {
   Icon
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, classService, paymentService, announcementService } from '../../services/firestoreService';
+
+const { width } = Dimensions.get('window');
 
 const StudentDashboard = ({ navigation }) => {
   const { user, userProfile, logout } = useAuth();
@@ -113,214 +117,236 @@ const StudentDashboard = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header com gradiente */}
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        style={styles.headerGradient}
+      >
+        <View style={styles.headerContent}>
+          <View style={styles.userSection}>
+            <LinearGradient
+              colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']}
+              style={styles.avatarContainer}
+            >
+              <Text style={styles.avatarText}>
+                {userProfile?.name?.charAt(0) || 'U'}
+              </Text>
+            </LinearGradient>
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>{userProfile?.name || 'Usuário'}</Text>
+              <Text style={styles.userEmail}>{user?.email}</Text>
+              <View style={styles.userBadge}>
+                <Ionicons name="school" size={14} color="#fff" />
+                <Text style={styles.badgeText}>Aluno</Text>
+              </View>
+            </View>
+          </View>
+          <TouchableOpacity style={styles.notificationIcon}>
+            <Ionicons name="notifications" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+
       <ScrollView 
-        style={styles.container}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Header com informações do usuário */}
-        <Card containerStyle={styles.userCard}>
-          <View style={styles.userHeader}>
-            <Avatar 
-              size={60} 
-              title={userProfile?.name?.charAt(0) || 'U'}
-              containerStyle={styles.avatar}
-              titleStyle={styles.avatarText}
-            />
-            <View style={styles.userInfo}>
-              <Text h3 style={styles.userName}>{userProfile?.name || 'Usuário'}</Text>
-              <Text style={styles.userEmail}>{user?.email}</Text>
-              <Badge 
-                value="Aluno"
-                status="primary"
-                containerStyle={styles.userTypeChip}
-                textStyle={styles.chipText}
-              />
-            </View>
-          </View>
-        </Card>
 
-        {/* Status de Pagamento */}
-        <Card containerStyle={styles.paymentCard}>
-          <View style={styles.cardHeader}>
-            <Icon name="payment" type="material" size={24} color="#4CAF50" />
-            <Text h4 style={styles.cardTitle}>Status de Pagamento</Text>
-          </View>
-          
-          {dashboardData.paymentStatus ? (
-            <View style={styles.paymentInfo}>
-              <Badge 
-                value={dashboardData.paymentStatus.status === 'paid' ? 'Em dia' : 'Pendente'}
-                status={dashboardData.paymentStatus.status === 'paid' ? 'success' : 'warning'}
-                containerStyle={styles.statusChip}
-                textStyle={styles.statusChipText}
-              />
-              <Text style={styles.paymentDetails}>
-                Vencimento: {dashboardData.paymentStatus.dueDate}
-              </Text>
-              {dashboardData.paymentStatus.status !== 'paid' && (
-                <Button 
-                  title="Ver Detalhes"
-                  type="outline" 
-                  onPress={() => navigation.navigate('StudentPayments')}
-                  buttonStyle={styles.paymentButton}
-                />
-              )}
+        {/* Cards de Status */}
+        <View style={styles.statusCardsContainer}>
+          {/* Status de Pagamento */}
+          <LinearGradient
+            colors={['#4CAF50', '#66BB6A']}
+            style={styles.statusCard}
+          >
+            <View style={styles.statusCardHeader}>
+              <Ionicons name="card" size={24} color="#fff" />
+              <Text style={styles.statusCardTitle}>Pagamento</Text>
             </View>
-          ) : (
-            <Text>Carregando informações de pagamento...</Text>
-          )}
-        </Card>
-
-        {/* Check-in Rápido */}
-        {dashboardData.checkInAvailable && (
-          <Card containerStyle={styles.card}>
-            <View style={styles.cardHeader}>
-              <Icon name="check-circle" type="material" size={24} color="#4CAF50" />
-              <Text h4 style={styles.cardTitle}>Check-in Disponível</Text>
-            </View>
-            <Text style={styles.checkInText}>
-              Você tem uma aula começando em breve!
+            <Text style={styles.statusValue}>
+              {getPaymentStatusText(dashboardData.paymentStatus)}
             </Text>
-            <Button 
-              title="Fazer Check-in"
-              onPress={handleCheckIn}
-              buttonStyle={styles.checkInButton}
-              icon={<Icon name="check" type="material" size={20} color="#fff" />}
-            />
-          </Card>
-        )}
+            <TouchableOpacity 
+              style={styles.statusCardButton}
+              onPress={() => navigation.navigate('Pagamentos')}
+            >
+              <Text style={styles.statusCardButtonText}>Ver Detalhes</Text>
+              <Ionicons name="chevron-forward" size={16} color="#fff" />
+            </TouchableOpacity>
+          </LinearGradient>
+
+          {/* Check-in Status */}
+          <LinearGradient
+            colors={dashboardData.checkInAvailable ? ['#FF6B6B', '#EE5A24'] : ['#95A5A6', '#7F8C8D']}
+            style={styles.statusCard}
+          >
+            <View style={styles.statusCardHeader}>
+              <Ionicons name="checkmark-circle" size={24} color="#fff" />
+              <Text style={styles.statusCardTitle}>Check-in</Text>
+            </View>
+            <Text style={styles.statusValue}>
+              {dashboardData.checkInAvailable ? 'Disponível' : 'Indisponível'}
+            </Text>
+            {dashboardData.checkInAvailable && (
+              <TouchableOpacity 
+                style={styles.statusCardButton}
+                onPress={handleCheckIn}
+              >
+                <Text style={styles.statusCardButtonText}>Fazer Check-in</Text>
+                <Ionicons name="chevron-forward" size={16} color="#fff" />
+              </TouchableOpacity>
+            )}
+          </LinearGradient>
+        </View>
+
 
         {/* Próximas Aulas */}
-        <Card containerStyle={styles.classesCard}>
-          <View style={styles.cardHeader}>
-            <Icon name="event" type="material" size={24} color="#2196F3" />
-            <Text h4 style={styles.cardTitle}>Próximas Aulas</Text>
+        <Card containerStyle={styles.modernCard}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="calendar" size={26} color="#667eea" />
+            <Text style={styles.sectionTitle}>Próximas Aulas</Text>
           </View>
           
           {dashboardData.nextClasses.length > 0 ? (
-            dashboardData.nextClasses.map((classItem, index) => (
-              <View key={index} style={styles.classItem}>
-                <View style={styles.classInfo}>
-                  <Text style={styles.className}>{classItem.name}</Text>
-                  <Text style={styles.classTime}>
-                    {classItem.schedule?.day} - {classItem.schedule?.time}
-                  </Text>
-                  <Text style={styles.classInstructor}>
-                    Prof. {classItem.instructorName}
-                  </Text>
-                </View>
-                <Button 
-                  title="Ver Detalhes"
-                  size="sm"
-                  onPress={() => navigation.navigate('StudentCalendar')}
-                  buttonStyle={styles.classButton}
-                />
-              </View>
-            ))
+            <View style={styles.classesList}>
+              {dashboardData.nextClasses.map((classItem, index) => (
+                <LinearGradient
+                  key={index}
+                  colors={['#f8f9fa', '#ffffff']}
+                  style={styles.classCard}
+                >
+                  <View style={styles.classCardContent}>
+                    <View style={styles.classIconContainer}>
+                      <Ionicons name="fitness" size={20} color="#667eea" />
+                    </View>
+                    <View style={styles.classDetails}>
+                      <Text style={styles.classTitle}>{classItem.name}</Text>
+                      <Text style={styles.classSchedule}>
+                        {classItem.schedule?.day} - {classItem.schedule?.time}
+                      </Text>
+                      <Text style={styles.classInstructorName}>
+                        👨‍🏫 Prof. {classItem.instructorName}
+                      </Text>
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.classActionButton}
+                      onPress={() => navigation.navigate('Calendário')}
+                    >
+                      <Ionicons name="chevron-forward" size={18} color="#667eea" />
+                    </TouchableOpacity>
+                  </View>
+                </LinearGradient>
+              ))}
+            </View>
           ) : (
-            <Text>Nenhuma aula agendada</Text>
+            <View style={styles.emptyState}>
+              <Ionicons name="calendar-outline" size={48} color="#adb5bd" />
+              <Text style={styles.emptyText}>Nenhuma aula agendada</Text>
+              <Text style={styles.emptySubtext}>Suas próximas aulas aparecerão aqui</Text>
+            </View>
           )}
           
-          <Divider style={styles.divider} />
-          
-          <Button 
-            title="Ver Calendário Completo"
-            type="outline"
-            onPress={() => navigation.navigate('StudentCalendar')}
-            buttonStyle={styles.viewAllButton}
-            icon={<Icon name="event" type="material" size={20} color="#2196F3" />}
-          />
+          <TouchableOpacity 
+            style={styles.viewAllButtonModern}
+            onPress={() => navigation.navigate('Calendário')}
+          >
+            <Ionicons name="calendar" size={20} color="#667eea" />
+            <Text style={styles.viewAllButtonText}>Ver Calendário Completo</Text>
+            <Ionicons name="arrow-forward" size={16} color="#667eea" />
+          </TouchableOpacity>
         </Card>
 
         {/* Avisos Recentes */}
-        <Card containerStyle={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="notifications" type="material" size={24} color="#FF9800" />
-            <Text h4 style={styles.cardTitle}>Avisos Recentes</Text>
+        <Card containerStyle={styles.modernCard}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="notifications" size={26} color="#FF9800" />
+            <Text style={styles.sectionTitle}>Avisos Recentes</Text>
           </View>
           
           {dashboardData.recentAnnouncements.length > 0 ? (
-            dashboardData.recentAnnouncements.map((announcement, index) => (
-              <View key={index} style={styles.announcementItem}>
-                <Text style={styles.announcementTitle}>{announcement.title}</Text>
-                <Text style={styles.announcementContent} numberOfLines={2}>
-                  {announcement.content}
-                </Text>
-                {index < dashboardData.recentAnnouncements.length - 1 && (
-                  <Divider style={styles.divider} />
-                )}
-              </View>
-            ))
+            <View style={styles.announcementsList}>
+              {dashboardData.recentAnnouncements.map((announcement, index) => (
+                <LinearGradient
+                  key={index}
+                  colors={['#fff5e6', '#ffffff']}
+                  style={styles.announcementCard}
+                >
+                  <View style={styles.announcementHeader}>
+                    <View style={styles.announcementIconContainer}>
+                      <Ionicons name="megaphone" size={18} color="#FF9800" />
+                    </View>
+                    <Text style={styles.announcementTitle}>{announcement.title}</Text>
+                  </View>
+                  <Text style={styles.announcementContent} numberOfLines={2}>
+                    {announcement.content}
+                  </Text>
+                </LinearGradient>
+              ))}
+            </View>
           ) : (
-            <Text>Nenhum aviso recente</Text>
+            <View style={styles.emptyState}>
+              <Ionicons name="notifications-outline" size={48} color="#adb5bd" />
+              <Text style={styles.emptyText}>Nenhum aviso recente</Text>
+              <Text style={styles.emptySubtext}>Novos avisos aparecerão aqui</Text>
+            </View>
           )}
           
-        </Card>
-
-        {/* Avisos Recentes */}
-        <Card containerStyle={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="notifications" type="material" size={24} color="#FF9800" />
-            <Text h4 style={styles.cardTitle}>Avisos Recentes</Text>
-          </View>
-          
-          {dashboardData.recentAnnouncements.length > 0 ? (
-            dashboardData.recentAnnouncements.map((announcement, index) => (
-              <View key={index} style={styles.announcementItem}>
-                <Text style={styles.announcementTitle}>{announcement.title}</Text>
-                <Text style={styles.announcementContent} numberOfLines={2}>
-                  {announcement.content}
-                </Text>
-                {index < dashboardData.recentAnnouncements.length - 1 && (
-                  <Divider style={styles.divider} />
-                )}
-              </View>
-            ))
-          ) : (
-            <Text>Nenhum aviso recente</Text>
-          )}
-          
-          <Button 
-            title="Ver Todos os Avisos"
-            type="outline"
+          <TouchableOpacity 
+            style={styles.viewAllButtonModern}
             onPress={() => navigation.navigate('StudentAnnouncements')}
-            buttonStyle={styles.viewAllButton}
-            icon={<Icon name="notifications" type="material" size={20} color="#FF9800" />}
-          />
+          >
+            <Ionicons name="notifications" size={20} color="#FF9800" />
+            <Text style={[styles.viewAllButtonText, { color: '#FF9800' }]}>Ver Todos os Avisos</Text>
+            <Ionicons name="arrow-forward" size={16} color="#FF9800" />
+          </TouchableOpacity>
         </Card>
 
         {/* Acesso Rápido */}
-        <Card containerStyle={styles.card}>
-          <Text h4 style={styles.cardTitle}>Acesso Rápido</Text>
-          <View style={styles.quickActions}>
-            <Button 
-              title="Minha Evolução"
-              type="outline" 
-              onPress={() => navigation.navigate('StudentEvolution')}
-              buttonStyle={styles.quickActionButton}
-              icon={<Icon name="trending-up" type="material" size={20} color="#2196F3" />}
-            />
-            <Button 
-              title="Pagamentos"
-              type="outline" 
-              onPress={() => navigation.navigate('StudentPayments')}
-              buttonStyle={styles.quickActionButton}
-              icon={<Icon name="payment" type="material" size={20} color="#2196F3" />}
-            />
+        <Card containerStyle={styles.modernCard}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="flash" size={26} color="#9C27B0" />
+            <Text style={styles.sectionTitle}>Acesso Rápido</Text>
           </View>
           
-          <View style={styles.logoutContainer}>
-            <Button 
-              title="Sair"
-              type="outline" 
-              onPress={handleLogout}
-              buttonStyle={styles.logoutButton}
-              titleStyle={styles.logoutButtonText}
-              icon={<Icon name="logout" type="material" size={20} color="#F44336" />}
-            />
+          <View style={styles.quickActionsGrid}>
+            <TouchableOpacity 
+              style={styles.quickActionCard}
+              onPress={() => navigation.navigate('Evolução')}
+            >
+              <LinearGradient
+                colors={['#667eea', '#764ba2']}
+                style={styles.quickActionGradient}
+              >
+                <Ionicons name="trending-up" size={28} color="#fff" />
+                <Text style={styles.quickActionText}>Minha Evolução</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.quickActionCard}
+              onPress={() => navigation.navigate('Pagamentos')}
+            >
+              <LinearGradient
+                colors={['#4CAF50', '#66BB6A']}
+                style={styles.quickActionGradient}
+              >
+                <Ionicons name="card" size={28} color="#fff" />
+                <Text style={styles.quickActionText}>Pagamentos</Text>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
+          
+          <TouchableOpacity 
+            style={styles.logoutButtonModern}
+            onPress={handleLogout}
+          >
+            <Ionicons name="log-out" size={20} color="#F44336" />
+            <Text style={styles.logoutButtonTextModern}>Sair da Conta</Text>
+          </TouchableOpacity>
         </Card>
       </ScrollView>
     </SafeAreaView>
@@ -330,198 +356,368 @@ const StudentDashboard = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f9fa',
+  },
+  headerGradient: {
+    paddingTop: 20,
+    paddingBottom: 25,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  userSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatarContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  avatarText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 0.3,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: '#fff',
+    opacity: 0.9,
+    marginTop: 2,
+  },
+  userBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 6,
+    alignSelf: 'flex-start',
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
+    marginLeft: 4,
+  },
+  notificationIcon: {
+    padding: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
   },
   scrollView: {
     flex: 1,
   },
-  userCard: {
-    margin: 16,
-    marginBottom: 8,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-
-      },
-
-    }),
+  scrollContent: {
+    paddingBottom: 40,
   },
-  userHeader: {
+  statusCardsContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 32,
+    gap: 12,
   },
-  userInfo: {
-    marginLeft: 16,
+  statusCard: {
     flex: 1,
-  },
-  userName: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-  },
-  userEmail: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  userTypeChip: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
-  },
-  chipText: {
-    fontSize: 12,
-  },
-  paymentCard: {
-    margin: 16,
-    marginTop: 8,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-
-      },
-
-    }),
-  },
-  paymentInfo: {
-    marginTop: 8,
-  },
-  statusChip: {
-    marginBottom: 8,
-    alignSelf: 'flex-start',
-  },
-  statusChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  paymentDetails: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-  },
-  paymentButton: {
-    alignSelf: 'flex-start',
-  },
-  classesCard: {
-    margin: 16,
-    marginTop: 8,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-
-      },
-
-    }),
-  },
-  classItem: {
-    flexDirection: 'row',
+    padding: 20,
+    borderRadius: 16,
+    minHeight: 120,
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+      web: {
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      },
+    }),
   },
-  classInfo: {
+  statusCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statusCardTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    marginLeft: 8,
+  },
+  statusValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  statusCardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  statusCardButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
+    marginRight: 4,
+  },
+  modernCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+      },
+    }),
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
+    marginLeft: 12,
+    letterSpacing: 0.3,
+  },
+  classesList: {
+    gap: 12,
+  },
+  classCard: {
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#667eea',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)',
+      },
+    }),
+  },
+  classCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  classIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  classDetails: {
     flex: 1,
   },
-  className: {
+  classTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 4,
+  },
+  classSchedule: {
+    fontSize: 14,
+    color: '#667eea',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  classInstructorName: {
+    fontSize: 13,
+    color: '#666',
+  },
+  classActionButton: {
+    padding: 8,
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    borderRadius: 20,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-  },
-  classTime: {
-    fontSize: 14,
     color: '#666',
-    marginTop: 2,
-  },
-  classInstructor: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
-  },
-  classButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  divider: {
-    marginVertical: 12,
-  },
-  viewAllButton: {
     marginTop: 12,
   },
-  checkInText: {
+  emptySubtext: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
+    color: '#999',
+    marginTop: 4,
     textAlign: 'center',
   },
-  checkInButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 25,
+  viewAllButtonModern: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8f9fa',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
   },
-  announcementItem: {
-    paddingVertical: 8,
+  viewAllButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#667eea',
+    marginHorizontal: 8,
+  },
+  announcementsList: {
+    gap: 12,
+  },
+  announcementCard: {
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF9800',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)',
+      },
+    }),
+  },
+  announcementHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  announcementIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 152, 0, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   announcementTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
-    marginBottom: 4,
+    flex: 1,
   },
   announcementContent: {
     fontSize: 14,
     color: '#666',
+    lineHeight: 20,
   },
-  quickActions: {
+  quickActionsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
+    gap: 12,
+    marginBottom: 20,
   },
-  quickActionButton: {
-    flex: 0.48,
+  quickActionCard: {
+    flex: 1,
   },
-  logoutContainer: {
-    marginTop: 20,
+  quickActionGradient: {
+    padding: 20,
+    borderRadius: 16,
     alignItems: 'center',
+    minHeight: 100,
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      },
+    }),
   },
-  logoutButton: {
+  quickActionText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  logoutButtonModern: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
     borderColor: '#F44336',
-    borderRadius: 25,
   },
-  logoutButtonText: {
-    color: '#F44336',
-  },
-  avatarText: {
-    color: 'white',
+  logoutButtonTextModern: {
+    fontSize: 14,
     fontWeight: '600',
+    color: '#F44336',
+    marginLeft: 8,
   },
 });
+
+export default StudentDashboard;

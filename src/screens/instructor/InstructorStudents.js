@@ -9,8 +9,7 @@ import {
   Icon,
   ListItem,
   Divider,
-  SearchBar,
-  FAB
+  SearchBar
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -124,7 +123,7 @@ const InstructorStudents = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Searchbar
+        <SearchBar
           placeholder="Buscar alunos..."
           onChangeText={setSearchQuery}
           value={searchQuery}
@@ -165,14 +164,13 @@ const InstructorStudents = ({ navigation }) => {
       >
         {filteredStudents.length > 0 ? (
           filteredStudents.map((student, index) => (
-            <Card key={student.id || index} style={styles.studentCard}>
-              <Card.Content>
+            <Card key={student.id || index} containerStyle={styles.studentCard}>
                 <View style={styles.studentHeader}>
                   <View style={styles.studentInfo}>
-                    <Avatar.Text 
+                    <Avatar 
                       size={50} 
-                      label={student.name?.charAt(0) || 'A'} 
-                      style={styles.avatar}
+                      title={student.name?.charAt(0) || 'A'} 
+                      containerStyle={styles.avatar}
                     />
                     <View style={styles.studentDetails}>
                       <Text style={styles.studentName}>{student.name}</Text>
@@ -244,26 +242,22 @@ const InstructorStudents = ({ navigation }) => {
                     type="outline"
                     onPress={() => handleStudentPress(student)}
                     buttonStyle={styles.actionButton}
-                    icon={<Icon name="eye" size={20} color="#666" />}
-                  >
-                    Ver Perfil
-                  </Button>
+                    icon={<Icon name="visibility" type="material" size={20} color="#666" />}
+                    title="Ver Perfil"
+                  />
 
                   <Button 
                     type="solid"
                     onPress={() => handleAddGraduation(student)}
                     buttonStyle={styles.actionButton}
-                    icon={<Icon name="trophy" size={20} color="white" />}
-                  >
-                    Graduação
-                  </Button>
+                    icon={<Icon name="emoji-events" type="material" size={20} color="white" />}
+                    title="Graduação"
+                  />
                 </View>
-              </Card.Content>
             </Card>
           ))
         ) : (
-          <Card style={styles.emptyCard}>
-            <Card.Content style={styles.emptyContent}>
+          <Card containerStyle={styles.emptyCard}>
               <Ionicons name="people-outline" size={48} color="#ccc" />
               <Text style={styles.emptyTitle}>Nenhum aluno encontrado</Text>
               <Text style={styles.emptyText}>
@@ -272,14 +266,12 @@ const InstructorStudents = ({ navigation }) => {
                   'Você ainda não possui alunos atribuídos'
                 }
               </Text>
-            </Card.Content>
           </Card>
         )}
 
         {/* Estatísticas gerais */}
         {students.length > 0 && (
-          <Card style={styles.statsCard}>
-            <Card.Content>
+          <Card containerStyle={styles.statsCard}>
               <Text style={styles.statsTitle}>Resumo dos Alunos</Text>
               
               <View style={styles.statsRow}>
@@ -309,18 +301,16 @@ const InstructorStudents = ({ navigation }) => {
                   <Text style={styles.statLabel}>Com Graduação</Text>
                 </View>
               </View>
-            </Card.Content>
           </Card>
         )}
       </ScrollView>
 
-      <FAB
+      <TouchableOpacity
         style={styles.fab}
-        icon={{ name: 'person-add', color: 'white' }}
-        title="Novo Aluno"
         onPress={() => Alert.alert('Info', 'Funcionalidade disponível apenas para administradores')}
-        color="#2196F3"
-      />
+      >
+        <Icon name="person-add" type="material" size={24} color="white" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };

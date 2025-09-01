@@ -54,19 +54,27 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password, userData) => {
     try {
+      console.log('Iniciando cadastro:', { email, userData });
       const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('Usuário criado no Firebase Auth:', firebaseUser.uid);
       
       // Criar perfil do usuário no Firestore
-      await setDoc(doc(db, 'users', firebaseUser.uid), {
+      const userProfile = {
         ...userData,
         email,
         createdAt: new Date(),
         updatedAt: new Date()
-      });
+      };
+      
+      console.log('Salvando perfil no Firestore:', userProfile);
+      await setDoc(doc(db, 'users', firebaseUser.uid), userProfile);
+      console.log('Perfil salvo com sucesso');
 
       await fetchUserProfile(firebaseUser.uid);
+      console.log('Cadastro concluído com sucesso');
       return firebaseUser;
     } catch (error) {
+      console.error('Erro detalhado no signUp:', error);
       throw error;
     }
   };
