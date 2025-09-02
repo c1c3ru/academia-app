@@ -25,6 +25,9 @@ import StudentCalendar from '../screens/student/StudentCalendar';
 import InstructorDashboard from '../screens/instructor/InstructorDashboard';
 import InstructorClasses from '../screens/instructor/InstructorClasses';
 import InstructorStudents from '../screens/instructor/InstructorStudents';
+import NovaAula from '../screens/instructor/NovaAula';
+import CheckIn from '../screens/instructor/CheckIn';
+import Relatorios from '../screens/instructor/Relatorios';
 
 // Telas do Admin
 import AdminDashboard from '../screens/admin/AdminDashboard';
@@ -91,6 +94,60 @@ const StudentTabNavigator = () => (
       options={{ title: 'Calendário de Aulas' }}
     />
   </Tab.Navigator>
+);
+
+// Stack Navigator para Instrutor (para incluir telas modais)
+const InstructorStack = createStackNavigator();
+
+const InstructorStackNavigator = () => (
+  <InstructorStack.Navigator screenOptions={{ headerShown: false }}>
+    <InstructorStack.Screen name="InstructorTabs" component={InstructorTabNavigator} />
+    <InstructorStack.Screen 
+      name="NovaAula" 
+      component={NovaAula}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Nova Aula"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#4CAF50"
+          />
+        ),
+      }}
+    />
+    <InstructorStack.Screen 
+      name="CheckIn" 
+      component={CheckIn}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Check-in"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#4CAF50"
+          />
+        ),
+      }}
+    />
+    <InstructorStack.Screen 
+      name="Relatorios" 
+      component={Relatorios}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Relatórios"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#4CAF50"
+          />
+        ),
+      }}
+    />
+  </InstructorStack.Navigator>
 );
 
 // Navegação para Professores
@@ -219,7 +276,7 @@ const ResponsiveMainNavigator = ({ userType }) => {
       TabNavigator = StudentTabNavigator;
       break;
     case 'instructor':
-      TabNavigator = InstructorTabNavigator;
+      TabNavigator = InstructorStackNavigator;
       break;
     case 'admin':
       TabNavigator = AdminTabNavigator;
