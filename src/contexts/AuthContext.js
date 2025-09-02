@@ -54,37 +54,65 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password, userData) => {
     try {
-      console.log('Iniciando cadastro:', { email, userData });
       const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('Usuário criado no Firebase Auth:', firebaseUser.uid);
       
       // Criar perfil do usuário no Firestore
-      const userProfile = {
+      await setDoc(doc(db, 'users', firebaseUser.uid), {
         ...userData,
         email,
         createdAt: new Date(),
         updatedAt: new Date()
-      };
-      
-      console.log('Salvando perfil no Firestore:', userProfile);
-      await setDoc(doc(db, 'users', firebaseUser.uid), userProfile);
-      console.log('Perfil salvo com sucesso');
+      });
 
       await fetchUserProfile(firebaseUser.uid);
-      console.log('Cadastro concluído com sucesso');
       return firebaseUser;
     } catch (error) {
-      console.error('Erro detalhado no signUp:', error);
       throw error;
     }
   };
 
   const signIn = async (email, password) => {
     try {
-      const { user: firebaseUser } = await signInWithEmailAndPassword(auth, email, password);
+      console.log('🔐 Tentando login com:', { 
+        email: email, 
+        emailType: typeof email,
+        emailLength: email ? email.length : 0,
+        password: password ? '***' : 'undefined',
+        passwordType: typeof password,
+        passwordLength: password ? password.length : 0
+      });
+      console.log('📧 Email válido:', email && email.includes('@'));
+      console.log('📧 Email trim:', email ? email.trim() : 'undefined');
+      console.log('🔑 Senha trim:', password ? password.trim() : 'undefined');
+      
+      // Limpar e validar dados
+      const cleanEmail = email ? email.trim().toLowerCase() : '';
+      const cleanPassword = password ? password.trim() : '';
+      
+      console.log('🧹 Dados limpos:', {
+        email: cleanEmail,
+        password: cleanPassword ? '***' : 'undefined'
+      });
+      
+      if (!cleanEmail || !cleanPassword) {
+        throw new Error('Email e senha são obrigatórios');
+      }
+      
+      const { user: firebaseUser } = await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+      console.log('✅ Login bem-sucedido:', firebaseUser.email);
+      
       await fetchUserProfile(firebaseUser.uid);
       return firebaseUser;
     } catch (error) {
+      console.error('❌ Erro detalhado no login:', {
+        code: error.code,
+        message: error.message,
+        email: email,
+        emailType: typeof email,
+        passwordLength: password ? password.length : 0,
+        passwordType: typeof password,
+        stack: error.stack
+      });
       throw error;
     }
   };

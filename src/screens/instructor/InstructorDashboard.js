@@ -1,25 +1,31 @@
+
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Platform, TouchableOpacity, Dimensions, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Animated, Platform } from 'react-native';
 import { 
   Card, 
-  Text, 
+  Title, 
+  Paragraph, 
   Button, 
   Avatar,
-  Badge,
+  Chip,
   Divider,
-  Icon,
-  ListItem
-} from 'react-native-elements';
+  Text,
+  Surface,
+  List
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-// import { LinearGradient } from 'expo-linear-gradient'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, classService, studentService } from '../../services/firestoreService';
-
-const { width } = Dimensions.get('window');
+import AnimatedCard from '../../components/AnimatedCard';
+import AnimatedButton from '../../components/AnimatedButton';
+import { useAnimation, ResponsiveUtils } from '../../utils/animations';
 
 const InstructorDashboard = ({ navigation }) => {
   const { user, userProfile, logout } = useAuth();
+  const { animations, startEntryAnimation } = useAnimation();
+  const scrollY = new Animated.Value(0);
+  
   const [dashboardData, setDashboardData] = useState({
     myClasses: [],
     todayClasses: [],
@@ -33,6 +39,7 @@ const InstructorDashboard = ({ navigation }) => {
 
   useEffect(() => {
     loadDashboardData();
+    startEntryAnimation();
   }, []);
 
   const loadDashboardData = async () => {
@@ -98,288 +105,379 @@ const InstructorDashboard = ({ navigation }) => {
   };
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Confirmar Logout',
-      'Tem certeza que deseja sair da sua conta?',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Sair',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-              Alert.alert('Sucesso', 'Logout realizado com sucesso!');
-            } catch (error) {
-              console.error('Erro ao fazer logout:', error);
-              Alert.alert('Erro', 'Não foi possível fazer logout. Tente novamente.');
-            }
-          },
-        },
-      ],
-      { cancelable: false }
-    );
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  };
+
+  const headerTransform = {
+    transform: [
+      {
+        translateY: scrollY.interpolate({
+          inputRange: [0, 100],
+          outputRange: [0, -20],
+          extrapolate: 'clamp',
+        }),
+      },
+    ],
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header com gradiente */}
-      <LinearGradient
-        colors={['#4CAF50', '#66BB6A']}
-        style={styles.headerGradient}
-      >
-        <View style={styles.headerContent}>
-          <View style={styles.userSection}>
-            <LinearGradient
-              colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']}
-              style={styles.avatarContainer}
-            >
-              <Text style={styles.avatarText}>
-                {userProfile?.name?.charAt(0) || 'I'}
-              </Text>
-            </LinearGradient>
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>{userProfile?.name || 'Instrutor'}</Text>
-              <Text style={styles.userEmail}>{user?.email}</Text>
-              <View style={styles.userBadge}>
-                <Ionicons name="school" size={14} color="#fff" />
-                <Text style={styles.badgeText}>Instrutor</Text>
-              </View>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.notificationIcon}>
-            <Ionicons name="notifications" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
-
-      <ScrollView 
+      <Animated.ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: Platform.OS !== 'web' }
+        )}
+        scrollEventThrottle={16}
       >
+        {/* Header do Professor */}
+        <Animated.View style={[headerTransform]}>
+          <AnimatedCard delay={0} style={styles.headerCard}>
+            <Card.Content style={styles.headerContent}>
+              <Animated.View
+                style={{
+                  transform: [{ scale: animations.scaleAnim }],
+                }}
+              >
+                <Avatar.Text 
+                  size={ResponsiveUtils.isTablet() ? 80 : 60} 
+                  label={userProfile?.name?.charAt(0) || 'P'} 
+                  style={styles.avatar}
+                />
+              </Animated.View>
+              <View style={styles.headerText}>
+                <Title style={[styles.welcomeText, { fontSize: ResponsiveUtils.fontSize.large }]}>
+                  Professor {userProfile?.name?.split(' ')[0] || 'Usuário'}
+                </Title>
+                <Paragraph style={[styles.roleText, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                  {userProfile?.specialties?.join(', ') || 'Instrutor'}
+                </Paragraph>
+              </View>
+            </Card.Content>
+          </AnimatedCard>
+        </Animated.View>
 
-        {/* Cards de Estatísticas */}
-        <View style={styles.statsCardsContainer}>
-          <LinearGradient
-            colors={['#2196F3', '#42A5F5']}
-            style={styles.statCardModern}
-          >
-            <View style={styles.statCardHeader}>
-              <Ionicons name="people" size={24} color="#fff" />
-              <Text style={styles.statCardTitle}>Alunos</Text>
+        {/* Estatísticas Rápidas */}
+        <AnimatedCard delay={100} style={styles.card}>
+          <Card.Content>
+            <View style={styles.cardHeader}>
+              <Ionicons name="analytics-outline" size={24} color="#4CAF50" />
+              <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                Visão Geral
+              </Title>
             </View>
-            <Text style={styles.statValue}>{dashboardData.totalStudents}</Text>
-            <TouchableOpacity 
-              style={styles.statCardButton}
-              onPress={() => navigation.navigate('Alunos')}
-            >
-              <Text style={styles.statCardButtonText}>Ver Todos</Text>
-              <Ionicons name="chevron-forward" size={16} color="#fff" />
-            </TouchableOpacity>
-          </LinearGradient>
-
-          <LinearGradient
-            colors={['#FF9800', '#FFB74D']}
-            style={styles.statCardModern}
-          >
-            <View style={styles.statCardHeader}>
-              <Ionicons name="today" size={24} color="#fff" />
-              <Text style={styles.statCardTitle}>Hoje</Text>
+            
+            <View style={styles.statsGrid}>
+              <Animated.View
+                style={{
+                  opacity: animations.fadeAnim,
+                  transform: [{ scale: animations.scaleAnim }],
+                }}
+              >
+                <Surface style={styles.statItem}>
+                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
+                    {dashboardData.myClasses.length}
+                  </Text>
+                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                    Minhas Turmas
+                  </Text>
+                </Surface>
+              </Animated.View>
+              
+              <Animated.View
+                style={{
+                  opacity: animations.fadeAnim,
+                  transform: [{ scale: animations.scaleAnim }],
+                }}
+              >
+                <Surface style={styles.statItem}>
+                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
+                    {dashboardData.totalStudents}
+                  </Text>
+                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                    Total Alunos
+                  </Text>
+                </Surface>
+              </Animated.View>
+              
+              <Animated.View
+                style={{
+                  opacity: animations.fadeAnim,
+                  transform: [{ scale: animations.scaleAnim }],
+                }}
+              >
+                <Surface style={styles.statItem}>
+                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
+                    {dashboardData.todayClasses.length}
+                  </Text>
+                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                    Aulas Hoje
+                  </Text>
+                </Surface>
+              </Animated.View>
+              
+              <Animated.View
+                style={{
+                  opacity: animations.fadeAnim,
+                  transform: [{ scale: animations.scaleAnim }],
+                }}
+              >
+                <Surface style={styles.statItem}>
+                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
+                    {dashboardData.activeCheckIns}
+                  </Text>
+                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                    Check-ins Ativos
+                  </Text>
+                </Surface>
+              </Animated.View>
             </View>
-            <Text style={styles.statValue}>{dashboardData.todayClasses.length}</Text>
-            <TouchableOpacity 
-              style={styles.statCardButton}
-              onPress={() => navigation.navigate('Turmas')}
-            >
-              <Text style={styles.statCardButtonText}>Ver Aulas</Text>
-              <Ionicons name="chevron-forward" size={16} color="#fff" />
-            </TouchableOpacity>
-          </LinearGradient>
-        </View>
+          </Card.Content>
+        </AnimatedCard>
 
         {/* Aulas de Hoje */}
-        <Card containerStyle={styles.modernCard}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="today" size={26} color="#4CAF50" />
-            <Text style={styles.sectionTitle}>Aulas de Hoje</Text>
-          </View>
-          
-          {dashboardData.todayClasses.length > 0 ? (
-            <View style={styles.classesList}>
-              {dashboardData.todayClasses.map((classItem, index) => (
-                <LinearGradient
-                  key={classItem.id || `class-${index}`}
-                  colors={['#f8f9fa', '#ffffff']}
-                  style={styles.classCard}
+        <AnimatedCard delay={200} style={styles.card}>
+          <Card.Content>
+            <View style={styles.cardHeader}>
+              <Ionicons name="today-outline" size={24} color="#2196F3" />
+              <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                Aulas de Hoje
+              </Title>
+            </View>
+            
+            {dashboardData.todayClasses.length > 0 ? (
+              dashboardData.todayClasses.map((classItem, index) => (
+                <Animated.View 
+                  key={index} 
+                  style={[
+                    styles.classItem,
+                    {
+                      opacity: animations.fadeAnim,
+                      transform: [{
+                        translateY: animations.slideAnim.interpolate({
+                          inputRange: [-50, 0],
+                          outputRange: [-20, 0],
+                        })
+                      }]
+                    }
+                  ]}
                 >
-                  <View style={styles.classCardContent}>
-                    <View style={styles.classIconContainer}>
-                      <Ionicons name="fitness" size={20} color="#4CAF50" />
-                    </View>
-                    <View style={styles.classDetails}>
-                      <Text style={styles.classTitle}>{classItem.name}</Text>
-                      <Text style={styles.classSchedule}>
-                        {classItem.schedule?.map((s) => 
-                          `${getDayName(s.dayOfWeek)} ${formatTime(s.hour, s.minute)}`
-                        ).join(', ')}
-                      </Text>
-                      <Text style={styles.classCapacityText}>
-                        👥 {classItem.currentStudents || 0}/{classItem.maxCapacity || 'N/A'} alunos
-                      </Text>
-                    </View>
-                    <TouchableOpacity 
-                      style={styles.classActionButton}
-                      onPress={() => navigation.navigate('Turmas', { classId: classItem.id })}
-                    >
-                      <Ionicons name="chevron-forward" size={18} color="#4CAF50" />
-                    </TouchableOpacity>
+                  <View style={styles.classHeader}>
+                    <Text style={[styles.className, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                      {classItem.name}
+                    </Text>
+                    <Chip mode="outlined" style={styles.modalityChip}>
+                      {classItem.modality}
+                    </Chip>
                   </View>
-                </LinearGradient>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="calendar-outline" size={48} color="#adb5bd" />
-              <Text style={styles.emptyText}>Nenhuma aula agendada para hoje</Text>
-              <Text style={styles.emptySubtext}>Suas aulas aparecerão aqui</Text>
-            </View>
-          )}
-        </Card>
+                  
+                  <View style={styles.classDetails}>
+                    <Text style={[styles.classTime, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                      {classItem.schedule?.map(s => 
+                        `${getDayName(s.dayOfWeek)} ${formatTime(s.hour, s.minute)}`
+                      ).join(', ')}
+                    </Text>
+                    <Text style={[styles.classCapacity, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                      Capacidade: {classItem.currentStudents || 0}/{classItem.maxCapacity || 'N/A'}
+                    </Text>
+                  </View>
+                  
+                  <AnimatedButton 
+                    mode="outlined" 
+                    onPress={() => navigation.navigate('Turmas', { classId: classItem.id })}
+                    style={styles.classButton}
+                    icon="eye"
+                  >
+                    Ver Detalhes
+                  </AnimatedButton>
+                  
+                  {index < dashboardData.todayClasses.length - 1 && (
+                    <Divider style={styles.divider} />
+                  )}
+                </Animated.View>
+              ))
+            ) : (
+              <Paragraph style={[styles.emptyText, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                Nenhuma aula agendada para hoje
+              </Paragraph>
+            )}
+          </Card.Content>
+        </AnimatedCard>
 
         {/* Ações Rápidas */}
-        <Card containerStyle={styles.modernCard}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="flash" size={26} color="#FF9800" />
-            <Text style={styles.sectionTitle}>Ações Rápidas</Text>
-          </View>
-          
-          <View style={styles.quickActionsGrid}>
-            <TouchableOpacity 
-              style={styles.quickActionCardModern}
-              onPress={() => navigation.navigate('Turmas')}
-            >
-              <LinearGradient
-                colors={['#2196F3', '#42A5F5']}
-                style={styles.quickActionGradient}
-              >
-                <Ionicons name="school" size={28} color="#fff" />
-                <Text style={styles.quickActionText}>Turmas</Text>
-                <Text style={styles.quickActionCount}>{dashboardData.myClasses.length}</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+        <AnimatedCard delay={300} style={styles.card}>
+          <Card.Content>
+            <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+              Ações Rápidas
+            </Title>
             
-            <TouchableOpacity 
-              style={styles.quickActionCardModern}
-              onPress={() => navigation.navigate('Alunos')}
-            >
-              <LinearGradient
-                colors={['#4CAF50', '#66BB6A']}
-                style={styles.quickActionGradient}
+            <View style={styles.quickActions}>
+              <AnimatedButton 
+                mode="contained" 
+                onPress={() => navigation.navigate('Turmas')}
+                style={[styles.quickActionButton, { backgroundColor: '#4CAF50' }]}
+                icon="school"
               >
-                <Ionicons name="people" size={28} color="#fff" />
-                <Text style={styles.quickActionText}>Alunos</Text>
-                <Text style={styles.quickActionCount}>{dashboardData.totalStudents}</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.quickActionsGrid}>
-            <TouchableOpacity 
-              style={styles.quickActionCardModern}
-              onPress={() => navigation.navigate('AddGraduation')}
-            >
-              <LinearGradient
-                colors={['#FF9800', '#FFB74D']}
-                style={styles.quickActionGradient}
+                Minhas Turmas
+              </AnimatedButton>
+              
+              <AnimatedButton 
+                mode="contained" 
+                onPress={() => navigation.navigate('Alunos')}
+                style={[styles.quickActionButton, { backgroundColor: '#2196F3' }]}
+                icon="account"
               >
-                <Ionicons name="trophy" size={28} color="#fff" />
-                <Text style={styles.quickActionText}>Graduações</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+                Meus Alunos
+              </AnimatedButton>
+            </View>
             
-            <TouchableOpacity 
-              style={styles.quickActionCardModern}
-              onPress={() => navigation.navigate('CheckIns')}
-            >
-              <LinearGradient
-                colors={['#9C27B0', '#BA68C8']}
-                style={styles.quickActionGradient}
+            <View style={styles.quickActions}>
+              <AnimatedButton 
+                mode="outlined" 
+                onPress={() => {/* Implementar graduação rápida */}}
+                style={styles.quickActionButton}
+                icon="trophy"
               >
-                <Ionicons name="checkmark-done" size={28} color="#fff" />
-                <Text style={styles.quickActionText}>Check-ins</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </Card>
+                Registrar Graduação
+              </AnimatedButton>
+              
+              <AnimatedButton 
+                mode="outlined" 
+                onPress={() => {/* Implementar check-in */}}
+                style={styles.quickActionButton}
+                icon="check"
+              >
+                Ver Check-ins
+              </AnimatedButton>
+            </View>
+            
+            <View style={styles.logoutContainer}>
+              <AnimatedButton 
+                mode="outlined" 
+                onPress={handleLogout}
+                style={styles.logoutButton}
+                icon="logout"
+                buttonColor="#FFEBEE"
+                textColor="#F44336"
+              >
+                Sair
+              </AnimatedButton>
+            </View>
+          </Card.Content>
+        </AnimatedCard>
 
         {/* Graduações Recentes */}
-        <Card containerStyle={styles.modernCard}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="trophy" size={26} color="#FFD700" />
-            <Text style={styles.sectionTitle}>Graduações Recentes</Text>
-          </View>
-          
-          {dashboardData.recentGraduations.length > 0 ? (
-            <View style={styles.graduationsList}>
-              {dashboardData.recentGraduations.map((graduation, index) => (
-                <LinearGradient
-                  key={graduation.id || `graduation-${index}`}
-                  colors={['#fff9c4', '#ffffff']}
-                  style={styles.graduationCard}
+        <AnimatedCard delay={400} style={styles.card}>
+          <Card.Content>
+            <View style={styles.cardHeader}>
+              <Ionicons name="trophy-outline" size={24} color="#FFD700" />
+              <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                Graduações Recentes
+              </Title>
+            </View>
+            
+            {dashboardData.recentGraduations.length > 0 ? (
+              dashboardData.recentGraduations.map((graduation, index) => (
+                <Animated.View
+                  key={index}
+                  style={{
+                    opacity: animations.fadeAnim,
+                    transform: [{
+                      translateX: animations.slideAnim.interpolate({
+                        inputRange: [-50, 0],
+                        outputRange: [-30, 0],
+                      })
+                    }]
+                  }}
                 >
-                  <View style={styles.graduationHeader}>
-                    <View style={styles.graduationIconContainer}>
-                      <Ionicons name="medal" size={18} color="#FFD700" />
-                    </View>
-                    <View style={styles.graduationDetails}>
-                      <Text style={styles.graduationStudentName}>{graduation.studentName}</Text>
-                      <Text style={styles.graduationInfo}>
-                        {graduation.graduation} • {graduation.modality}
-                      </Text>
-                      <Text style={styles.graduationDate}>
-                        📅 {graduation.date.toLocaleDateString('pt-BR')}
-                      </Text>
-                    </View>
-                  </View>
-                </LinearGradient>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="trophy-outline" size={48} color="#adb5bd" />
-              <Text style={styles.emptyText}>Nenhuma graduação recente</Text>
-              <Text style={styles.emptySubtext}>Graduações aparecerão aqui</Text>
-            </View>
-          )}
-          
-          <TouchableOpacity 
-            style={styles.viewAllButtonModern}
-            onPress={() => navigation.navigate('Graduações')}
-          >
-            <Ionicons name="trophy" size={20} color="#FFD700" />
-            <Text style={[styles.viewAllButtonText, { color: '#FFD700' }]}>Ver Todas as Graduações</Text>
-            <Ionicons name="arrow-forward" size={16} color="#FFD700" />
-          </TouchableOpacity>
-        </Card>
+                  <List.Item
+                    title={`${graduation.studentName} - ${graduation.graduation}`}
+                    description={`${graduation.modality} • ${graduation.date.toLocaleDateString('pt-BR')}`}
+                    titleStyle={{ fontSize: ResponsiveUtils.fontSize.medium }}
+                    descriptionStyle={{ fontSize: ResponsiveUtils.fontSize.small }}
+                    left={() => <List.Icon icon="trophy" color="#FFD700" />}
+                  />
+                </Animated.View>
+              ))
+            ) : (
+              <Paragraph style={[styles.emptyText, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                Nenhuma graduação recente
+              </Paragraph>
+            )}
+            
+            <AnimatedButton 
+              mode="text" 
+              onPress={() => {/* Implementar histórico completo */}}
+              style={styles.viewAllButton}
+            >
+              Ver Todas as Graduações
+            </AnimatedButton>
+          </Card.Content>
+        </AnimatedCard>
 
-        {/* Logout */}
-        <Card containerStyle={styles.modernCard}>
-          <TouchableOpacity 
-            style={styles.logoutButtonModern}
-            onPress={handleLogout}
-          >
-            <Ionicons name="log-out" size={20} color="#F44336" />
-            <Text style={styles.logoutButtonTextModern}>Sair da Conta</Text>
-          </TouchableOpacity>
-        </Card>
-      </ScrollView>
+        {/* Próximas Aulas */}
+        <AnimatedCard delay={500} style={styles.card}>
+          <Card.Content>
+            <View style={styles.cardHeader}>
+              <Ionicons name="calendar-outline" size={24} color="#FF9800" />
+              <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                Próximas Aulas
+              </Title>
+            </View>
+            
+            {dashboardData.upcomingClasses.length > 0 ? (
+              dashboardData.upcomingClasses.map((classItem, index) => (
+                <Animated.View 
+                  key={index} 
+                  style={[
+                    styles.upcomingClass,
+                    {
+                      opacity: animations.fadeAnim,
+                      transform: [{
+                        translateY: animations.slideAnim.interpolate({
+                          inputRange: [-50, 0],
+                          outputRange: [-15, 0],
+                        })
+                      }]
+                    }
+                  ]}
+                >
+                  <Text style={[styles.upcomingClassName, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                    {classItem.name}
+                  </Text>
+                  <Text style={[styles.upcomingClassInfo, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                    {classItem.modality} • {classItem.schedule?.[0] ? 
+                      `${getDayName(classItem.schedule[0].dayOfWeek)} ${formatTime(classItem.schedule[0].hour)}` 
+                      : 'Horário não definido'}
+                  </Text>
+                  {index < dashboardData.upcomingClasses.length - 1 && (
+                    <Divider style={styles.divider} />
+                  )}
+                </Animated.View>
+              ))
+            ) : (
+              <Paragraph style={[styles.emptyText, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                Nenhuma aula próxima
+              </Paragraph>
+            )}
+            
+            <AnimatedButton 
+              mode="outlined" 
+              onPress={() => navigation.navigate('Turmas')}
+              style={styles.viewAllButton}
+            >
+              Ver Todas as Turmas
+            </AnimatedButton>
+          </Card.Content>
+        </AnimatedCard>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 };
@@ -387,380 +485,147 @@ const InstructorDashboard = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  headerGradient: {
-    paddingTop: 20,
-    paddingBottom: 25,
-    paddingHorizontal: 20,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  userSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  avatarContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  avatarText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: 0.3,
-  },
-  userEmail: {
-    fontSize: 14,
-    color: '#fff',
-    opacity: 0.9,
-    marginTop: 2,
-  },
-  userBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 6,
-    alignSelf: 'flex-start',
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
-    marginLeft: 4,
-  },
-  notificationIcon: {
-    padding: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 20,
+    backgroundColor: '#f5f5f5',
   },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 40,
+  headerCard: {
+    margin: ResponsiveUtils.spacing.md,
+    marginBottom: ResponsiveUtils.spacing.sm,
+    ...ResponsiveUtils.elevation,
   },
-  statsCardsContainer: {
+  headerContent: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 32,
-    gap: 12,
+    alignItems: 'center',
+    padding: ResponsiveUtils.spacing.md,
   },
-  statCardModern: {
+  avatar: {
+    backgroundColor: '#4CAF50',
+  },
+  headerText: {
+    marginLeft: ResponsiveUtils.spacing.md,
     flex: 1,
-    padding: 20,
-    borderRadius: 16,
-    minHeight: 120,
+  },
+  welcomeText: {
+    fontWeight: 'bold',
+    marginBottom: ResponsiveUtils.spacing.xs,
+  },
+  roleText: {
+    color: '#666',
+  },
+  card: {
+    margin: ResponsiveUtils.spacing.md,
+    marginTop: ResponsiveUtils.spacing.sm,
+    ...ResponsiveUtils.elevation,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: ResponsiveUtils.spacing.md,
+  },
+  cardTitle: {
+    marginLeft: ResponsiveUtils.spacing.sm,
+    fontWeight: 'bold',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 8,
-      },
-      web: {
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-      },
-    }),
   },
-  statCardHeader: {
-    flexDirection: 'row',
+  statItem: {
+    width: ResponsiveUtils.isTablet() ? '23%' : '48%',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  statCardTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    marginLeft: 8,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  statCardButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  statCardButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
-    marginRight: 4,
-  },
-  modernCard: {
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 16,
+    padding: ResponsiveUtils.spacing.md,
+    borderRadius: ResponsiveUtils.borderRadius.medium,
+    ...ResponsiveUtils.elevation,
     backgroundColor: '#fff',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-      web: {
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-      },
-    }),
+    marginBottom: ResponsiveUtils.spacing.sm,
   },
-  sectionHeader: {
+  statNumber: {
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  statLabel: {
+    color: '#666',
+    marginTop: ResponsiveUtils.spacing.xs,
+    textAlign: 'center',
+  },
+  classItem: {
+    marginBottom: ResponsiveUtils.spacing.md,
+    padding: ResponsiveUtils.spacing.sm,
+    backgroundColor: '#f9f9f9',
+    borderRadius: ResponsiveUtils.borderRadius.small,
+  },
+  classHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    marginBottom: 20,
+    marginBottom: ResponsiveUtils.spacing.sm,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#333',
-    marginLeft: 12,
-    letterSpacing: 0.3,
+  className: {
+    fontWeight: 'bold',
+    flex: 1,
   },
-  classesList: {
-    gap: 12,
-  },
-  classCard: {
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#4CAF50',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-      web: {
-        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)',
-      },
-    }),
-  },
-  classCardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  classIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
+  modalityChip: {
+    marginLeft: ResponsiveUtils.spacing.sm,
   },
   classDetails: {
-    flex: 1,
+    marginBottom: ResponsiveUtils.spacing.sm,
   },
-  classTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 4,
+  classTime: {
+    color: '#666',
+    marginBottom: ResponsiveUtils.spacing.xs,
   },
-  classSchedule: {
-    fontSize: 14,
-    color: '#4CAF50',
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  classCapacityText: {
-    fontSize: 13,
+  classCapacity: {
     color: '#666',
   },
-  classActionButton: {
-    padding: 8,
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    borderRadius: 20,
+  classButton: {
+    marginTop: ResponsiveUtils.spacing.sm,
   },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 40,
+  quickActions: {
+    flexDirection: ResponsiveUtils.isTablet() ? 'row' : 'column',
+    justifyContent: 'space-between',
+    marginBottom: ResponsiveUtils.spacing.sm,
   },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
-    marginTop: 12,
+  quickActionButton: {
+    flex: ResponsiveUtils.isTablet() ? 1 : undefined,
+    marginHorizontal: ResponsiveUtils.isTablet() ? ResponsiveUtils.spacing.xs : 0,
+    marginBottom: ResponsiveUtils.isTablet() ? 0 : ResponsiveUtils.spacing.sm,
   },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  quickActionCardModern: {
-    flex: 1,
-  },
-  quickActionGradient: {
-    padding: 20,
-    borderRadius: 16,
-    alignItems: 'center',
-    minHeight: 100,
-    justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 6,
-      },
-      web: {
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-      },
-    }),
-  },
-  quickActionText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#fff',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  quickActionCount: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
-    opacity: 0.9,
-    marginTop: 2,
-  },
-  graduationsList: {
-    gap: 12,
-  },
-  graduationCard: {
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FFD700',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-      web: {
-        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)',
-      },
-    }),
-  },
-  graduationHeader: {
-    flexDirection: 'row',
+  logoutContainer: {
+    marginTop: ResponsiveUtils.spacing.lg,
     alignItems: 'center',
   },
-  graduationIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  graduationDetails: {
-    flex: 1,
-  },
-  graduationStudentName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 2,
-  },
-  graduationInfo: {
-    fontSize: 14,
-    color: '#FFD700',
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  graduationDate: {
-    fontSize: 12,
-    color: '#666',
-  },
-  viewAllButtonModern: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f8f9fa',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  viewAllButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginHorizontal: 8,
-  },
-  logoutButtonModern: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 1,
+  logoutButton: {
+    width: ResponsiveUtils.isTablet() ? '40%' : '60%',
     borderColor: '#F44336',
   },
-  logoutButtonTextModern: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#F44336',
-    marginLeft: 8,
+  upcomingClass: {
+    marginBottom: ResponsiveUtils.spacing.sm,
+    padding: ResponsiveUtils.spacing.sm,
+    backgroundColor: '#fff3e0',
+    borderRadius: ResponsiveUtils.borderRadius.small,
+  },
+  upcomingClassName: {
+    fontWeight: 'bold',
+    marginBottom: ResponsiveUtils.spacing.xs,
+  },
+  upcomingClassInfo: {
+    color: '#666',
+    marginBottom: ResponsiveUtils.spacing.sm,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#666',
+    fontStyle: 'italic',
+    marginVertical: ResponsiveUtils.spacing.md,
+  },
+  divider: {
+    marginVertical: ResponsiveUtils.spacing.sm,
+  },
+  viewAllButton: {
+    marginTop: ResponsiveUtils.spacing.sm,
   },
 });
 

@@ -1,92 +1,52 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ThemeProvider } from 'react-native-elements';
+import { Platform, View, Text } from 'react-native';
+import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+// Componentes e contextos
 import { AuthProvider } from './src/contexts/AuthContext';
-import { NotificationProvider } from './src/components/NotificationManager';
+import { NotificationProvider } from './src/contexts/NotificationContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import ErrorBoundary from './src/components/ErrorBoundary';
+import FirebaseInitializer from './src/components/FirebaseInitializer';
+import WebCompatibility from './src/components/WebCompatibility';
 
-// Tema personalizado para React Native Elements
-const theme = {
-  colors: {
-    primary: '#2196F3',
-    secondary: '#4CAF50',
-    success: '#4CAF50',
-    warning: '#FF9800',
-    error: '#F44336',
-    text: '#333333',
-    grey0: '#ffffff',
-    grey1: '#f5f5f5',
-    grey2: '#e0e0e0',
-    grey3: '#bdbdbd',
-    grey4: '#9e9e9e',
-    grey5: '#757575',
-    searchBg: '#f5f5f5',
-    platform: {
-      ios: {
-        primary: '#2196F3',
-        secondary: '#4CAF50',
-        grey: '#f5f5f5',
-        searchBg: '#dcdce1',
-        success: '#4CAF50',
-        error: '#F44336',
-        warning: '#FF9800',
-      },
-      android: {
-        primary: '#2196F3',
-        secondary: '#4CAF50',
-        grey: '#f5f5f5',
-        searchBg: '#dcdce1',
-        success: '#4CAF50',
-        error: '#F44336',
-        warning: '#FF9800',
-      },
-      web: {
-        primary: '#2196F3',
-        secondary: '#4CAF50',
-        grey: '#f5f5f5',
-        searchBg: '#dcdce1',
-        success: '#4CAF50',
-        error: '#F44336',
-        warning: '#FF9800',
-      },
-    },
-  },
-  Button: {
-    buttonStyle: {
-      borderRadius: 12,
-    },
-    titleStyle: {
-      fontWeight: '600',
-    },
-  },
-  Input: {
-    inputContainerStyle: {
-      borderRadius: 8,
-    },
-  },
-  Card: {
-    containerStyle: {
-      borderRadius: 12,
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    },
-  },
-};
+// Tema
+import theme from './src/utils/theme';
+
+console.log('🚀 App.js carregado - Platform:', Platform.OS);
 
 export default function App() {
-  return (
-    <SafeAreaProvider>
-      <ErrorBoundary>
-        <ThemeProvider theme={theme}>
-          <NotificationProvider>
-            <AuthProvider>
-              <StatusBar style="auto" />
-              <AppNavigator />
-            </AuthProvider>
-          </NotificationProvider>
-        </ThemeProvider>
-      </ErrorBoundary>
-    </SafeAreaProvider>
+  useEffect(() => {
+    console.log('🚀 App iniciando...', Platform.OS);
+  }, []);
+
+  const AppContent = () => (
+    <ErrorBoundary>
+      <FirebaseInitializer>
+        <SafeAreaProvider>
+          <PaperProvider theme={theme}>
+            <NotificationProvider>
+              <AuthProvider>
+                <StatusBar style="auto" />
+                <AppNavigator />
+              </AuthProvider>
+            </NotificationProvider>
+          </PaperProvider>
+        </SafeAreaProvider>
+      </FirebaseInitializer>
+    </ErrorBoundary>
   );
+
+  // Para web, adicionar wrapper de compatibilidade
+  if (Platform.OS === 'web') {
+    return (
+      <WebCompatibility>
+        <AppContent />
+      </WebCompatibility>
+    );
+  }
+
+  return <AppContent />;
 }

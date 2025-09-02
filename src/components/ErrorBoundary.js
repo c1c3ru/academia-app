@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Card, Text, Button, Icon } from 'react-native-elements';
+import { Card, Title, Paragraph, Button } from 'react-native-paper';
+import { Ionicons } from '@expo/vector-icons';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -24,20 +25,22 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <View style={styles.container}>
-          <Card containerStyle={styles.card}>
-            <View style={styles.content}>
-              <Icon name="error-outline" type="material" size={64} color="#F44336" />
-              <Text h3 style={styles.title}>Ops! Algo deu errado</Text>
-              <Text style={styles.message}>
+          <Card style={styles.card}>
+            <Card.Content style={styles.content}>
+              <Ionicons name="alert-circle-outline" size={64} color="#F44336" />
+              <Title style={styles.title}>Ops! Algo deu errado</Title>
+              <Paragraph style={styles.message}>
                 Ocorreu um erro inesperado. Tente novamente ou reinicie o aplicativo.
-              </Text>
+              </Paragraph>
               <Button 
-                title="Tentar Novamente"
+                mode="contained" 
                 onPress={this.handleRetry}
-                buttonStyle={styles.button}
-                icon={<Icon name="refresh" type="material" size={20} color="white" />}
-              />
-            </View>
+                style={styles.button}
+                icon="refresh"
+              >
+                Tentar Novamente
+              </Button>
+            </Card.Content>
           </Card>
         </View>
       );
@@ -58,8 +61,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 400,
-    borderRadius: 16,
-    padding: 0,
+    elevation: 4,
   },
   content: {
     alignItems: 'center',
@@ -75,12 +77,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
     marginBottom: 24,
-    fontSize: 16,
   },
   button: {
     backgroundColor: '#2196F3',
-    borderRadius: 12,
-    paddingVertical: 12,
   },
 });
 

@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity, TextInput, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { 
   Card, 
-  Text, 
-  Button,
-  Badge,
-  Icon,
-  ListItem,
+  Title, 
+  Paragraph, 
+  Button, 
+  Chip,
   Divider,
-  SearchBar
-} from 'react-native-elements';
+  Text,
+  List,
+  FAB,
+  Searchbar
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -104,44 +106,43 @@ const InstructorClasses = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <SearchBar
+        <Searchbar
           placeholder="Buscar turmas..."
           onChangeText={setSearchQuery}
           value={searchQuery}
-          containerStyle={styles.searchbar}
-          inputContainerStyle={styles.searchInput}
+          style={styles.searchbar}
         />
       </View>
 
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {filteredClasses.length > 0 ? (
           filteredClasses.map((classItem, index) => (
-            <Card key={classItem.id || index} containerStyle={styles.classCard}>
+            <Card key={classItem.id || index} style={styles.classCard}>
+              <Card.Content>
                 <View style={styles.classHeader}>
                   <View style={styles.classInfo}>
-                    <Text h4 style={styles.className}>{classItem.name}</Text>
-                    <Badge value={classItem.modality} badgeStyle={styles.modalityChip} textStyle={styles.modalityText} />
+                    <Title style={styles.className}>{classItem.name}</Title>
+                    <Chip mode="outlined" style={styles.modalityChip}>
+                      {classItem.modality}
+                    </Chip>
                   </View>
                 </View>
 
                 <View style={styles.classDetails}>
                   <View style={styles.detailRow}>
-                    <Icon name="time-outline" type="ionicon" size={16} color="#666" />
+                    <Ionicons name="time-outline" size={16} color="#666" />
                     <Text style={styles.detailText}>
                       {formatSchedule(classItem.schedule)}
                     </Text>
                   </View>
 
                   <View style={styles.detailRow}>
-                    <Icon name="people-outline" type="ionicon" size={16} color="#666" />
+                    <Ionicons name="people-outline" size={16} color="#666" />
                     <Text style={[
                       styles.detailText,
                       { color: getCapacityColor(classItem.currentStudents, classItem.maxCapacity) }
@@ -152,7 +153,7 @@ const InstructorClasses = ({ navigation }) => {
 
                   {classItem.location && (
                     <View style={styles.detailRow}>
-                      <Icon name="location-outline" type="ionicon" size={16} color="#666" />
+                      <Ionicons name="location-outline" size={16} color="#666" />
                       <Text style={styles.detailText}>{classItem.location}</Text>
                     </View>
                   )}
@@ -162,39 +163,63 @@ const InstructorClasses = ({ navigation }) => {
 
                 <View style={styles.classActions}>
                   <Button 
-                    type="outline" 
+                    mode="outlined" 
                     onPress={() => handleClassPress(classItem)}
-                    buttonStyle={styles.actionButton}
-                    icon={<Icon name="eye" type="ionicon" size={16} color="#2196F3" />}
-                    title="Ver Detalhes"
-                  />
+                    style={styles.actionButton}
+                    icon="eye"
+                  >
+                    Ver Detalhes
+                  </Button>
 
                   <Button 
+                    mode="contained" 
                     onPress={() => handleCheckIns(classItem)}
-                    buttonStyle={styles.actionButton}
-                    icon={<Icon name="checkmark" type="ionicon" size={16} color="white" />}
-                    title="Check-ins"
-                  />
+                    style={styles.actionButton}
+                    icon="check"
+                  >
+                    Check-ins
+                  </Button>
                 </View>
+
+                {/* Lista rápida de alunos */}
+                {classItem.students && classItem.students.length > 0 && (
+                  <View style={styles.studentsPreview}>
+                    <Text style={styles.studentsTitle}>Alunos da turma:</Text>
+                    {classItem.students.slice(0, 3).map((student, idx) => (
+                      <Text key={idx} style={styles.studentName}>
+                        • {student.name}
+                      </Text>
+                    ))}
+                    {classItem.students.length > 3 && (
+                      <Text style={styles.moreStudents}>
+                        +{classItem.students.length - 3} mais...
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </Card.Content>
             </Card>
           ))
         ) : (
-          <Card containerStyle={styles.emptyCard}>
-              <Icon name="school-outline" type="ionicon" size={48} color="#ccc" />
-              <Text h4 style={styles.emptyTitle}>Nenhuma turma encontrada</Text>
-              <Text style={styles.emptyText}>
+          <Card style={styles.emptyCard}>
+            <Card.Content style={styles.emptyContent}>
+              <Ionicons name="school-outline" size={48} color="#ccc" />
+              <Title style={styles.emptyTitle}>Nenhuma turma encontrada</Title>
+              <Paragraph style={styles.emptyText}>
                 {searchQuery ? 
                   'Nenhuma turma corresponde à sua busca' : 
                   'Você ainda não possui turmas atribuídas'
                 }
-              </Text>
+              </Paragraph>
+            </Card.Content>
           </Card>
         )}
 
         {/* Estatísticas gerais */}
         {classes.length > 0 && (
-          <Card containerStyle={styles.statsCard}>
-              <Text h4 style={styles.statsTitle}>Resumo das Turmas</Text>
+          <Card style={styles.statsCard}>
+            <Card.Content>
+              <Title style={styles.statsTitle}>Resumo das Turmas</Title>
               
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
@@ -216,16 +241,17 @@ const InstructorClasses = ({ navigation }) => {
                   <Text style={styles.statLabel}>Modalidades</Text>
                 </View>
               </View>
+            </Card.Content>
           </Card>
         )}
       </ScrollView>
 
-      <TouchableOpacity
+      <FAB
         style={styles.fab}
+        icon="plus"
+        label="Nova Turma"
         onPress={() => Alert.alert('Info', 'Funcionalidade disponível apenas para administradores')}
-      >
-        <Icon name="add" type="ionicon" size={24} color="white" />
-      </TouchableOpacity>
+      />
     </SafeAreaView>
   );
 };
@@ -238,66 +264,19 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     backgroundColor: '#fff',
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
+    elevation: 2,
   },
   searchbar: {
+    elevation: 0,
     backgroundColor: '#f5f5f5',
-    borderTopWidth: 0,
-    borderBottomWidth: 0,
-  },
-  searchInput: {
-    backgroundColor: 'white',
   },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 100,
-  },
   classCard: {
     margin: 16,
     marginBottom: 8,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
-  },
-  modalityChip: {
-    backgroundColor: '#2196F3',
-    marginLeft: 8,
-  },
-  modalityText: {
-    color: 'white',
-    fontSize: 12,
+    elevation: 2,
   },
   classHeader: {
     marginBottom: 12,
@@ -361,23 +340,7 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     margin: 16,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
+    elevation: 2,
   },
   emptyContent: {
     alignItems: 'center',
@@ -394,23 +357,7 @@ const styles = StyleSheet.create({
   statsCard: {
     margin: 16,
     marginTop: 8,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
+    elevation: 2,
     backgroundColor: '#E8F5E8',
   },
   statsTitle: {

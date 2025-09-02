@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Input } from 'react-native-elements';
+import { TextInput, HelperText } from 'react-native-paper';
 import { formatters } from '../utils/validation';
 
 const FormInput = ({
@@ -45,20 +45,33 @@ const FormInput = ({
 
   return (
     <View style={styles.container}>
-      <Input
+      <TextInput
         label={label}
         value={value}
         onChangeText={handleChangeText}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        errorMessage={hasError ? error : ''}
-        inputContainerStyle={[
+        mode="outlined"
+        error={hasError}
+        style={[
           styles.input,
           hasError && styles.inputError,
           isFocused && styles.inputFocused
         ]}
+        theme={{
+          colors: {
+            primary: hasError ? '#F44336' : '#2196F3',
+            error: '#F44336'
+          }
+        }}
         {...props}
       />
+      
+      {hasError && (
+        <HelperText type="error" visible={hasError} style={styles.errorText}>
+          {error}
+        </HelperText>
+      )}
     </View>
   );
 };

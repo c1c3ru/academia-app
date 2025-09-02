@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.academiaapp'
+    namespace 'com.c1c3ru.academiaapp'
     defaultConfig {
-        applicationId 'com.anonymous.academiaapp'
+        applicationId 'com.c1c3ru.academiaapp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

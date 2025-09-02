@@ -163,10 +163,6 @@ export const studentService = {
 };
 
 export const classService = {
-  getAllClasses: async () => {
-    return await firestoreService.getAll('classes');
-  },
-
   getClassesByInstructor: async (instructorId) => {
     return await firestoreService.getWhere('classes', 'instructorId', '==', instructorId);
   },

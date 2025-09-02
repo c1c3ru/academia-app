@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert, Platform, Dimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { 
   Card, 
-  Text, 
-  Button,
-  Badge,
+  Title, 
+  Paragraph, 
+  Button, 
   Avatar,
-  Icon,
-  ListItem,
-  Divider
-} from 'react-native-elements';
+  Chip,
+  Divider,
+  Text,
+  List,
+  Surface
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-// import { LinearGradient } from 'expo-linear-gradient'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService } from '../../services/firestoreService';
-
-const { width } = Dimensions.get('window');
 
 const StudentEvolution = ({ navigation }) => {
   const { user, userProfile } = useAuth();
@@ -112,216 +111,167 @@ const StudentEvolution = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header com gradiente */}
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        style={styles.headerGradient}
-      >
-        <View style={styles.headerContent}>
-          <Ionicons name="trophy" size={12} color="#fff" />
-          <Text style={styles.headerTitle}>Minha Evolução</Text>
-          <Text style={styles.headerSubtitle}>Acompanhe seu progresso nas artes marciais</Text>
-        </View>
-      </LinearGradient>
-
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Estatísticas Principais */}
-        <View style={styles.statsContainer}>
-          <LinearGradient
-            colors={['#ff6b6b', '#ee5a24']}
-            style={styles.statCard}
-          >
-            <Ionicons name="medal" size={32} color="#fff" />
-            <Text style={styles.statNumber}>{stats.totalGraduations}</Text>
-            <Text style={styles.statLabel}>Graduações</Text>
-          </LinearGradient>
-          
-          <LinearGradient
-            colors={['#4834d4', '#686de0']}
-            style={styles.statCard}
-          >
-            <Ionicons name="fitness" size={32} color="#fff" />
-            <Text style={styles.statNumber}>{stats.modalities.length}</Text>
-            <Text style={styles.statLabel}>Modalidades</Text>
-          </LinearGradient>
-          
-          <LinearGradient
-            colors={['#00d2d3', '#54a0ff']}
-            style={styles.statCard}
-          >
-            <Ionicons name="calendar" size={32} color="#fff" />
-            <Text style={styles.statNumber}>{stats.timeInCurrentGraduation}</Text>
-            <Text style={styles.statLabel}>Dias Atual</Text>
-          </LinearGradient>
-        </View>
-
-        {/* Graduação Atual */}
-        <Card containerStyle={styles.currentCard}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="star" size={26} color="#FFD700" />
-            <Text style={styles.sectionTitle}>Graduação Atual</Text>
-          </View>
-          <View style={styles.currentGraduationContent}>
-            <LinearGradient
-              colors={[getGraduationColor(stats.currentGraduation), '#fff']}
-              style={styles.graduationBadge}
-            >
-              <Text style={styles.graduationText}>
+        {/* Estatísticas Gerais */}
+        <Card style={styles.statsCard}>
+          <Card.Content>
+            <View style={styles.cardHeader}>
+              <Ionicons name="trophy-outline" size={24} color="#FFD700" />
+              <Title style={styles.cardTitle}>Minha Evolução</Title>
+            </View>
+            
+            <View style={styles.statsGrid}>
+              <Surface style={styles.statItem}>
+                <Text style={styles.statNumber}>{stats.totalGraduations}</Text>
+                <Text style={styles.statLabel}>Graduações</Text>
+              </Surface>
+              
+              <Surface style={styles.statItem}>
+                <Text style={styles.statNumber}>{stats.modalities.length}</Text>
+                <Text style={styles.statLabel}>Modalidades</Text>
+              </Surface>
+              
+              <Surface style={styles.statItem}>
+                <Text style={styles.statNumber}>{stats.timeInCurrentGraduation}</Text>
+                <Text style={styles.statLabel}>Dias na Atual</Text>
+              </Surface>
+            </View>
+            
+            <View style={styles.currentGraduation}>
+              <Text style={styles.currentLabel}>Graduação Atual:</Text>
+              <Chip 
+                mode="outlined"
+                style={[
+                  styles.graduationChip, 
+                  { borderColor: getGraduationColor(stats.currentGraduation) }
+                ]}
+                textStyle={{ 
+                  color: getGraduationColor(stats.currentGraduation),
+                  fontWeight: 'bold'
+                }}
+              >
                 {stats.currentGraduation}
-              </Text>
-            </LinearGradient>
-            <Text style={styles.graduationDays}>
-              {stats.timeInCurrentGraduation} dias nesta graduação
-            </Text>
-          </View>
+              </Chip>
+            </View>
+          </Card.Content>
         </Card>
 
         {/* Timeline de Graduações */}
-        <Card containerStyle={styles.timelineCard}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="ribbon" size={24} color="#667eea" />
-            <Text style={styles.sectionTitle}>Timeline de Graduações</Text>
-          </View>
-          
-          {graduations.length > 0 ? (
-            graduations.map((graduation, index) => (
-              <View key={`${graduation.date}-${graduation.graduation}-${graduation.modality}`} style={styles.timelineItem}>
-                <View style={styles.timelineDot}>
-                  <LinearGradient
-                    colors={[getGraduationColor(graduation.graduation), '#fff']}
-                    style={styles.graduationDot}
-                  >
-                    <Ionicons 
-                      name={getGraduationIcon(graduation.modality)} 
-                      size={16} 
-                      color="#fff"
-                    />
-                  </LinearGradient>
-                </View>
-                
-                <View style={styles.timelineContent}>
-                  <View style={styles.graduationCard}>
-                    <View style={styles.graduationHeader}>
-                      <Text style={styles.graduationTitle}>
-                        {graduation.graduation}
-                      </Text>
+        <Card style={styles.card}>
+          <Card.Content>
+            <View style={styles.cardHeader}>
+              <Ionicons name="timeline-outline" size={24} color="#2196F3" />
+              <Title style={styles.cardTitle}>Timeline de Graduações</Title>
+            </View>
+            
+            {graduations.length > 0 ? (
+              graduations.map((graduation, index) => (
+                <View key={index} style={styles.timelineItem}>
+                  <View style={styles.timelineContent}>
+                    <View style={styles.timelineHeader}>
+                      <View style={styles.graduationInfo}>
+                        <Ionicons 
+                          name={getGraduationIcon(graduation.modality)} 
+                          size={20} 
+                          color={getGraduationColor(graduation.graduation)}
+                        />
+                        <Text style={styles.graduationTitle}>
+                          {graduation.graduation} - {graduation.modality}
+                        </Text>
+                      </View>
                       <Text style={styles.graduationDate}>
                         {formatDate(graduation.date)}
                       </Text>
                     </View>
                     
-                    <Text style={styles.modalityText}>
-                      {graduation.modality}
-                    </Text>
-                    
                     {graduation.instructor && (
                       <Text style={styles.instructorText}>
-                        👨‍🏫 {graduation.instructor}
+                        Professor: {graduation.instructor}
                       </Text>
                     )}
                     
                     {graduation.observations && (
                       <Text style={styles.observationsText}>
-                        💭 {graduation.observations}
+                        {graduation.observations}
                       </Text>
                     )}
                   </View>
+                  
+                  {index < graduations.length - 1 && (
+                    <View style={styles.timelineLine} />
+                  )}
                 </View>
-                
-                {index < graduations.length - 1 && (
-                  <View style={styles.timelineLine} />
-                )}
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <Ionicons name="medal-outline" size={48} color="#ccc" />
+                <Paragraph style={styles.emptyText}>
+                  Nenhuma graduação registrada ainda
+                </Paragraph>
+                <Paragraph style={styles.emptySubtext}>
+                  Suas graduações aparecerão aqui conforme você evolui
+                </Paragraph>
               </View>
-            ))
-          ) : (
-            <View style={styles.emptyState}>
-              <LinearGradient
-                colors={['#f8f9fa', '#e9ecef']}
-                style={styles.emptyContainer}
-              >
-                <Ionicons name="medal-outline" size={64} color="#adb5bd" />
-                <Text style={styles.emptyText}>
-                  Nenhuma graduação registrada
-                </Text>
-                <Text style={styles.emptySubtext}>
-                  Suas conquistas aparecerão aqui
-                </Text>
-              </LinearGradient>
-            </View>
-          )}
+            )}
+          </Card.Content>
         </Card>
 
         {/* Modalidades Praticadas */}
         {stats.modalities.length > 0 && (
-          <Card containerStyle={styles.modalitiesCard}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="fitness" size={24} color="#4CAF50" />
-              <Text style={styles.sectionTitle}>Modalidades Praticadas</Text>
-            </View>
-            
-            <View style={styles.modalitiesGrid}>
-              {stats.modalities.map((modality) => (
-                <LinearGradient
-                  key={modality}
-                  colors={['#4CAF50', '#81C784']}
-                  style={styles.modalityChip}
-                >
-                  <Ionicons name={getGraduationIcon(modality)} size={20} color="#fff" />
-                  <Text style={styles.modalityText}>{modality}</Text>
-                </LinearGradient>
-              ))}
-            </View>
+          <Card style={styles.card}>
+            <Card.Content>
+              <View style={styles.cardHeader}>
+                <Ionicons name="fitness-outline" size={24} color="#4CAF50" />
+                <Title style={styles.cardTitle}>Modalidades Praticadas</Title>
+              </View>
+              
+              <View style={styles.modalitiesContainer}>
+                {stats.modalities.map((modality, index) => (
+                  <Chip 
+                    key={index}
+                    mode="outlined"
+                    style={styles.modalityChip}
+                    icon={getGraduationIcon(modality)}
+                  >
+                    {modality}
+                  </Chip>
+                ))}
+              </View>
+            </Card.Content>
           </Card>
         )}
 
         {/* Próximos Objetivos */}
-        <Card containerStyle={styles.objectivesCard}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="flag" size={24} color="#FF9800" />
-            <Text style={styles.sectionTitle}>Próximos Objetivos</Text>
-          </View>
-          
-          <View style={styles.objectivesList}>
-            <LinearGradient
-              colors={['#4CAF50', '#66BB6A']}
-              style={styles.objectiveItem}
-            >
-              <Ionicons name="checkmark-circle" size={24} color="#fff" />
-              <View style={styles.objectiveContent}>
-                <Text style={styles.objectiveTitle}>Manter Frequência</Text>
-                <Text style={styles.objectiveDescription}>Continue comparecendo às aulas regularmente</Text>
-              </View>
-            </LinearGradient>
+        <Card style={styles.card}>
+          <Card.Content>
+            <View style={styles.cardHeader}>
+              <Ionicons name="target-outline" size={24} color="#FF9800" />
+              <Title style={styles.cardTitle}>Próximos Objetivos</Title>
+            </View>
             
-            <LinearGradient
-              colors={['#2196F3', '#42A5F5']}
-              style={styles.objectiveItem}
-            >
-              <Ionicons name="trending-up" size={24} color="#fff" />
-              <View style={styles.objectiveContent}>
-                <Text style={styles.objectiveTitle}>Aperfeiçoar Técnicas</Text>
-                <Text style={styles.objectiveDescription}>Foque no desenvolvimento técnico</Text>
-              </View>
-            </LinearGradient>
+            <List.Item
+              title="Manter frequência nas aulas"
+              description="Continue participando regularmente das aulas"
+              left={() => <List.Icon icon="check-circle-outline" color="#4CAF50" />}
+            />
             
-            <LinearGradient
-              colors={['#FFD700', '#FFC107']}
-              style={styles.objectiveItem}
-            >
-              <Ionicons name="trophy" size={24} color="#fff" />
-              <View style={styles.objectiveContent}>
-                <Text style={styles.objectiveTitle}>Próxima Graduação</Text>
-                <Text style={styles.objectiveDescription}>Continue se dedicando para a próxima faixa</Text>
-              </View>
-            </LinearGradient>
-          </View>
+            <List.Item
+              title="Aperfeiçoar técnicas"
+              description="Foque no desenvolvimento técnico"
+              left={() => <List.Icon icon="trending-up" color="#2196F3" />}
+            />
+            
+            <List.Item
+              title="Próxima graduação"
+              description="Continue se dedicando para a próxima faixa"
+              left={() => <List.Icon icon="trophy" color="#FFD700" />}
+            />
+          </Card.Content>
         </Card>
       </ScrollView>
     </SafeAreaView>
@@ -331,401 +281,134 @@ const StudentEvolution = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  headerGradient: {
-    paddingTop: 3,
-    paddingBottom: 4,
-    paddingHorizontal: 8,
-  },
-  headerContent: {
-    alignItems: 'center',
-    paddingVertical: 0,
-  },
-  headerTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#fff',
-    marginTop: 2,
-    textAlign: 'center',
-    letterSpacing: 0.1,
-  },
-  headerSubtitle: {
-    fontSize: 10,
-    color: '#fff',
-    opacity: 0.9,
-    marginTop: 1,
-    textAlign: 'center',
-    fontWeight: '400',
+    backgroundColor: '#f5f5f5',
   },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 40,
+  statsCard: {
+    margin: 16,
+    marginBottom: 8,
+    elevation: 4,
+    backgroundColor: '#E8F5E8',
   },
-  statsContainer: {
+  card: {
+    margin: 16,
+    marginTop: 8,
+    elevation: 2,
+  },
+  cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 32,
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    padding: 24,
-    borderRadius: 20,
     alignItems: 'center',
-    minHeight: 120,
-    justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 12,
-      },
-      web: {
-        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
-      },
-    }),
+    marginBottom: 16,
+  },
+  cardTitle: {
+    marginLeft: 8,
+    fontSize: 18,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+  },
+  statItem: {
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    elevation: 1,
+    backgroundColor: '#fff',
   },
   statNumber: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: '#fff',
-    marginTop: 12,
-    marginBottom: 4,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2196F3',
   },
   statLabel: {
-    fontSize: 13,
-    color: '#fff',
-    opacity: 0.95,
-    textAlign: 'center',
-    fontWeight: '600',
-    letterSpacing: 0.3,
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
   },
-  currentCard: {
-    marginHorizontal: 20,
-    marginBottom: 24,
-    borderRadius: 20,
-    padding: 24,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.12,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 8,
-      },
-      web: {
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
-      },
-    }),
-  },
-  sectionHeader: {
+  currentGraduation: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    justifyContent: 'space-between',
   },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#2c3e50',
-    marginLeft: 12,
-    letterSpacing: 0.3,
+  currentLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  currentGraduationContent: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  graduationBadge: {
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 30,
-    marginBottom: 12,
-    minWidth: 160,
-    alignItems: 'center',
-  },
-  graduationText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#2c3e50',
-    letterSpacing: 0.5,
-  },
-  graduationDays: {
-    fontSize: 15,
-    color: '#7f8c8d',
-    fontWeight: '500',
-  },
-  timelineCard: {
-    marginHorizontal: 20,
-    marginBottom: 24,
-    borderRadius: 20,
-    padding: 24,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.12,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 8,
-      },
-      web: {
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
-      },
-    }),
+  graduationChip: {
+    borderWidth: 2,
   },
   timelineItem: {
-    flexDirection: 'row',
-    marginBottom: 24,
-    position: 'relative',
-  },
-  timelineDot: {
-    width: 48,
-    alignItems: 'center',
-    marginRight: 20,
-  },
-  graduationDot: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 4,
-      },
-      web: {
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-      },
-    }),
+    marginBottom: 16,
   },
   timelineContent: {
-    flex: 1,
-  },
-  graduationCard: {
     backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#667eea',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-      web: {
-        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
-      },
-    }),
+    padding: 12,
+    borderRadius: 8,
+    elevation: 1,
   },
-  graduationHeader: {
+  timelineHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+  },
+  graduationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   graduationTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#2c3e50',
-    letterSpacing: 0.3,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
   graduationDate: {
-    fontSize: 13,
-    color: '#7f8c8d',
-    fontWeight: '500',
-  },
-  modalityText: {
-    fontSize: 15,
-    color: '#667eea',
-    fontWeight: '600',
-    marginBottom: 12,
-    letterSpacing: 0.2,
+    fontSize: 14,
+    color: '#666',
   },
   instructorText: {
     fontSize: 14,
-    color: '#27ae60',
-    marginBottom: 8,
-    fontWeight: '500',
+    color: '#666',
+    marginBottom: 4,
   },
   observationsText: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: '#333',
     fontStyle: 'italic',
-    lineHeight: 20,
   },
   timelineLine: {
-    position: 'absolute',
-    left: 23,
-    top: 36,
-    bottom: -24,
     width: 2,
-    backgroundColor: '#e9ecef',
+    height: 16,
+    backgroundColor: '#ddd',
+    marginLeft: 20,
+    marginTop: 8,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 48,
-  },
-  emptyContainer: {
-    padding: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    width: '100%',
+    padding: 32,
   },
   emptyText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#6c757d',
-    marginTop: 20,
+    fontSize: 16,
+    color: '#666',
+    marginTop: 16,
     textAlign: 'center',
-    letterSpacing: 0.3,
   },
   emptySubtext: {
-    fontSize: 15,
-    color: '#adb5bd',
-    marginTop: 12,
+    fontSize: 14,
+    color: '#999',
     textAlign: 'center',
-    lineHeight: 22,
+    marginTop: 8,
   },
-  modalitiesCard: {
-    marginHorizontal: 20,
-    marginBottom: 24,
-    borderRadius: 20,
-    padding: 24,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.12,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 8,
-      },
-      web: {
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
-      },
-    }),
-  },
-  modalitiesGrid: {
+  modalitiesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 8,
   },
   modalityChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 30,
-    minWidth: '47%',
-    justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 4,
-      },
-      web: {
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-      },
-    }),
-  },
-  modalityText: {
-    color: '#fff',
-    fontWeight: '700',
-    marginLeft: 10,
-    fontSize: 15,
-    letterSpacing: 0.3,
-  },
-  objectivesCard: {
-    marginHorizontal: 20,
-    marginBottom: 24,
-    borderRadius: 20,
-    padding: 24,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.12,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 8,
-      },
-      web: {
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
-      },
-    }),
-  },
-  objectivesList: {
-    gap: 16,
-  },
-  objectiveItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    borderRadius: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 4,
-      },
-      web: {
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-      },
-    }),
-  },
-  objectiveContent: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  objectiveTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 6,
-    letterSpacing: 0.3,
-  },
-  objectiveDescription: {
-    fontSize: 14,
-    color: '#fff',
-    opacity: 0.95,
-    lineHeight: 20,
-    fontWeight: '400',
+    marginBottom: 8,
   },
 });
 

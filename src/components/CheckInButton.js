@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert, Platform } from 'react-native';
-import { Button, Text, Card, Icon } from 'react-native-elements';
-import { ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
+import { Button, Text, Card, ActivityIndicator } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import locationService from '../services/locationService';
 import { firestoreService } from '../services/firestoreService';
 import { useAuth } from '../contexts/AuthContext';
@@ -94,23 +94,21 @@ const CheckInButton = ({ classId, className, onCheckInSuccess }) => {
   };
 
   return (
-    <Card containerStyle={styles.container}>
-      <View style={styles.content}>
+    <Card style={styles.container}>
+      <Card.Content>
         <View style={styles.header}>
-          <Icon 
-            name="location-on" 
-            type="material"
+          <MaterialCommunityIcons 
+            name="map-marker-check" 
             size={24} 
             color="#2196F3" 
           />
-          <Text h4 style={styles.title}>Check-in com Localização</Text>
+          <Text style={styles.title}>Check-in com Localização</Text>
         </View>
 
         {locationStatus && (
           <View style={[styles.statusContainer, { backgroundColor: getStatusColor() + '20' }]}>
-            <Icon 
-              name="info" 
-              type="material"
+            <MaterialCommunityIcons 
+              name="information" 
               size={16} 
               color={getStatusColor()} 
             />
@@ -125,19 +123,27 @@ const CheckInButton = ({ classId, className, onCheckInSuccess }) => {
         </Text>
 
         <Button
-          title={loading ? "Verificando..." : "Fazer Check-in"}
+          mode="contained"
           onPress={handleCheckIn}
           disabled={loading}
-          buttonStyle={styles.button}
-          titleStyle={styles.buttonText}
-          loading={loading}
-          icon={!loading ? <Icon name="location-on" type="material" size={20} color="white" /> : undefined}
-        />
+          style={styles.button}
+          icon={loading ? undefined : "map-marker-check"}
+          contentStyle={styles.buttonContent}
+        >
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color="white" size="small" />
+              <Text style={styles.loadingText}>Verificando...</Text>
+            </View>
+          ) : (
+            'Fazer Check-in'
+          )}
+        </Button>
 
         <Text style={styles.hint}>
           💡 Certifique-se de estar dentro da academia
         </Text>
-      </View>
+      </Card.Content>
     </Card>
   );
 };
@@ -145,27 +151,8 @@ const CheckInButton = ({ classId, className, onCheckInSuccess }) => {
 const styles = StyleSheet.create({
   container: {
     margin: 16,
+    elevation: 4,
     borderRadius: 12,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
-
-      },
-
-    }),
-  },
-  content: {
-    padding: 16,
   },
   header: {
     flexDirection: 'row',
@@ -199,28 +186,20 @@ const styles = StyleSheet.create({
   button: {
     marginVertical: 8,
     borderRadius: 25,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-
-      },
-
-    }),
+    elevation: 2,
   },
-  buttonText: {
+  buttonContent: {
+    paddingVertical: 8,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
     color: 'white',
+    marginLeft: 8,
     fontSize: 16,
-    fontWeight: '600',
   },
   hint: {
     fontSize: 12,

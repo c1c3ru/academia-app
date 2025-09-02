@@ -2,14 +2,17 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, TouchableOpacity } from 'react-native';
-import { Icon } from 'react-native-elements';
+import { Platform } from 'react-native';
+import { useResponsive } from '../hooks/useResponsive';
+
 import { useAuth } from '../contexts/AuthContext';
 
 // Telas de Autenticação
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
 // Telas do Aluno
 import StudentDashboard from '../screens/student/StudentDashboard';
@@ -31,60 +34,10 @@ import AdminModalities from '../screens/admin/AdminModalities';
 // Telas Compartilhadas
 import ProfileScreen from '../screens/shared/ProfileScreen';
 import LoadingScreen from '../screens/shared/LoadingScreen';
-import ClassDetailsScreen from '../screens/shared/ClassDetailsScreen';
-import StudentDetailsScreen from '../screens/shared/StudentDetailsScreen';
-import SettingsScreen from '../screens/shared/SettingsScreen';
-import AddClassScreen from '../screens/admin/AddClassScreen';
-import AddStudentScreen from '../screens/admin/AddStudentScreen';
-import EditClassScreen from '../screens/admin/EditClassScreen';
-import EditStudentScreen from '../screens/admin/EditStudentScreen';
-import ReportsScreen from '../screens/admin/ReportsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
-
-// Componente do botão de logout para o header
-const LogoutButton = () => {
-  const { logout } = useAuth();
-  
-  const handleLogout = () => {
-    Alert.alert(
-      'Sair',
-      'Tem certeza que deseja sair da sua conta?',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel'
-        },
-        {
-          text: 'Sair',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log('Fazendo logout...');
-              await logout();
-              console.log('Logout realizado com sucesso');
-            } catch (error) {
-              console.error('Erro no logout:', error);
-              Alert.alert('Erro', 'Não foi possível fazer logout');
-            }
-          }
-        }
-      ]
-    );
-  };
-
-  return (
-    <TouchableOpacity onPress={handleLogout} style={{ marginRight: 15 }}>
-      <Icon
-        name="logout"
-        type="material"
-        color="#fff"
-        size={24}
-      />
-    </TouchableOpacity>
-  );
-};
+const Drawer = createDrawerNavigator();
 
 // Navegação para Alunos
 const StudentTabNavigator = () => (
@@ -111,11 +64,7 @@ const StudentTabNavigator = () => (
   >
     <Tab.Screen name="Dashboard" component={StudentDashboard} />
     <Tab.Screen name="Pagamentos" component={StudentPayments} />
-    <Tab.Screen 
-      name="Evolução" 
-      component={StudentEvolution} 
-      options={{ headerShown: false }}
-    />
+    <Tab.Screen name="Evolução" component={StudentEvolution} />
     <Tab.Screen name="Calendário" component={StudentCalendar} />
   </Tab.Navigator>
 );
@@ -178,17 +127,27 @@ const AdminTabNavigator = () => (
 );
 
 // Navegação de Autenticação
-const AuthNavigator = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="Login" component={LoginScreen} />
-    <Stack.Screen name="Register" component={RegisterScreen} />
-  </Stack.Navigator>
-);
+const AuthNavigator = () => {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+        animationEnabled: true,
+      }}
+    >
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+    </Stack.Navigator>
+  );
+};
 
-// Navegação Principal
-const MainNavigator = ({ userType }) => {
+// Componente para usar responsividade dentro do navegador
+const ResponsiveMainNavigator = ({ userType }) => {
+  const { isMobile, isTablet } = useResponsive();
+
   let TabNavigator;
-
   switch (userType) {
     case 'student':
       TabNavigator = StudentTabNavigator;
@@ -203,148 +162,66 @@ const MainNavigator = ({ userType }) => {
       TabNavigator = StudentTabNavigator;
   }
 
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: '#2196F3',
-        },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-      }}
-    >
-      <Stack.Screen 
-        name="MainTabs" 
-        component={TabNavigator} 
-        options={{
-          headerShown: true,
-          title: 'Academia App',
-          headerRight: () => <LogoutButton />
+  // Use drawer para tablets/desktop, tabs para mobile
+  if (isMobile) {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen
+          name="MainTabs"
+          component={TabNavigator}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{ title: 'Perfil' }}
+        />
+      </Stack.Navigator>
+    );
+  } else {
+    // Para tablet/desktop, usar drawer navigation
+    const DrawerNavigator = () => (
+      <Drawer.Navigator
+        screenOptions={{
+          drawerStyle: {
+            backgroundColor: '#f5f5f5',
+            width: 280,
+          },
+          headerStyle: {
+            backgroundColor: '#2196F3',
+          },
+          headerTintColor: '#fff',
         }}
-      />
-      <Stack.Screen 
-        name="Profile" 
-        component={ProfileScreen}
-        options={{ 
-          title: 'Perfil',
-          headerRight: () => <LogoutButton />
-        }}
-      />
-      
-      {/* Telas de Detalhes */}
-      <Stack.Screen 
-        name="ClassDetails" 
-        component={ClassDetailsScreen}
-        options={{ 
-          title: 'Detalhes da Turma',
-          headerRight: () => <LogoutButton />
-        }}
-      />
-      <Stack.Screen 
-        name="StudentDetails" 
-        component={StudentDetailsScreen}
-        options={{ 
-          title: 'Detalhes do Aluno',
-          headerRight: () => <LogoutButton />
-        }}
-      />
-      <Stack.Screen 
-        name="StudentProfile" 
-        component={StudentDetailsScreen}
-        options={{ 
-          title: 'Perfil do Aluno',
-          headerRight: () => <LogoutButton />
-        }}
-      />
-      
-      {/* Telas de Gestão */}
-      <Stack.Screen 
-        name="CheckIns" 
-        component={LoadingScreen} // Temporário
-        options={{ 
-          title: 'Check-ins',
-          headerRight: () => <LogoutButton />
-        }}
-      />
-      <Stack.Screen 
-        name="AddGraduation" 
-        component={LoadingScreen} // Temporário
-        options={{ 
-          title: 'Adicionar Graduação',
-          headerRight: () => <LogoutButton />
-        }}
-      />
-      <Stack.Screen 
-        name="AddClass" 
-        component={AddClassScreen}
-        options={{ 
-          title: 'Adicionar Turma',
-          headerRight: () => <LogoutButton />
-        }}
-      />
-      <Stack.Screen 
-        name="EditClass" 
-        component={EditClassScreen}
-        options={{ 
-          title: 'Editar Turma',
-          headerRight: () => <LogoutButton />
-        }}
-      />
-      <Stack.Screen 
-        name="AddStudent" 
-        component={AddStudentScreen}
-        options={{ 
-          title: 'Adicionar Aluno',
-          headerRight: () => <LogoutButton />
-        }}
-      />
-      <Stack.Screen 
-        name="EditStudent" 
-        component={EditStudentScreen}
-        options={{ 
-          title: 'Editar Aluno',
-          headerRight: () => <LogoutButton />
-        }}
-      />
-      
-      {/* Telas de Relatórios e Configurações */}
-      <Stack.Screen 
-        name="Relatórios" 
-        component={ReportsScreen}
-        options={{ 
-          title: 'Relatórios',
-          headerRight: () => <LogoutButton />
-        }}
-      />
-      <Stack.Screen 
-        name="Configurações" 
-        component={SettingsScreen}
-        options={{ 
-          title: 'Configurações',
-          headerRight: () => <LogoutButton />
-        }}
-      />
-      <Stack.Screen 
-        name="AdminSettings" 
-        component={SettingsScreen}
-        options={{ title: 'Configurações Admin' }}
-      />
-      
-      {/* Telas Específicas */}
-      <Stack.Screen 
-        name="StudentAnnouncements" 
-        component={StudentDashboard} // Redirecionamento temporário
-        options={{ title: 'Avisos' }}
-      />
-      <Stack.Screen 
-        name="ClassStudents" 
-        component={LoadingScreen} // Temporário
-        options={{ title: 'Alunos da Turma' }}
-      />
-    </Stack.Navigator>
-  );
+      >
+        <Drawer.Screen
+          name="Dashboard"
+          component={TabNavigator}
+          options={{
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="home-outline" color={color} size={size} />
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{
+            title: 'Perfil',
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="person-outline" color={color} size={size} />
+            ),
+          }}
+        />
+      </Drawer.Navigator>
+    );
+
+    return <DrawerNavigator />;
+  }
+};
+
+// Navegação Principal
+const MainNavigator = ({ userType }) => {
+  return <ResponsiveMainNavigator userType={userType} />;
 };
 
 // Navegador Principal da Aplicação
@@ -367,4 +244,3 @@ const AppNavigator = () => {
 };
 
 export default AppNavigator;
-

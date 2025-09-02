@@ -1,6 +1,5 @@
 import React from 'react';
-import { ActivityIndicator } from 'react-native';
-import { Button } from 'react-native-elements';
+import { Button, ActivityIndicator } from 'react-native-paper';
 
 const LoadingButton = ({ 
   loading, 
@@ -13,14 +12,14 @@ const LoadingButton = ({
 }) => {
   return (
     <Button
-      type={mode === 'outlined' ? 'outline' : 'solid'}
+      mode={mode}
       onPress={onPress}
       disabled={loading || disabled}
-      buttonStyle={[{ paddingVertical: 8 }, style]}
-      title={loading ? '' : children}
-      loading={loading}
+      style={[{ paddingVertical: 8 }, style]}
       {...props}
-    />
+    >
+      {loading ? <ActivityIndicator color="white" size="small" /> : children}
+    </Button>
   );
 };
 

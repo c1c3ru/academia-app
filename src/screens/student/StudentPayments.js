@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { 
   Card, 
-  Text, 
-  Button,
-  Badge,
-  Icon,
-  ListItem,
-  Divider
-} from 'react-native-elements';
+  Title, 
+  Paragraph, 
+  Button, 
+  Chip,
+  Divider,
+  Text,
+  FAB,
+  List
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -90,19 +92,17 @@ const StudentPayments = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {/* Status Atual */}
         {currentPayment && (
-          <Card containerStyle={styles.currentCard}>
+          <Card style={styles.currentCard}>
+            <Card.Content>
               <View style={styles.cardHeader}>
-                <Icon name="card-outline" type="ionicon" size={24} color="#2196F3" />
-                <Text h4 style={styles.cardTitle}>Mensalidade Atual</Text>
+                <Ionicons name="card-outline" size={24} color="#2196F3" />
+                <Title style={styles.cardTitle}>Mensalidade Atual</Title>
               </View>
               
               <View style={styles.currentPaymentInfo}>
@@ -123,79 +123,95 @@ const StudentPayments = ({ navigation }) => {
                 
                 <View style={styles.paymentRow}>
                   <Text style={styles.label}>Status:</Text>
-                  <Badge 
-                    value={getStatusText(currentPayment.status)}
-                    badgeStyle={[styles.statusChip, { backgroundColor: getStatusColor(currentPayment.status) }]}
-                    textStyle={{ color: 'white' }}
-                  />
+                  <Chip 
+                    mode="outlined"
+                    style={[styles.statusChip, { borderColor: getStatusColor(currentPayment.status) }]}
+                    textStyle={{ color: getStatusColor(currentPayment.status) }}
+                  >
+                    {getStatusText(currentPayment.status)}
+                  </Chip>
                 </View>
               </View>
 
               {currentPayment.status === 'pending' && (
                 <Button 
+                  mode="contained" 
                   onPress={handlePayWithPix}
-                  buttonStyle={styles.payButton}
-                  icon={<Icon name="qr-code" type="ionicon" size={16} color="white" />}
-                  title="Pagar com PIX"
-                />
+                  style={styles.payButton}
+                  icon="qrcode"
+                >
+                  Pagar com PIX
+                </Button>
               )}
+            </Card.Content>
           </Card>
         )}
 
         {/* Histórico de Pagamentos */}
-        <Card containerStyle={styles.card}>
+        <Card style={styles.card}>
+          <Card.Content>
             <View style={styles.cardHeader}>
-              <Icon name="time-outline" type="ionicon" size={24} color="#2196F3" />
-              <Text h4 style={styles.cardTitle}>Histórico de Pagamentos</Text>
+              <Ionicons name="time-outline" size={24} color="#2196F3" />
+              <Title style={styles.cardTitle}>Histórico de Pagamentos</Title>
             </View>
             
             {payments.length > 0 ? (
               payments.map((payment, index) => (
                 <View key={payment.id || index}>
-                  <ListItem>
-                    <Icon name="receipt" type="ionicon" color={getStatusColor(payment.status)} />
-                    <ListItem.Content>
-                      <ListItem.Title>{`${payment.planName || 'Mensalidade'} - ${formatCurrency(payment.amount)}`}</ListItem.Title>
-                      <ListItem.Subtitle>{`Vencimento: ${formatDate(payment.dueDate)}`}</ListItem.Subtitle>
-                    </ListItem.Content>
-                    <Badge 
-                      value={getStatusText(payment.status)}
-                      badgeStyle={[styles.listStatusChip, { backgroundColor: getStatusColor(payment.status) }]}
-                      textStyle={{ color: 'white', fontSize: 12 }}
-                    />
-                  </ListItem>
+                  <List.Item
+                    title={`${payment.planName || 'Mensalidade'} - ${formatCurrency(payment.amount)}`}
+                    description={`Vencimento: ${formatDate(payment.dueDate)}`}
+                    left={() => (
+                      <List.Icon 
+                        icon="receipt" 
+                        color={getStatusColor(payment.status)}
+                      />
+                    )}
+                    right={() => (
+                      <Chip 
+                        mode="outlined"
+                        style={[styles.listStatusChip, { borderColor: getStatusColor(payment.status) }]}
+                        textStyle={{ color: getStatusColor(payment.status), fontSize: 12 }}
+                      >
+                        {getStatusText(payment.status)}
+                      </Chip>
+                    )}
+                  />
                   {index < payments.length - 1 && <Divider />}
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyText}>
+              <Paragraph style={styles.emptyText}>
                 Nenhum pagamento encontrado
-              </Text>
+              </Paragraph>
             )}
+          </Card.Content>
         </Card>
 
         {/* Informações Adicionais */}
-        <Card containerStyle={styles.card}>
-            <Text h4 style={styles.cardTitle}>Informações</Text>
-            <Text style={styles.infoText}>
+        <Card style={styles.card}>
+          <Card.Content>
+            <Title style={styles.cardTitle}>Informações</Title>
+            <Paragraph style={styles.infoText}>
               • Os pagamentos devem ser realizados até a data de vencimento
-            </Text>
-            <Text style={styles.infoText}>
+            </Paragraph>
+            <Paragraph style={styles.infoText}>
               • Após o vencimento, será cobrada multa de 2% + juros de 1% ao mês
-            </Text>
-            <Text style={styles.infoText}>
+            </Paragraph>
+            <Paragraph style={styles.infoText}>
               • Em caso de dúvidas, entre em contato com a administração
-            </Text>
+            </Paragraph>
+          </Card.Content>
         </Card>
       </ScrollView>
 
       {/* Botão de Contato */}
-      <TouchableOpacity
+      <FAB
         style={styles.fab}
+        icon="message"
+        label="Contato"
         onPress={() => Alert.alert('Contato', 'Funcionalidade de contato será implementada')}
-      >
-        <Icon name="chatbubble" type="ionicon" size={24} color="white" />
-      </TouchableOpacity>
+      />
     </SafeAreaView>
   );
 };
@@ -208,51 +224,16 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 100,
-  },
   currentCard: {
     margin: 16,
     marginBottom: 8,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
-
-      },
-
-    }),
+    elevation: 4,
     backgroundColor: '#E3F2FD',
   },
   card: {
     margin: 16,
     marginTop: 8,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
+    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',

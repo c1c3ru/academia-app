@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { 
   Card, 
-  Text, 
-  Button,
-  Badge,
+  Title, 
+  Paragraph, 
+  Button, 
   Avatar,
-  Icon,
-  ListItem,
+  Chip,
   Divider,
-  SearchBar
-} from 'react-native-elements';
+  Text,
+  List,
+  FAB,
+  Searchbar,
+  Menu,
+  IconButton
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import CustomMenu from '../../components/CustomMenu';
 import { useAuth } from '../../contexts/AuthContext';
 import { studentService, firestoreService } from '../../services/firestoreService';
 
@@ -123,7 +126,7 @@ const InstructorStudents = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <SearchBar
+        <Searchbar
           placeholder="Buscar alunos..."
           onChangeText={setSearchQuery}
           value={searchQuery}
@@ -131,95 +134,99 @@ const InstructorStudents = ({ navigation }) => {
         />
         
         <View style={styles.filterRow}>
-          <CustomMenu
+          <Menu
             visible={filterVisible}
             onDismiss={() => setFilterVisible(false)}
             anchor={
               <Button 
-                type="outline"
+                mode="outlined" 
                 onPress={() => setFilterVisible(true)}
-                icon={<Icon name="filter" size={20} color="#666" />}
-                buttonStyle={styles.filterButton}
+                icon="filter"
+                style={styles.filterButton}
               >
                 {getFilterText(selectedFilter)}
               </Button>
             }
           >
-            <CustomMenu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title="Todos" />
-            <CustomMenu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title="Ativos" />
-            <CustomMenu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title="Inativos" />
-            <CustomMenu.Item onPress={() => { setSelectedFilter('payment_pending'); setFilterVisible(false); }} title="Pagamento Pendente" />
-          </CustomMenu>
+            <Menu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title="Todos" />
+            <Menu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title="Ativos" />
+            <Menu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title="Inativos" />
+            <Menu.Item onPress={() => { setSelectedFilter('payment_pending'); setFilterVisible(false); }} title="Pagamento Pendente" />
+          </Menu>
         </View>
       </View>
 
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {filteredStudents.length > 0 ? (
           filteredStudents.map((student, index) => (
-            <Card key={student.id || index} containerStyle={styles.studentCard}>
+            <Card key={student.id || index} style={styles.studentCard}>
+              <Card.Content>
                 <View style={styles.studentHeader}>
                   <View style={styles.studentInfo}>
-                    <Avatar 
+                    <Avatar.Text 
                       size={50} 
-                      title={student.name?.charAt(0) || 'A'} 
-                      containerStyle={styles.avatar}
+                      label={student.name?.charAt(0) || 'A'} 
+                      style={styles.avatar}
                     />
                     <View style={styles.studentDetails}>
-                      <Text style={styles.studentName}>{student.name}</Text>
+                      <Title style={styles.studentName}>{student.name}</Title>
                       <Text style={styles.studentEmail}>{student.email}</Text>
                       {student.currentGraduation && (
-                        <View style={[styles.graduationChip, styles.graduationText]}>
-                          <Text style={styles.graduationText}>{student.currentGraduation}</Text>
-                        </View>
+                        <Chip 
+                          mode="outlined" 
+                          style={styles.graduationChip}
+                          textStyle={styles.graduationText}
+                        >
+                          {student.currentGraduation}
+                        </Chip>
                       )}
                     </View>
                   </View>
                   
-                  <TouchableOpacity
+                  <IconButton
+                    icon="dots-vertical"
                     onPress={() => handleStudentPress(student)}
-                    style={styles.iconButton}
-                  >
-                    <Ionicons name="ellipsis-vertical" size={24} color="#666" />
-                  </TouchableOpacity>
+                  />
                 </View>
 
                 <View style={styles.studentStats}>
                   <View style={styles.statItem}>
                     <Text style={styles.statLabel}>Status</Text>
-                    <View style={[
-                      styles.statusChip,
-                      { borderColor: student.isActive !== false ? '#4CAF50' : '#F44336' }
-                    ]}>
-                      <Text style={{ 
+                    <Chip 
+                      mode="outlined"
+                      style={[
+                        styles.statusChip,
+                        { borderColor: student.isActive !== false ? '#4CAF50' : '#F44336' }
+                      ]}
+                      textStyle={{ 
                         color: student.isActive !== false ? '#4CAF50' : '#F44336',
                         fontSize: 12
-                      }}>
-                        {student.isActive !== false ? 'Ativo' : 'Inativo'}
-                      </Text>
-                    </View>
+                      }}
+                    >
+                      {student.isActive !== false ? 'Ativo' : 'Inativo'}
+                    </Chip>
                   </View>
 
                   <View style={styles.statItem}>
                     <Text style={styles.statLabel}>Pagamento</Text>
-                    <View style={[
-                      styles.statusChip,
-                      { borderColor: getPaymentStatusColor(student.paymentStatus) }
-                    ]}>
-                      <Text style={{ 
+                    <Chip 
+                      mode="outlined"
+                      style={[
+                        styles.statusChip,
+                        { borderColor: getPaymentStatusColor(student.paymentStatus) }
+                      ]}
+                      textStyle={{ 
                         color: getPaymentStatusColor(student.paymentStatus),
                         fontSize: 12
-                      }}>
-                        {getPaymentStatusText(student.paymentStatus)}
-                      </Text>
-                    </View>
+                      }}
+                    >
+                      {getPaymentStatusText(student.paymentStatus)}
+                    </Chip>
                   </View>
                 </View>
 
@@ -239,40 +246,46 @@ const InstructorStudents = ({ navigation }) => {
 
                 <View style={styles.studentActions}>
                   <Button 
-                    type="outline"
+                    mode="outlined" 
                     onPress={() => handleStudentPress(student)}
-                    buttonStyle={styles.actionButton}
-                    icon={<Icon name="visibility" type="material" size={20} color="#666" />}
-                    title="Ver Perfil"
-                  />
+                    style={styles.actionButton}
+                    icon="eye"
+                  >
+                    Ver Perfil
+                  </Button>
 
                   <Button 
-                    type="solid"
+                    mode="contained" 
                     onPress={() => handleAddGraduation(student)}
-                    buttonStyle={styles.actionButton}
-                    icon={<Icon name="emoji-events" type="material" size={20} color="white" />}
-                    title="Graduação"
-                  />
+                    style={styles.actionButton}
+                    icon="trophy"
+                  >
+                    Graduação
+                  </Button>
                 </View>
+              </Card.Content>
             </Card>
           ))
         ) : (
-          <Card containerStyle={styles.emptyCard}>
+          <Card style={styles.emptyCard}>
+            <Card.Content style={styles.emptyContent}>
               <Ionicons name="people-outline" size={48} color="#ccc" />
-              <Text style={styles.emptyTitle}>Nenhum aluno encontrado</Text>
-              <Text style={styles.emptyText}>
+              <Title style={styles.emptyTitle}>Nenhum aluno encontrado</Title>
+              <Paragraph style={styles.emptyText}>
                 {searchQuery ? 
                   'Nenhum aluno corresponde à sua busca' : 
                   'Você ainda não possui alunos atribuídos'
                 }
-              </Text>
+              </Paragraph>
+            </Card.Content>
           </Card>
         )}
 
         {/* Estatísticas gerais */}
         {students.length > 0 && (
-          <Card containerStyle={styles.statsCard}>
-              <Text style={styles.statsTitle}>Resumo dos Alunos</Text>
+          <Card style={styles.statsCard}>
+            <Card.Content>
+              <Title style={styles.statsTitle}>Resumo dos Alunos</Title>
               
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
@@ -301,16 +314,17 @@ const InstructorStudents = ({ navigation }) => {
                   <Text style={styles.statLabel}>Com Graduação</Text>
                 </View>
               </View>
+            </Card.Content>
           </Card>
         )}
       </ScrollView>
 
-      <TouchableOpacity
+      <FAB
         style={styles.fab}
+        icon="account-plus"
+        label="Novo Aluno"
         onPress={() => Alert.alert('Info', 'Funcionalidade disponível apenas para administradores')}
-      >
-        <Icon name="person-add" type="material" size={24} color="white" />
-      </TouchableOpacity>
+      />
     </SafeAreaView>
   );
 };
@@ -323,29 +337,12 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     backgroundColor: '#fff',
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
+    elevation: 2,
   },
   searchbar: {
+    elevation: 0,
     backgroundColor: '#f5f5f5',
     marginBottom: 8,
-    borderTopWidth: 0,
-    borderBottomWidth: 0,
   },
   filterRow: {
     flexDirection: 'row',
@@ -357,29 +354,10 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 100,
-  },
   studentCard: {
     margin: 16,
     marginBottom: 8,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
+    elevation: 2,
   },
   studentHeader: {
     flexDirection: 'row',
@@ -462,23 +440,7 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     margin: 16,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
+    elevation: 2,
   },
   emptyContent: {
     alignItems: 'center',
@@ -495,23 +457,7 @@ const styles = StyleSheet.create({
   statsCard: {
     margin: 16,
     marginTop: 8,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
+    elevation: 2,
     backgroundColor: '#E8F5E8',
   },
   statsTitle: {

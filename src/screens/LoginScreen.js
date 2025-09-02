@@ -1,189 +1,190 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Alert, ScrollView, Animated, Easing } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, Alert, Platform, ScrollView } from 'react-native';
 import { 
-  Input,
+  TextInput, 
+  Card, 
+  Title, 
+  Paragraph,
+  Divider,
+  ActivityIndicator,
   Button,
   Text,
-  Card,
-  Divider,
-  Icon
-} from 'react-native-elements';
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
-// import { LinearGradient } from 'expo-linear-gradient'; // Removido - dependência não disponível
+import AnimatedCard from '../components/AnimatedCard';
+import AnimatedButton from '../components/AnimatedButton';
 
-const LoginScreen = ({ navigation }) => {
+export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const headerOpacity = useRef(new Animated.Value(0)).current;
-  const headerTranslate = useRef(new Animated.Value(20)).current;
-
-  const { signIn, signInWithGoogle } = useAuth();
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(headerOpacity, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: false,
-        easing: Easing.out(Easing.ease)
-      }),
-      Animated.timing(headerTranslate, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: false,
-        easing: Easing.out(Easing.ease)
-      })
-    ]).start();
-  }, [headerOpacity, headerTranslate]);
+  const { signIn } = useAuth();
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      setErrorMessage('Por favor, preencha todos os campos');
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Erro', 'Por favor, preencha todos os campos');
       return;
     }
 
     setLoading(true);
-    setErrorMessage('');
     try {
-      await signIn(email, password);
+      await signIn(email.trim(), password);
     } catch (error) {
       console.error('Erro no login:', error);
-      setErrorMessage('Email ou senha incorretos');
+      let errorMessage = 'Verifique suas credenciais';
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'Usuário não encontrado';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Senha incorreta';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Email inválido';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Erro no Login', errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      setLoading(true);
-      
-      // Para implementação completa, seria necessário:
-      // 1. Instalar @expo/google-app-auth ou expo-auth-session
-      // 2. Configurar credenciais OAuth no Google Console
-      // 3. Adicionar configurações no app.json
-      
-      // Simulação da implementação:
-      /*
-      import * as Google from 'expo-auth-session/providers/google';
-      
-      const [request, response, promptAsync] = Google.useAuthRequest({
-        expoClientId: 'YOUR_EXPO_CLIENT_ID',
-        iosClientId: 'YOUR_IOS_CLIENT_ID',
-        androidClientId: 'YOUR_ANDROID_CLIENT_ID',
-        webClientId: 'YOUR_WEB_CLIENT_ID',
-      });
-      
-      if (response?.type === 'success') {
-        const { authentication } = response;
-        await signInWithGoogle(authentication.accessToken);
-      }
-      */
-      
-      setErrorMessage('Login com Google requer configuração OAuth (ver instruções)');
-    } catch (error) {
-      console.error('Erro no login com Google:', error);
-      Alert.alert('Erro', 'Falha no login com Google');
-    } finally {
-      setLoading(false);
+  const handleForgotPassword = () => {
+    if (navigation) {
+      navigation.navigate('ForgotPassword');
+    } else {
+      Alert.alert(
+        'Recuperar Senha',
+        'Entre em contato com o suporte para recuperar sua senha.',
+        [{ text: 'OK' }]
+      );
     }
   };
+
+  const handleGoToRegister = () => {
+    if (navigation) {
+      navigation.navigate('Register');
+    } else {
+      Alert.alert('Cadastro', 'Funcionalidade de cadastro em desenvolvimento');
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" />
+        <Paragraph style={styles.loadingText}>Fazendo login...</Paragraph>
+      </View>
+    );
+  }
 
   return (
-    <LinearGradient colors={["#0f172a", "#111827"]} style={styles.gradient}>
+    <LinearGradient
+      colors={['#667eea', '#764ba2']}
+      style={styles.gradient}
+    >
       <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-          <Animated.View style={[styles.header, { opacity: headerOpacity, transform: [{ translateY: headerTranslate }] }]}>
-            <Text h1 style={styles.title}>Academia App</Text>
-            <Text style={styles.subtitle}>
-              Gerencie sua academia de lutas
-            </Text>
-          </Animated.View>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.header}>
+            <MaterialCommunityIcons 
+              name="school" 
+              size={60} 
+              color="white" 
+              style={styles.headerIcon}
+            />
+            <Title style={styles.headerTitle}>Academia App</Title>
+            <Paragraph style={styles.headerSubtitle}>
+              Bem-vindo de volta!
+            </Paragraph>
+          </View>
 
-          <Animated.View style={{ width: '100%', opacity: headerOpacity }}>
-            <Card containerStyle={styles.card}>
-              <Text h3 style={styles.cardTitle}>Entrar</Text>
-              
-              {errorMessage ? (
-                <Text style={styles.errorText}>{errorMessage}</Text>
-              ) : null}
-              
-              <Input
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                leftIcon={<Icon name="email" type="material" size={20} color="#666" />}
-                containerStyle={styles.inputContainer}
-                inputStyle={styles.inputText}
-                disabled={loading}
-              />
+          <View style={styles.content}>
+            <AnimatedCard elevation="medium" animationType="fadeIn">
+              <Card.Content style={styles.cardContent}>
+                <Title style={styles.title}>Entrar</Title>
+                <Paragraph style={styles.subtitle}>
+                  Faça login para continuar
+                </Paragraph>
 
-              <Input
-                placeholder="Senha"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                rightIcon={
-                  <Icon 
-                    name={showPassword ? "visibility-off" : "visibility"} 
-                    type="material"
-                    size={20} 
-                    color="#666"
-                    onPress={() => setShowPassword(!showPassword)}
-                  />
-                }
-                leftIcon={<Icon name="lock" type="material" size={20} color="#666" />}
-                containerStyle={styles.inputContainer}
-                inputStyle={styles.inputText}
-                disabled={loading}
-              />
+                <Divider style={styles.divider} />
 
-              <Button
-                title={loading ? "Entrando..." : "Entrar"}
-                onPress={handleLogin}
-                buttonStyle={styles.button}
-                titleStyle={styles.buttonText}
-                icon={!loading ? <Icon name="login" type="material" size={20} color="white" /> : undefined}
-                disabled={loading}
-                loading={loading}
-              />
-
-              <Divider style={styles.divider} />
-
-              <Button
-                title="Entrar com Google"
-                onPress={handleGoogleLogin}
-                buttonStyle={styles.googleButton}
-                titleStyle={styles.googleButtonText}
-                icon={<Icon name="google" type="font-awesome" size={16} color="#4285F4" />}
-                disabled={loading}
-                type="outline"
-              />
-
-              <View style={styles.registerContainer}>
-                <Text style={styles.registerText}>Não tem uma conta? </Text>
-                <Button
-                  title="Cadastre-se"
-                  onPress={() => navigation.navigate('Register')}
+                <TextInput
+                  label="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  mode="outlined"
+                  style={styles.input}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
                   disabled={loading}
-                  type="clear"
-                  titleStyle={styles.registerButtonText}
+                  left={<TextInput.Icon icon="email" />}
                 />
-              </View>
-            </Card>
-          </Animated.View>
+
+                <TextInput
+                  label="Senha"
+                  value={password}
+                  onChangeText={setPassword}
+                  mode="outlined"
+                  style={styles.input}
+                  secureTextEntry={!showPassword}
+                  disabled={loading}
+                  left={<TextInput.Icon icon="lock" />}
+                  right={
+                    <TextInput.Icon 
+                      icon={showPassword ? "eye-off" : "eye"} 
+                      onPress={() => setShowPassword(!showPassword)}
+                    />
+                  }
+                />
+
+                <View style={styles.forgotPasswordContainer}>
+                  <Button
+                    mode="text"
+                    onPress={handleForgotPassword}
+                    disabled={loading}
+                    style={styles.forgotPasswordButton}
+                  >
+                    Esqueci minha senha
+                  </Button>
+                </View>
+
+                <AnimatedButton
+                  mode="contained"
+                  onPress={handleLogin}
+                  style={styles.loginButton}
+                  loading={loading}
+                  disabled={loading}
+                  icon="login"
+                >
+                  Entrar
+                </AnimatedButton>
+
+                <Divider style={styles.dividerRegister} />
+
+                <View style={styles.registerContainer}>
+                  <Text style={styles.registerText}>Ainda não tem uma conta?</Text>
+                  <Button
+                    mode="outlined"
+                    onPress={handleGoToRegister}
+                    disabled={loading}
+                    style={styles.registerButton}
+                    icon="account-plus"
+                  >
+                    Criar Conta
+                  </Button>
+                </View>
+              </Card.Content>
+            </AnimatedCard>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
   );
-};
+}
 
 const styles = StyleSheet.create({
   gradient: {
@@ -196,91 +197,102 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: 16,
   },
   header: {
     alignItems: 'center',
     marginBottom: 30,
   },
-  title: {
-    fontSize: 34,
+  headerIcon: {
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  headerTitle: {
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#e5e7eb',
+    color: 'white',
     marginBottom: 8,
-    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
-  subtitle: {
+  headerSubtitle: {
     fontSize: 16,
-    color: '#9ca3af',
+    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
-  card: {
-    borderRadius: 16,
-    backgroundColor: '#ffffff',
-    padding: 20,
-    margin: 0,
+  content: {
+    maxWidth: 400,
+    alignSelf: 'center',
+    width: '100%',
   },
-  cardTitle: {
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#333',
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  errorText: {
-    color: '#F44336',
-    textAlign: 'center',
-    marginBottom: 16,
-    fontSize: 14,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputText: {
-    color: '#333',
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: '#2563eb',
-    borderRadius: 12,
-    paddingVertical: 12,
-    marginTop: 8,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  divider: {
-    marginVertical: 20,
-    backgroundColor: '#e0e0e0',
-  },
-  googleButton: {
-    borderColor: '#4285F4',
-    borderRadius: 12,
-    paddingVertical: 12,
-    marginBottom: 16,
-  },
-  googleButtonText: {
-    color: '#4285F4',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  registerContainer: {
-    flexDirection: 'row',
+  loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  loadingText: {
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  cardContent: {
+    padding: 24,
+  },
+  title: {
+    textAlign: 'center',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#333',
+  },
+  subtitle: {
+    textAlign: 'center',
+    marginBottom: 16,
+    color: '#666',
+  },
+  divider: {
+    marginVertical: 16,
+  },
+  input: {
+    marginBottom: 16,
+    backgroundColor: 'white',
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 8,
+  },
+  forgotPasswordButton: {
+    padding: 0,
+  },
+  loginButton: {
     marginTop: 8,
+    paddingVertical: 8,
+    borderRadius: 25,
+  },
+  dividerRegister: {
+    marginVertical: 24,
+  },
+  registerContainer: {
+    alignItems: 'center',
   },
   registerText: {
-    color: '#6b7280',
+    marginBottom: 12,
+    color: '#666',
     fontSize: 14,
   },
-  registerButtonText: {
-    color: '#2563eb',
-    fontSize: 14,
-    fontWeight: '600',
+  registerButton: {
+    borderColor: '#2196F3',
+    borderRadius: 25,
   },
 });
-
-export default LoginScreen;
-

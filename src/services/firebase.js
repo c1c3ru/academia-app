@@ -1,39 +1,65 @@
 // Configuração do Firebase
 import { initializeApp } from 'firebase/app';
-import { initializeAuth, getReactNativePersistence, getAuth, browserLocalPersistence } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { Platform } from 'react-native';
-// import { getStorage } from 'firebase/storage'; // Removido - não necessário
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Configuração do Firebase
+// Detectar plataforma
+const isWeb = Platform.OS === 'web';
+
+// Configuração do Firebase - usando valores do google-services.json
 const firebaseConfig = {
-  apiKey: "AIzaSyCq9vc3dLfWdGWF4kFXiaj1cy92R1CNKAc",
+  apiKey: "AIzaSyA_hzFPt9hUITlMq9BrsJuxAdzycVR3AEI",
   authDomain: "academia-app-5cf79.firebaseapp.com",
   projectId: "academia-app-5cf79",
   storageBucket: "academia-app-5cf79.firebasestorage.app",
   messagingSenderId: "377489252583",
-  appId: "1:377489252583:web:ac369431965301dd69c242"
+  appId: "1:377489252583:android:87f2c3948511325769c242"
 };
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
+console.log('🔥 Inicializando Firebase...');
+console.log('📋 Config:', {
+  apiKey: firebaseConfig.apiKey ? 'Presente' : 'Ausente',
+  authDomain: firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId,
+  appId: firebaseConfig.appId
+});
 
-// Inicializar Auth com persistência adequada para cada plataforma
+// Função para inicializar Firebase com tratamento de erro
+let app;
 let auth;
-if (Platform.OS === 'web') {
-  // Para web, usar getAuth com browserLocalPersistence
+let db;
+
+try {
+  // Inicializar Firebase
+  app = initializeApp(firebaseConfig);
+  console.log('✅ Firebase App inicializado para', isWeb ? 'Web' : 'Mobile');
+  
+  // Inicializar Auth com configurações específicas da plataforma
   auth = getAuth(app);
-} else {
-  // Para mobile, usar initializeAuth com AsyncStorage
-  auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage)
-  });
+  
+  // Configurações específicas para web
+  if (isWeb) {
+    // Configurar persistência para web
+    auth.settings = {
+      appVerificationDisabledForTesting: false,
+    };
+  }
+  
+  console.log('✅ Firebase Auth inicializado');
+  
+  // Inicializar Firestore
+  db = getFirestore(app);
+  console.log('✅ Firebase Firestore inicializado');
+  
+  console.log('🎉 Firebase inicializado com sucesso para', Platform.OS);
+} catch (error) {
+  console.error('❌ Erro ao inicializar Firebase:', error);
+  console.error('Platform:', Platform.OS);
+  console.error('Stack:', error.stack);
+  throw error;
 }
 
-export { auth };
-export const db = getFirestore(app);
-// export const storage = getStorage(app); // Removido - não necessário
-
+export { auth, db };
 export default app;
 

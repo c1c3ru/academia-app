@@ -1,0 +1,9 @@
+{
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.configuration.updateBuildConfiguration": "disabled",
+    "java.import.gradle.enabled": false,
+    "files.exclude": {
+        "**/node_modules/**/android": true,
+        "**/node_modules/**/ios": true
+    }
+}

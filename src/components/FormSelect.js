@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, FlatList } from 'react-native';
-import { Button, Text, Icon } from 'react-native-elements';
+import { View, StyleSheet } from 'react-native';
+import { Menu, Button, HelperText, Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import CustomMenu from './CustomMenu';
 
 const FormSelect = ({
   label,
@@ -37,12 +36,12 @@ const FormSelect = ({
     <View style={[styles.container, style]}>
       {label && <Text style={styles.label}>{label}</Text>}
       
-      <CustomMenu
+      <Menu
         visible={visible}
         onDismiss={closeMenu}
         anchor={
           <Button
-            type="outline"
+            mode="outlined"
             onPress={openMenu}
             disabled={disabled}
             style={[
@@ -68,19 +67,19 @@ const FormSelect = ({
         }
       >
         {options.map((option) => (
-          <CustomMenu.Item
+          <Menu.Item
             key={option.value}
             onPress={() => handleSelect(option.value)}
             title={option.label}
             titleStyle={value === option.value ? styles.selectedOption : null}
           />
         ))}
-      </CustomMenu>
+      </Menu>
 
       {hasError && (
-        <Text style={styles.errorText}>
+        <HelperText type="error" visible={hasError} style={styles.errorText}>
           {error}
-        </Text>
+        </HelperText>
       )}
     </View>
   );

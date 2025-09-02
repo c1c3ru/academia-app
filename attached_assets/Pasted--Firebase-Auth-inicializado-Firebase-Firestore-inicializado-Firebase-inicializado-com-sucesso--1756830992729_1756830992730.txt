@@ -1,0 +1,24 @@
+✅ Firebase Auth inicializado
+✅ Firebase Firestore inicializado
+🎉 Firebase inicializado com sucesso para web
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+🚀 App.js carregado - Platform: web
+Running application "main" with appParams:
+ 
+Object {rootTag: "#root", hydrate: undefined}
+ 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+🌐 Executando no navegador
+🚀 App iniciando... web
+Firebase inicializado com sucesso
+props.pointerEvents is deprecated. Use style.pointerEvents
+Animated: `useNativeDriver` is not supported because the native animated module is missing. Falling back to JS-based animation. To resolve this, add `RCTAnimation` module to this app, or remove `useNativeDriver`. Make sure to run `bundle exec pod install` first. Read more about autolinking: https://github.com/react-native-community/cli/blob/master/docs/autolinking.md
+Erro no login: 
+TypeError {}
+message: "login is not a function"
+stack: "TypeError: login is not a function↵ at handleLogin (https://5475e674-7784-4e22-8227-a67d9c77a834-00-mlauj2xx7kbd.riker.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable:149248:15)↵ at onClick (https://5475e674-7784-4e22-8227-a67d9c77a834-00-mlauj2xx7kbd.riker.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable:33596:15)↵ at processDispatchQueue (https://5475e674-7784-4e22-8227-a67d9c77a834-00-mlauj2xx7kbd.riker.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable:9558:15)↵ at https://5475e674-7784-4e22-8227-a67d9c77a834-00-mlauj2xx7kbd.riker.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable:9855:9↵ at batchedUpdates$1 (https://5475e674-7784-4e22-8227-a67d9c77a834-00-mlauj2xx7kbd.riker.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable:3226:40)↵ at dispatchEventForPluginEventSystem (https://5475e674-7784-4e22-8227-a67d9c77a834-00-mlauj2xx7kbd.riker.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable:9638:7)↵ at dispatchEvent (https://5475e674-7784-4e22-8227-a67d9c77a834-00-mlauj2xx7kbd.riker.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable:11720:33)↵ at dispatchDiscreteEvent (https://5475e674-7784-4e22-8227-a67d9c77a834-00-mlauj2xx7kbd.riker.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable:11702:60)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object

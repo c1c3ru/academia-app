@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { 
   Card, 
-  Text, 
-  Button,
-  Badge,
+  Title, 
+  Paragraph, 
+  Button, 
   Avatar,
-  Icon,
-  ListItem,
-  Divider
-} from 'react-native-elements';
+  TextInput,
+  Divider,
+  Text,
+  Chip,
+  List
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -52,9 +54,10 @@ const ProfileScreen = ({ navigation }) => {
       'Sair',
       'Tem certeza que deseja sair da sua conta?',
       [
-        { text: 'Cancelar' },
+        { text: 'Cancelar', style: 'cancel' },
         { 
           text: 'Sair', 
+          style: 'destructive',
           onPress: logout
         }
       ]
@@ -81,15 +84,7 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
+      <ScrollView style={styles.scrollView}>
         {/* Header do Perfil */}
         <Card style={styles.headerCard}>
           <Card.Content style={styles.headerContent}>
@@ -99,15 +94,15 @@ const ProfileScreen = ({ navigation }) => {
               style={[styles.avatar, { backgroundColor: getUserTypeColor(userProfile?.userType) }]}
             />
             <View style={styles.headerText}>
-              <Text style={[styles.userName, { fontSize: 24, fontWeight: 'bold' }]}>{userProfile?.name || 'Usuário'}</Text>
+              <Title style={styles.userName}>{userProfile?.name || 'Usuário'}</Title>
               <Text style={styles.userEmail}>{user?.email}</Text>
-                              <View 
-                  style={[styles.userTypeChip, { borderColor: getUserTypeColor(userProfile?.userType) }]}
-                >
-                  <Text style={{ color: getUserTypeColor(userProfile?.userType) }}>
-                    {getUserTypeText(userProfile?.userType)}
-                  </Text>
-                </View>
+              <Chip 
+                mode="outlined"
+                style={[styles.userTypeChip, { borderColor: getUserTypeColor(userProfile?.userType) }]}
+                textStyle={{ color: getUserTypeColor(userProfile?.userType) }}
+              >
+                {getUserTypeText(userProfile?.userType)}
+              </Chip>
             </View>
           </Card.Content>
         </Card>
@@ -117,11 +112,11 @@ const ProfileScreen = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="person-outline" size={24} color="#2196F3" />
-              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Informações Pessoais</Text>
+              <Title style={styles.cardTitle}>Informações Pessoais</Title>
               <Button 
-                type="clear"
+                mode="text" 
                 onPress={() => setEditing(!editing)}
-                icon={<Icon name={editing ? "close" : "pencil"} size={20} color="#666" />}
+                icon={editing ? "close" : "pencil"}
               >
                 {editing ? 'Cancelar' : 'Editar'}
               </Button>
@@ -129,111 +124,96 @@ const ProfileScreen = ({ navigation }) => {
 
             {editing ? (
               <View>
-                <Input
+                <TextInput
                   label="Nome Completo"
                   value={formData.name}
                   onChangeText={(text) => setFormData({...formData, name: text})}
-                  containerStyle={styles.input}
+                  mode="outlined"
+                  style={styles.input}
                 />
                 
-                <Input
+                <TextInput
                   label="Telefone/WhatsApp"
                   value={formData.phone}
                   onChangeText={(text) => setFormData({...formData, phone: text})}
-                  containerStyle={styles.input}
+                  mode="outlined"
                   keyboardType="phone-pad"
+                  style={styles.input}
                 />
                 
-                <Input
+                <TextInput
                   label="Endereço"
                   value={formData.address}
                   onChangeText={(text) => setFormData({...formData, address: text})}
-                  containerStyle={styles.input}
+                  mode="outlined"
                   multiline
                   numberOfLines={2}
+                  style={styles.input}
                 />
                 
-                <Input
+                <TextInput
                   label="Contato de Emergência"
                   value={formData.emergencyContact}
                   onChangeText={(text) => setFormData({...formData, emergencyContact: text})}
-                  containerStyle={styles.input}
+                  mode="outlined"
+                  style={styles.input}
                 />
                 
-                <Input
+                <TextInput
                   label="Informações Médicas"
                   value={formData.medicalInfo}
                   onChangeText={(text) => setFormData({...formData, medicalInfo: text})}
-                  containerStyle={styles.input}
+                  mode="outlined"
                   multiline
                   numberOfLines={3}
+                  style={styles.input}
                   placeholder="Alergias, medicamentos, condições médicas..."
                 />
 
                 <Button 
-                  type="solid"
+                  mode="contained" 
                   onPress={handleSave}
-                  buttonStyle={styles.saveButton}
-                  icon={<Icon name="check" size={20} color="white" />}
+                  style={styles.saveButton}
+                  icon="check"
                 >
                   Salvar Alterações
                 </Button>
               </View>
             ) : (
               <View>
-                <View style={styles.listItem}>
-                  <View style={styles.listItemLeft}>
-                    <Ionicons name="account" size={24} color="#666" />
-                  </View>
-                  <View style={styles.listItemContent}>
-                    <Text style={styles.listItemTitle}>Nome</Text>
-                    <Text style={styles.listItemDescription}>{userProfile?.name || 'Não informado'}</Text>
-                  </View>
-                </View>
+                <List.Item
+                  title="Nome"
+                  description={userProfile?.name || 'Não informado'}
+                  left={() => <List.Icon icon="account" />}
+                />
                 <Divider />
                 
-                <View style={styles.listItem}>
-                  <View style={styles.listItemLeft}>
-                    <Ionicons name="phone" size={24} color="#666" />
-                  </View>
-                  <View style={styles.listItemContent}>
-                    <Text style={styles.listItemTitle}>Telefone</Text>
-                    <Text style={styles.listItemDescription}>{userProfile?.phone || 'Não informado'}</Text>
-                  </View>
-                </View>
+                <List.Item
+                  title="Telefone"
+                  description={userProfile?.phone || 'Não informado'}
+                  left={() => <List.Icon icon="phone" />}
+                />
                 <Divider />
                 
-                <View style={styles.listItem}>
-                  <View style={styles.listItemLeft}>
-                    <Ionicons name="map-marker" size={24} color="#666" />
-                  </View>
-                  <View style={styles.listItemContent}>
-                    <Text style={styles.listItemTitle}>Endereço</Text>
-                    <Text style={styles.listItemDescription}>{userProfile?.address || 'Não informado'}</Text>
-                  </View>
-                </View>
+                <List.Item
+                  title="Endereço"
+                  description={userProfile?.address || 'Não informado'}
+                  left={() => <List.Icon icon="map-marker" />}
+                />
                 <Divider />
                 
-                <View style={styles.listItem}>
-                  <View style={styles.listItemLeft}>
-                    <Ionicons name="phone-alert" size={24} color="#666" />
-                  </View>
-                  <View style={styles.listItemContent}>
-                    <Text style={styles.listItemTitle}>Contato de Emergência</Text>
-                    <Text style={styles.listItemDescription}>{userProfile?.emergencyContact || 'Não informado'}</Text>
-                  </View>
-                </View>
+                <List.Item
+                  title="Contato de Emergência"
+                  description={userProfile?.emergencyContact || 'Não informado'}
+                  left={() => <List.Icon icon="phone-alert" />}
+                />
                 <Divider />
                 
-                <View style={styles.listItem}>
-                  <View style={styles.listItemLeft}>
-                    <Ionicons name="medical-bag" size={24} color="#666" />
-                  </View>
-                  <View style={styles.listItemContent}>
-                    <Text style={styles.listItemTitle}>Informações Médicas</Text>
-                    <Text style={styles.listItemDescription}>{userProfile?.medicalInfo || 'Não informado'}</Text>
-                  </View>
-                </View>
+                <List.Item
+                  title="Informações Médicas"
+                  description={userProfile?.medicalInfo || 'Não informado'}
+                  left={() => <List.Icon icon="medical-bag" />}
+                />
               </View>
             )}
           </Card.Content>
@@ -245,43 +225,31 @@ const ProfileScreen = ({ navigation }) => {
             <Card.Content>
               <View style={styles.cardHeader}>
                 <Ionicons name="school-outline" size={24} color="#4CAF50" />
-                <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Informações da Academia</Text>
+                <Title style={styles.cardTitle}>Informações da Academia</Title>
               </View>
 
-              <View style={styles.listItem}>
-                <View style={styles.listItemLeft}>
-                  <Ionicons name="trophy" size={24} color="#FFD700" />
-                </View>
-                <View style={styles.listItemContent}>
-                  <Text style={styles.listItemTitle}>Graduação Atual</Text>
-                  <Text style={styles.listItemDescription}>{userProfile?.currentGraduation || 'Iniciante'}</Text>
-                </View>
-              </View>
+              <List.Item
+                title="Graduação Atual"
+                description={userProfile?.currentGraduation || 'Iniciante'}
+                left={() => <List.Icon icon="trophy" color="#FFD700" />}
+              />
               <Divider />
               
-              <View style={styles.listItem}>
-                <View style={styles.listItemLeft}>
-                  <Ionicons name="card-membership" size={24} color="#666" />
-                </View>
-                <View style={styles.listItemContent}>
-                  <Text style={styles.listItemTitle}>Plano Atual</Text>
-                  <Text style={styles.listItemDescription}>{userProfile?.currentPlan || 'Não definido'}</Text>
-                </View>
-              </View>
+              <List.Item
+                title="Plano Atual"
+                description={userProfile?.currentPlan || 'Não definido'}
+                left={() => <List.Icon icon="card-membership" />}
+              />
               <Divider />
               
-              <View style={styles.listItem}>
-                <View style={styles.listItemLeft}>
-                  <Ionicons name="calendar-start" size={24} color="#666" />
-                </View>
-                <View style={styles.listItemContent}>
-                  <Text style={styles.listItemTitle}>Data de Início</Text>
-                  <Text style={styles.listItemDescription}>{userProfile?.startDate ? 
-                    new Date(userProfile.startDate).toLocaleDateString('pt-BR') : 
-                    'Não informado'
-                  }</Text>
-                </View>
-              </View>
+              <List.Item
+                title="Data de Início"
+                description={userProfile?.startDate ? 
+                  new Date(userProfile.startDate).toLocaleDateString('pt-BR') : 
+                  'Não informado'
+                }
+                left={() => <List.Icon icon="calendar-start" />}
+              />
             </Card.Content>
           </Card>
         )}
@@ -291,49 +259,34 @@ const ProfileScreen = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="settings-outline" size={24} color="#666" />
-                              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Configurações da Conta</Text>
+              <Title style={styles.cardTitle}>Configurações da Conta</Title>
             </View>
 
-            <TouchableOpacity style={styles.listItem} onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}>
-              <View style={styles.listItemLeft}>
-                <Ionicons name="lock" size={24} color="#666" />
-              </View>
-              <View style={styles.listItemContent}>
-                <Text style={styles.listItemTitle}>Alterar Senha</Text>
-                <Text style={styles.listItemDescription}>Clique para alterar sua senha</Text>
-              </View>
-              <View style={styles.listItemRight}>
-                <Ionicons name="chevron-right" size={24} color="#666" />
-              </View>
-            </TouchableOpacity>
+            <List.Item
+              title="Alterar Senha"
+              description="Clique para alterar sua senha"
+              left={() => <List.Icon icon="lock" />}
+              right={() => <List.Icon icon="chevron-right" />}
+              onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}
+            />
             <Divider />
             
-            <TouchableOpacity style={styles.listItem} onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}>
-              <View style={styles.listItemLeft}>
-                <Ionicons name="bell" size={24} color="#666" />
-              </View>
-              <View style={styles.listItemContent}>
-                <Text style={styles.listItemTitle}>Notificações</Text>
-                <Text style={styles.listItemDescription}>Configurar notificações do app</Text>
-              </View>
-              <View style={styles.listItemRight}>
-                <Ionicons name="chevron-right" size={24} color="#666" />
-              </View>
-            </TouchableOpacity>
+            <List.Item
+              title="Notificações"
+              description="Configurar notificações do app"
+              left={() => <List.Icon icon="bell" />}
+              right={() => <List.Icon icon="chevron-right" />}
+              onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}
+            />
             <Divider />
             
-            <TouchableOpacity style={styles.listItem} onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}>
-              <View style={styles.listItemLeft}>
-                <Ionicons name="shield" size={24} color="#666" />
-              </View>
-              <View style={styles.listItemContent}>
-                <Text style={styles.listItemTitle}>Privacidade</Text>
-                <Text style={styles.listItemDescription}>Configurações de privacidade</Text>
-              </View>
-              <View style={styles.listItemRight}>
-                <Ionicons name="chevron-right" size={24} color="#666" />
-              </View>
-            </TouchableOpacity>
+            <List.Item
+              title="Privacidade"
+              description="Configurações de privacidade"
+              left={() => <List.Icon icon="shield" />}
+              right={() => <List.Icon icon="chevron-right" />}
+              onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}
+            />
           </Card.Content>
         </Card>
 
@@ -341,11 +294,11 @@ const ProfileScreen = ({ navigation }) => {
         <Card style={styles.card}>
           <Card.Content>
             <Button 
-              type="outline"
+              mode="outlined" 
               onPress={handleLogout}
-              buttonStyle={styles.logoutButton}
-              icon={<Icon name="logout" size={20} color="#F44336" />}
-              titleStyle={{ color: "#F44336" }}
+              style={styles.logoutButton}
+              icon="logout"
+              textColor="#F44336"
             >
               Sair da Conta
             </Button>
@@ -364,29 +317,10 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 100,
-  },
   headerCard: {
     margin: 16,
     marginBottom: 8,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
-
-      },
-
-    }),
+    elevation: 4,
   },
   headerContent: {
     flexDirection: 'row',
@@ -415,23 +349,7 @@ const styles = StyleSheet.create({
   card: {
     margin: 16,
     marginTop: 8,
-    ...Platform.select({
-
-      ios: {},
-
-      android: {
-
-        elevation: 4,
-
-      },
-
-      web: {
-
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-      },
-
-    }),
+    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -453,31 +371,6 @@ const styles = StyleSheet.create({
   logoutButton: {
     borderColor: '#F44336',
     marginTop: 8,
-  },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  listItemLeft: {
-    marginRight: 16,
-  },
-  listItemContent: {
-    flex: 1,
-  },
-  listItemTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  listItemDescription: {
-    fontSize: 14,
-    color: '#666',
-  },
-  listItemRight: {
-    marginLeft: 8,
   },
 });
 

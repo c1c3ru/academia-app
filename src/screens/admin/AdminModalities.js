@@ -1,28 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { 
-  View, 
-  StyleSheet, 
-  ScrollView, 
-  RefreshControl, 
-  Alert,
-  TouchableOpacity,
-  Platform
-} from 'react-native';
-import { 
-  Text, 
-  Button,
-  Badge,
-  Icon,
-  ListItem,
-  Divider
-} from 'react-native-elements';
-import { TextInput } from 'react-native';
-import { Card } from 'react-native-elements';
+  Card, 
+  Title, 
+  Paragraph, 
+  Button, 
+  Chip,
+  Divider,
+  Text,
+  List,
+  FAB,
+  Searchbar,
+  TextInput,
+  Dialog,
+  Portal
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService } from '../../services/firestoreService';
-import AccessibleDialog from '../../components/AccessibleDialog';
 
 const AdminModalities = ({ navigation }) => {
   const { user } = useAuth();
@@ -100,9 +96,10 @@ const AdminModalities = ({ navigation }) => {
       'Confirmar Exclusão',
       `Tem certeza que deseja excluir a modalidade ${modality.name}?`,
       [
-        { text: 'Cancelar' },
+        { text: 'Cancelar', style: 'cancel' },
         { 
           text: 'Excluir', 
+          style: 'destructive',
           onPress: async () => {
             try {
               await firestoreService.delete('modalities', modality.id);
@@ -146,9 +143,10 @@ const AdminModalities = ({ navigation }) => {
       'Confirmar Exclusão',
       `Tem certeza que deseja excluir o plano ${plan.name}?`,
       [
-        { text: 'Cancelar' },
+        { text: 'Cancelar', style: 'cancel' },
         { 
           text: 'Excluir', 
+          style: 'destructive',
           onPress: async () => {
             try {
               await firestoreService.delete('plans', plan.id);
@@ -171,47 +169,10 @@ const AdminModalities = ({ navigation }) => {
     }
 
     try {
-      // Validar e converter data de expiração
-      let expirationDate = null;
-      if (newAnnouncement.expirationDate && newAnnouncement.expirationDate.trim()) {
-        // Tentar converter a data do formato DD/MM/AAAA
-        const dateParts = newAnnouncement.expirationDate.split('/');
-        if (dateParts.length === 3) {
-          const day = parseInt(dateParts[0]);
-          const month = parseInt(dateParts[1]) - 1; // Mês é 0-indexado
-          const year = parseInt(dateParts[2]);
-          
-          if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-            expirationDate = new Date(year, month, day);
-            
-            // Verificar se a data é válida
-            if (isNaN(expirationDate.getTime())) {
-              Alert.alert('Erro', 'Data de expiração inválida. Use o formato DD/MM/AAAA');
-              return;
-            }
-          } else {
-            Alert.alert('Erro', 'Data de expiração inválida. Use o formato DD/MM/AAAA');
-            return;
-          }
-        } else {
-          Alert.alert('Erro', 'Data de expiração inválida. Use o formato DD/MM/AAAA');
-          return;
-        }
-      }
-
-      // Garantir que a data seja um objeto Date válido
-      const expirationDateObj = new Date(expirationDate);
-      if (isNaN(expirationDateObj.getTime())) {
-        Alert.alert('Erro', 'Data de expiração inválida');
-        return;
-      }
-
       const announcementData = {
-        title: newAnnouncement.title,
-        content: newAnnouncement.content,
-        expirationDate: expirationDateObj,
-        publishedBy: user.uid,
-        createdAt: new Date()
+        ...newAnnouncement,
+        expirationDate: newAnnouncement.expirationDate ? new Date(newAnnouncement.expirationDate) : null,
+        publishedBy: user.uid
       };
       
       await firestoreService.create('announcements', announcementData);
@@ -229,9 +190,10 @@ const AdminModalities = ({ navigation }) => {
       'Confirmar Exclusão',
       `Tem certeza que deseja excluir o aviso "${announcement.title}"?`,
       [
-        { text: 'Cancelar' },
+        { text: 'Cancelar', style: 'cancel' },
         { 
           text: 'Excluir', 
+          style: 'destructive',
           onPress: async () => {
             try {
               await firestoreService.delete('announcements', announcement.id);
@@ -262,9 +224,6 @@ const AdminModalities = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -274,12 +233,12 @@ const AdminModalities = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="fitness-outline" size={24} color="#4CAF50" />
-              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Modalidades de Luta</Text>
+              <Title style={styles.cardTitle}>Modalidades de Luta</Title>
               <Button 
-                type="solid"
+                mode="contained" 
                 onPress={() => setModalityDialogVisible(true)}
-                icon={<Icon name="add" type="material" size={20} color="white" />}
-                buttonStyle={styles.addButton}
+                icon="plus"
+                style={styles.addButton}
               >
                 Adicionar
               </Button>
@@ -288,31 +247,27 @@ const AdminModalities = ({ navigation }) => {
             {modalities.length > 0 ? (
               modalities.map((modality, index) => (
                 <View key={modality.id || index}>
-                  <View style={styles.listItem}>
-                    <View style={styles.listItemLeft}>
-                      <Ionicons name="fitness" size={24} color="#4CAF50" />
-                    </View>
-                    <View style={styles.listItemContent}>
-                      <Text style={styles.listItemTitle}>{modality.name}</Text>
-                      <Text style={styles.listItemDescription}>{modality.description || 'Sem descrição'}</Text>
-                    </View>
-                    <View style={styles.listItemRight}>
+                  <List.Item
+                    title={modality.name}
+                    description={modality.description || 'Sem descrição'}
+                    left={() => <List.Icon icon="fitness" color="#4CAF50" />}
+                    right={() => (
                       <Button 
-                        type="clear"
+                        mode="text" 
                         onPress={() => handleDeleteModality(modality)}
-                        titleStyle={{ color: '#F44336' }}
+                        textColor="#F44336"
                       >
                         Excluir
                       </Button>
-                    </View>
-                  </View>
+                    )}
+                  />
                   {index < modalities.length - 1 && <Divider />}
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyText}>
+              <Paragraph style={styles.emptyText}>
                 Nenhuma modalidade cadastrada
-              </Text>
+              </Paragraph>
             )}
           </Card.Content>
         </Card>
@@ -322,12 +277,12 @@ const AdminModalities = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="card-outline" size={24} color="#2196F3" />
-              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Planos de Pagamento</Text>
+              <Title style={styles.cardTitle}>Planos de Pagamento</Title>
               <Button 
-                type="solid"
+                mode="contained" 
                 onPress={() => setPlanDialogVisible(true)}
-                icon={<Icon name="add" type="material" size={20} color="white" />}
-                buttonStyle={styles.addButton}
+                icon="plus"
+                style={styles.addButton}
               >
                 Adicionar
               </Button>
@@ -336,31 +291,27 @@ const AdminModalities = ({ navigation }) => {
             {plans.length > 0 ? (
               plans.map((plan, index) => (
                 <View key={plan.id || index}>
-                  <View style={styles.listItem}>
-                    <View style={styles.listItemLeft}>
-                      <Ionicons name="cash" size={24} color="#2196F3" />
-                    </View>
-                    <View style={styles.listItemContent}>
-                      <Text style={styles.listItemTitle}>{`${plan.name} - ${formatCurrency(plan.value)}`}</Text>
-                      <Text style={styles.listItemDescription}>{`${plan.duration || 1} mês(es) • ${plan.description || 'Sem descrição'}`}</Text>
-                    </View>
-                    <View style={styles.listItemRight}>
+                  <List.Item
+                    title={`${plan.name} - ${formatCurrency(plan.value)}`}
+                    description={`${plan.duration || 1} mês(es) • ${plan.description || 'Sem descrição'}`}
+                    left={() => <List.Icon icon="cash" color="#2196F3" />}
+                    right={() => (
                       <Button 
-                        type="clear"
+                        mode="text" 
                         onPress={() => handleDeletePlan(plan)}
-                        titleStyle={{ color: '#F44336' }}
+                        textColor="#F44336"
                       >
                         Excluir
                       </Button>
-                    </View>
-                  </View>
+                    )}
+                  />
                   {index < plans.length - 1 && <Divider />}
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyText}>
+              <Paragraph style={styles.emptyText}>
                 Nenhum plano cadastrado
-              </Text>
+              </Paragraph>
             )}
           </Card.Content>
         </Card>
@@ -370,12 +321,12 @@ const AdminModalities = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="megaphone-outline" size={24} color="#FF9800" />
-              <Text style={[styles.cardTitle, { fontSize: 20, fontWeight: 'bold' }]}>Mural de Avisos</Text>
+              <Title style={styles.cardTitle}>Mural de Avisos</Title>
               <Button 
-                type="solid"
+                mode="contained" 
                 onPress={() => setAnnouncementDialogVisible(true)}
-                icon={<Icon name="add" type="material" size={20} color="white" />}
-                buttonStyle={styles.addButton}
+                icon="plus"
+                style={styles.addButton}
               >
                 Publicar
               </Button>
@@ -384,24 +335,20 @@ const AdminModalities = ({ navigation }) => {
             {announcements.length > 0 ? (
               announcements.map((announcement, index) => (
                 <View key={announcement.id || index}>
-                  <View style={styles.listItem}>
-                    <View style={styles.listItemLeft}>
-                      <Ionicons name="megaphone" size={24} color="#FF9800" />
-                    </View>
-                    <View style={styles.listItemContent}>
-                      <Text style={styles.listItemTitle}>{announcement.title}</Text>
-                      <Text style={styles.listItemDescription}>{`${announcement.content.substring(0, 100)}${announcement.content.length > 100 ? '...' : ''}`}</Text>
-                    </View>
-                    <View style={styles.listItemRight}>
+                  <List.Item
+                    title={announcement.title}
+                    description={`${announcement.content.substring(0, 100)}${announcement.content.length > 100 ? '...' : ''}`}
+                    left={() => <List.Icon icon="bullhorn" color="#FF9800" />}
+                    right={() => (
                       <Button 
-                        type="clear"
+                        mode="text" 
                         onPress={() => handleDeleteAnnouncement(announcement)}
-                        titleStyle={{ color: '#F44336' }}
+                        textColor="#F44336"
                       >
                         Excluir
                       </Button>
-                    </View>
-                  </View>
+                    )}
+                  />
                   <Text style={styles.announcementDate}>
                     Expira em: {formatDate(announcement.expirationDate)}
                   </Text>
@@ -409,9 +356,9 @@ const AdminModalities = ({ navigation }) => {
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyText}>
+              <Paragraph style={styles.emptyText}>
                 Nenhum aviso publicado
-              </Text>
+              </Paragraph>
             )}
           </Card.Content>
         </Card>
@@ -419,7 +366,7 @@ const AdminModalities = ({ navigation }) => {
         {/* Estatísticas */}
         <Card style={styles.statsCard}>
           <Card.Content>
-                          <Text style={[styles.statsTitle, { fontSize: 20, fontWeight: 'bold' }]}>Resumo</Text>
+            <Title style={styles.statsTitle}>Resumo</Title>
             
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
@@ -442,168 +389,112 @@ const AdminModalities = ({ navigation }) => {
       </ScrollView>
 
       {/* Diálogos */}
-      <AccessibleDialog 
-        visible={modalityDialogVisible} 
-        onDismiss={() => setModalityDialogVisible(false)}
-      >
-        <View style={styles.dialogContent}>
-          <Text style={styles.dialogTitle}>Nova Modalidade</Text>
-          <View style={styles.dialogInput}>
-            <Text style={styles.inputLabel}>Nome da Modalidade</Text>
+      <Portal>
+        {/* Diálogo para adicionar modalidade */}
+        <Dialog visible={modalityDialogVisible} onDismiss={() => setModalityDialogVisible(false)}>
+          <Dialog.Title>Nova Modalidade</Dialog.Title>
+          <Dialog.Content>
             <TextInput
+              label="Nome da Modalidade"
               value={newModality.name}
               onChangeText={(text) => setNewModality({...newModality, name: text})}
-              style={styles.textInput}
-              accessibilityLabel="Nome da modalidade"
-              accessibilityHint="Digite o nome da nova modalidade"
+              mode="outlined"
+              style={styles.dialogInput}
             />
-          </View>
-          <View style={styles.dialogInput}>
-            <Text style={styles.inputLabel}>Descrição (opcional)</Text>
             <TextInput
+              label="Descrição (opcional)"
               value={newModality.description}
               onChangeText={(text) => setNewModality({...newModality, description: text})}
+              mode="outlined"
               multiline
               numberOfLines={3}
-              style={[styles.textInput, styles.multilineInput]}
-              accessibilityLabel="Descrição da modalidade"
-              accessibilityHint="Digite uma descrição opcional para a modalidade"
+              style={styles.dialogInput}
             />
-          </View>
-          <View style={styles.dialogActions}>
-            <Button 
-              onPress={() => setModalityDialogVisible(false)}
-              accessibilityLabel="Cancelar criação de modalidade"
-              title="✕ Cancelar"
-              type="outline"
-              buttonStyle={[styles.dialogButton, styles.cancelButton]}
-              titleStyle={styles.cancelButtonText}
-            />
-            <Button 
-              onPress={handleAddModality}
-              accessibilityLabel="Criar nova modalidade"
-              title="✓ Criar Modalidade"
-              type="solid"
-              buttonStyle={[styles.dialogButton, styles.confirmButton]}
-              titleStyle={styles.confirmButtonText}
-            />
-          </View>
-        </View>
-      </AccessibleDialog>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setModalityDialogVisible(false)}>Cancelar</Button>
+            <Button onPress={handleAddModality}>Criar</Button>
+          </Dialog.Actions>
+        </Dialog>
 
-      <AccessibleDialog 
-        visible={planDialogVisible} 
-        onDismiss={() => setPlanDialogVisible(false)}
-      >
-        <View style={styles.dialogContent}>
-          <Text style={styles.dialogTitle}>Novo Plano</Text>
-          <View style={styles.dialogInput}>
-            <Text style={styles.inputLabel}>Nome do Plano</Text>
+        {/* Diálogo para adicionar plano */}
+        <Dialog visible={planDialogVisible} onDismiss={() => setPlanDialogVisible(false)}>
+          <Dialog.Title>Novo Plano</Dialog.Title>
+          <Dialog.Content>
             <TextInput
+              label="Nome do Plano"
               value={newPlan.name}
               onChangeText={(text) => setNewPlan({...newPlan, name: text})}
-              style={styles.textInput}
+              mode="outlined"
+              style={styles.dialogInput}
             />
-          </View>
-          <View style={styles.dialogInput}>
-            <Text style={styles.inputLabel}>Valor (R$)</Text>
             <TextInput
+              label="Valor (R$)"
               value={newPlan.value}
               onChangeText={(text) => setNewPlan({...newPlan, value: text})}
-              style={styles.textInput}
+              mode="outlined"
               keyboardType="numeric"
+              style={styles.dialogInput}
             />
-          </View>
-          <View style={styles.dialogInput}>
-            <Text style={styles.inputLabel}>Duração (meses)</Text>
             <TextInput
+              label="Duração (meses)"
               value={newPlan.duration}
               onChangeText={(text) => setNewPlan({...newPlan, duration: text})}
-              style={styles.textInput}
+              mode="outlined"
               keyboardType="numeric"
+              style={styles.dialogInput}
             />
-          </View>
-          <View style={styles.dialogInput}>
-            <Text style={styles.inputLabel}>Descrição (opcional)</Text>
             <TextInput
+              label="Descrição (opcional)"
               value={newPlan.description}
               onChangeText={(text) => setNewPlan({...newPlan, description: text})}
-              style={[styles.textInput, styles.multilineInput]}
+              mode="outlined"
               multiline
               numberOfLines={2}
+              style={styles.dialogInput}
             />
-          </View>
-          <View style={styles.dialogActions}>
-            <Button 
-              onPress={() => setPlanDialogVisible(false)} 
-              title="✕ Cancelar"
-              type="outline" 
-              buttonStyle={[styles.dialogButton, styles.cancelButton]}
-              titleStyle={styles.cancelButtonText}
-            />
-            <Button 
-              onPress={handleAddPlan} 
-              title="✓ Criar Plano"
-              type="solid" 
-              buttonStyle={[styles.dialogButton, styles.confirmButton]}
-              titleStyle={styles.confirmButtonText}
-            />
-          </View>
-        </View>
-      </AccessibleDialog>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setPlanDialogVisible(false)}>Cancelar</Button>
+            <Button onPress={handleAddPlan}>Criar</Button>
+          </Dialog.Actions>
+        </Dialog>
 
         {/* Diálogo para adicionar aviso */}
-        <AccessibleDialog 
-          visible={announcementDialogVisible} 
-          onDismiss={() => setAnnouncementDialogVisible(false)}
-        >
-          <View style={styles.dialogContent}>
-            <Text style={styles.dialogTitle}>Novo Aviso</Text>
-            <View style={styles.dialogInput}>
-              <Text style={styles.inputLabel}>Título do Aviso</Text>
-              <TextInput
-                value={newAnnouncement.title}
-                onChangeText={(text) => setNewAnnouncement({...newAnnouncement, title: text})}
-                style={styles.textInput}
-              />
-            </View>
-            <View style={styles.dialogInput}>
-              <Text style={styles.inputLabel}>Conteúdo</Text>
-              <TextInput
-                value={newAnnouncement.content}
-                onChangeText={(text) => setNewAnnouncement({...newAnnouncement, content: text})}
-                style={[styles.textInput, styles.multilineInput]}
-                multiline
-                numberOfLines={4}
-              />
-            </View>
-            <View style={styles.dialogInput}>
-              <Text style={styles.inputLabel}>Data de Expiração (opcional)</Text>
-              <TextInput
-                value={newAnnouncement.expirationDate}
-                onChangeText={(text) => setNewAnnouncement({...newAnnouncement, expirationDate: text})}
-                style={styles.textInput}
-                placeholder="DD/MM/AAAA"
-              />
-            </View>
-            <View style={styles.dialogActions}>
-              <Button 
-                onPress={() => setAnnouncementDialogVisible(false)} 
-                title="✕ Cancelar"
-                type="outline" 
-                buttonStyle={[styles.dialogButton, styles.cancelButton]}
-                titleStyle={styles.cancelButtonText}
-              />
-              <Button 
-                onPress={handleAddAnnouncement} 
-                title="✓ Publicar Aviso"
-                type="solid" 
-                buttonStyle={[styles.dialogButton, styles.confirmButton]}
-                titleStyle={styles.confirmButtonText}
-              />
-            </View>
-          </View>
-        </AccessibleDialog>
+        <Dialog visible={announcementDialogVisible} onDismiss={() => setAnnouncementDialogVisible(false)}>
+          <Dialog.Title>Novo Aviso</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              label="Título do Aviso"
+              value={newAnnouncement.title}
+              onChangeText={(text) => setNewAnnouncement({...newAnnouncement, title: text})}
+              mode="outlined"
+              style={styles.dialogInput}
+            />
+            <TextInput
+              label="Conteúdo"
+              value={newAnnouncement.content}
+              onChangeText={(text) => setNewAnnouncement({...newAnnouncement, content: text})}
+              mode="outlined"
+              multiline
+              numberOfLines={4}
+              style={styles.dialogInput}
+            />
+            <TextInput
+              label="Data de Expiração (opcional)"
+              value={newAnnouncement.expirationDate}
+              onChangeText={(text) => setNewAnnouncement({...newAnnouncement, expirationDate: text})}
+              mode="outlined"
+              placeholder="DD/MM/AAAA"
+              style={styles.dialogInput}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setAnnouncementDialogVisible(false)}>Cancelar</Button>
+            <Button onPress={handleAddAnnouncement}>Publicar</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </SafeAreaView>
   );
 };
@@ -616,37 +507,10 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 100,
-  },
   card: {
     margin: 16,
     marginBottom: 8,
-    ...Platform.select({
-      ios: {},
-      android: {
-        elevation: 4,
-      },
-      web: {
-        ...Platform.select({
-
-          ios: {},
-
-          android: {
-
-            elevation: 4,
-
-          },
-
-          web: {
-
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-          },
-
-        }),
-      },
-    }),
+    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -677,32 +541,8 @@ const styles = StyleSheet.create({
   statsCard: {
     margin: 16,
     marginTop: 8,
+    elevation: 2,
     backgroundColor: '#E8F5E8',
-    ...Platform.select({
-      ios: {},
-      android: {
-        elevation: 4,
-      },
-      web: {
-        ...Platform.select({
-
-          ios: {},
-
-          android: {
-
-            elevation: 4,
-
-          },
-
-          web: {
-
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-
-          },
-
-        }),
-      },
-    }),
   },
   statsTitle: {
     textAlign: 'center',
@@ -726,99 +566,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   dialogInput: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 10,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 10,
-    padding: 16,
-    fontSize: 16,
-    backgroundColor: '#fafafa',
-    minHeight: 50,
-  },
-  multilineInput: {
-    minHeight: 100,
-    textAlignVertical: 'top',
-    paddingTop: 16,
-  },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  listItemLeft: {
-    marginRight: 16,
-  },
-  listItemContent: {
-    flex: 1,
-  },
-  listItemTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  listItemDescription: {
-    fontSize: 14,
-    color: '#666',
-  },
-  listItemRight: {
-    marginLeft: 8,
-  },
-  dialogContent: {
-    padding: 24,
-    minWidth: 320,
-    maxWidth: 400,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-  },
-  dialogTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 24,
-    textAlign: 'center',
-    color: '#333',
-  },
-  dialogActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 24,
-    gap: 12,
-  },
-  dialogButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    minHeight: 48,
-  },
-  cancelButton: {
-    backgroundColor: '#f5f5f5',
-    borderColor: '#d32f2f',
-    borderWidth: 2,
-    paddingHorizontal: 20,
-  },
-  confirmButton: {
-    backgroundColor: '#4CAF50',
-    borderWidth: 0,
-    paddingHorizontal: 20,
-  },
-  cancelButtonText: {
-    color: '#d32f2f',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  confirmButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    marginBottom: 12,
   },
 });
 
