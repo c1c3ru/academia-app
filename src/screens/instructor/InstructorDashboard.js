@@ -23,7 +23,7 @@ import AnimatedButton from '../../components/AnimatedButton';
 import { useAnimation, ResponsiveUtils } from '../../utils/animations';
 
 const InstructorDashboard = ({ navigation }) => {
-  const { user, userProfile, logout } = useAuth();
+  const { user, userProfile } = useAuth();
   const { animations, startEntryAnimation } = useAnimation();
   const scrollY = new Animated.Value(0);
   
@@ -105,13 +105,6 @@ const InstructorDashboard = ({ navigation }) => {
     return days[dayNumber] || 'N/A';
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-    }
-  };
 
   const headerTransform = {
     transform: [
@@ -387,20 +380,6 @@ const InstructorDashboard = ({ navigation }) => {
                   </AnimatedButton>
                 </LinearGradient>
               </Animated.View>
-            </View>
-            
-            {/* Botão de Logout */}
-            <View style={styles.logoutContainer}>
-              <AnimatedButton 
-                mode="outlined" 
-                onPress={handleLogout}
-                style={styles.logoutButton}
-                icon="logout"
-                buttonColor="#FFEBEE"
-                textColor="#F44336"
-              >
-                Sair
-              </AnimatedButton>
             </View>
           </Card.Content>
         </AnimatedCard>
@@ -774,14 +753,6 @@ const styles = StyleSheet.create({
     marginLeft: ResponsiveUtils.spacing.sm,
     fontWeight: 'bold',
     marginBottom: ResponsiveUtils.spacing.xs,
-  },
-  logoutContainer: {
-    marginTop: ResponsiveUtils.spacing.lg,
-    alignItems: 'center',
-  },
-  logoutButton: {
-    borderColor: '#F44336',
-    borderRadius: ResponsiveUtils.borderRadius.medium,
   },
   classItem: {
     marginBottom: ResponsiveUtils.spacing.md,

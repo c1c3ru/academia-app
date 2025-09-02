@@ -145,8 +145,15 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      console.log('🔐 AuthContext: Iniciando signOut do Firebase...');
       await signOut(auth);
+      console.log('🔐 AuthContext: SignOut executado com sucesso');
+      console.log('🔐 AuthContext: Limpando estados locais...');
+      setUser(null);
+      setUserProfile(null);
+      console.log('🔐 AuthContext: Logout completo');
     } catch (error) {
+      console.error('🔐 AuthContext: Erro no signOut:', error);
       throw error;
     }
   };

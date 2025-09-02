@@ -8,6 +8,7 @@ import { Platform } from 'react-native';
 import { useResponsive } from '../hooks/useResponsive';
 
 import { useAuth } from '../contexts/AuthContext';
+import UniversalHeader from '../components/UniversalHeader';
 
 // Telas de Autenticação
 import LoginScreen from '../screens/LoginScreen';
@@ -42,7 +43,14 @@ const Drawer = createDrawerNavigator();
 // Navegação para Alunos
 const StudentTabNavigator = () => (
   <Tab.Navigator
-    screenOptions={({ route }) => ({
+    screenOptions={({ route, navigation }) => ({
+      header: ({ options }) => (
+        <UniversalHeader
+          title={options.title || route.name}
+          navigation={navigation}
+          backgroundColor="#2196F3"
+        />
+      ),
       tabBarIcon: ({ focused, color, size }) => {
         let iconName;
 
@@ -62,17 +70,40 @@ const StudentTabNavigator = () => (
       tabBarInactiveTintColor: 'gray',
     })}
   >
-    <Tab.Screen name="Dashboard" component={StudentDashboard} />
-    <Tab.Screen name="Pagamentos" component={StudentPayments} />
-    <Tab.Screen name="Evolução" component={StudentEvolution} />
-    <Tab.Screen name="Calendário" component={StudentCalendar} />
+    <Tab.Screen 
+      name="Dashboard" 
+      component={StudentDashboard}
+      options={{ title: 'Painel do Aluno' }}
+    />
+    <Tab.Screen 
+      name="Pagamentos" 
+      component={StudentPayments}
+      options={{ title: 'Pagamentos' }}
+    />
+    <Tab.Screen 
+      name="Evolução" 
+      component={StudentEvolution}
+      options={{ title: 'Minha Evolução' }}
+    />
+    <Tab.Screen 
+      name="Calendário" 
+      component={StudentCalendar}
+      options={{ title: 'Calendário de Aulas' }}
+    />
   </Tab.Navigator>
 );
 
 // Navegação para Professores
 const InstructorTabNavigator = () => (
   <Tab.Navigator
-    screenOptions={({ route }) => ({
+    screenOptions={({ route, navigation }) => ({
+      header: ({ options }) => (
+        <UniversalHeader
+          title={options.title || route.name}
+          navigation={navigation}
+          backgroundColor="#4CAF50"
+        />
+      ),
       tabBarIcon: ({ focused, color, size }) => {
         let iconName;
 
@@ -90,16 +121,35 @@ const InstructorTabNavigator = () => (
       tabBarInactiveTintColor: 'gray',
     })}
   >
-    <Tab.Screen name="Dashboard" component={InstructorDashboard} />
-    <Tab.Screen name="Turmas" component={InstructorClasses} />
-    <Tab.Screen name="Alunos" component={InstructorStudents} />
+    <Tab.Screen 
+      name="Dashboard" 
+      component={InstructorDashboard}
+      options={{ title: 'Painel do Instrutor' }}
+    />
+    <Tab.Screen 
+      name="Turmas" 
+      component={InstructorClasses}
+      options={{ title: 'Minhas Turmas' }}
+    />
+    <Tab.Screen 
+      name="Alunos" 
+      component={InstructorStudents}
+      options={{ title: 'Meus Alunos' }}
+    />
   </Tab.Navigator>
 );
 
 // Navegação para Administradores
 const AdminTabNavigator = () => (
   <Tab.Navigator
-    screenOptions={({ route }) => ({
+    screenOptions={({ route, navigation }) => ({
+      header: ({ options }) => (
+        <UniversalHeader
+          title={options.title || route.name}
+          navigation={navigation}
+          backgroundColor="#FF9800"
+        />
+      ),
       tabBarIcon: ({ focused, color, size }) => {
         let iconName;
 
@@ -119,10 +169,26 @@ const AdminTabNavigator = () => (
       tabBarInactiveTintColor: 'gray',
     })}
   >
-    <Tab.Screen name="Dashboard" component={AdminDashboard} />
-    <Tab.Screen name="Alunos" component={AdminStudents} />
-    <Tab.Screen name="Turmas" component={AdminClasses} />
-    <Tab.Screen name="Gestão" component={AdminModalities} />
+    <Tab.Screen 
+      name="Dashboard" 
+      component={AdminDashboard}
+      options={{ title: 'Painel Administrativo' }}
+    />
+    <Tab.Screen 
+      name="Alunos" 
+      component={AdminStudents}
+      options={{ title: 'Gerenciar Alunos' }}
+    />
+    <Tab.Screen 
+      name="Turmas" 
+      component={AdminClasses}
+      options={{ title: 'Gerenciar Turmas' }}
+    />
+    <Tab.Screen 
+      name="Gestão" 
+      component={AdminModalities}
+      options={{ title: 'Configurações' }}
+    />
   </Tab.Navigator>
 );
 
@@ -174,7 +240,20 @@ const ResponsiveMainNavigator = ({ userType }) => {
         <Stack.Screen
           name="Profile"
           component={ProfileScreen}
-          options={{ title: 'Perfil' }}
+          options={({ navigation }) => ({
+            header: () => (
+              <UniversalHeader
+                title="Meu Perfil"
+                subtitle="Informações pessoais e configurações"
+                navigation={navigation}
+                showBack={true}
+                backgroundColor={
+                  userType === 'admin' ? '#FF9800' :
+                  userType === 'instructor' ? '#4CAF50' : '#2196F3'
+                }
+              />
+            ),
+          })}
         />
       </Stack.Navigator>
     );
@@ -182,21 +261,28 @@ const ResponsiveMainNavigator = ({ userType }) => {
     // Para tablet/desktop, usar drawer navigation
     const DrawerNavigator = () => (
       <Drawer.Navigator
-        screenOptions={{
+        screenOptions={({ navigation }) => ({
           drawerStyle: {
             backgroundColor: '#f5f5f5',
             width: 280,
           },
-          headerStyle: {
-            backgroundColor: '#2196F3',
-          },
-          headerTintColor: '#fff',
-        }}
+          header: ({ options, route }) => (
+            <UniversalHeader
+              title={options.title || route.name}
+              navigation={navigation}
+              backgroundColor={
+                userType === 'admin' ? '#FF9800' :
+                userType === 'instructor' ? '#4CAF50' : '#2196F3'
+              }
+            />
+          ),
+        })}
       >
         <Drawer.Screen
           name="Dashboard"
           component={TabNavigator}
           options={{
+            title: 'Dashboard',
             drawerIcon: ({ color, size }) => (
               <Ionicons name="home-outline" color={color} size={size} />
             ),
@@ -206,7 +292,7 @@ const ResponsiveMainNavigator = ({ userType }) => {
           name="Profile"
           component={ProfileScreen}
           options={{
-            title: 'Perfil',
+            title: 'Meu Perfil',
             drawerIcon: ({ color, size }) => (
               <Ionicons name="person-outline" color={color} size={size} />
             ),
