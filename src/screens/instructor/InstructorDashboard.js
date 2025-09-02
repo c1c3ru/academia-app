@@ -14,7 +14,8 @@ import {
   List
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, classService, studentService } from '../../services/firestoreService';
 import AnimatedCard from '../../components/AnimatedCard';
@@ -137,227 +138,258 @@ const InstructorDashboard = ({ navigation }) => {
         )}
         scrollEventThrottle={16}
       >
-        {/* Header do Professor */}
+        {/* Header Moderno com Gradiente */}
         <Animated.View style={[headerTransform]}>
-          <AnimatedCard delay={0} style={styles.headerCard}>
-            <Card.Content style={styles.headerContent}>
-              <Animated.View
-                style={{
-                  transform: [{ scale: animations.scaleAnim }],
-                }}
-              >
-                <Avatar.Text 
-                  size={ResponsiveUtils.isTablet() ? 80 : 60} 
-                  label={userProfile?.name?.charAt(0) || 'P'} 
-                  style={styles.avatar}
-                />
-              </Animated.View>
-              <View style={styles.headerText}>
-                <Title style={[styles.welcomeText, { fontSize: ResponsiveUtils.fontSize.large }]}>
-                  Professor {userProfile?.name?.split(' ')[0] || 'Usuário'}
-                </Title>
-                <Paragraph style={[styles.roleText, { fontSize: ResponsiveUtils.fontSize.medium }]}>
-                  {userProfile?.specialties?.join(', ') || 'Instrutor'}
-                </Paragraph>
+          <View style={styles.headerContainer}>
+            <LinearGradient
+              colors={['#4CAF50', '#45A049', '#388E3C']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.headerGradient}
+            >
+              <View style={styles.headerContent}>
+                <Animated.View
+                  style={{
+                    transform: [{ scale: animations.scaleAnim }],
+                  }}
+                >
+                  <Avatar.Text 
+                    size={ResponsiveUtils.isTablet() ? 85 : 65} 
+                    label={userProfile?.name?.charAt(0) || 'P'} 
+                    style={styles.avatar}
+                  />
+                </Animated.View>
+                <View style={styles.headerText}>
+                  <Text style={styles.welcomeText}>
+                    Olá, {userProfile?.name?.split(' ')[0] || 'Professor'}! 👋
+                  </Text>
+                  <Text style={styles.roleText}>
+                    {userProfile?.specialties?.join(' • ') || 'Instrutor de Artes Marciais'}
+                  </Text>
+                  <View style={styles.statusBadge}>
+                    <MaterialCommunityIcons name="circle" size={8} color="#4CAF50" />
+                    <Text style={styles.statusText}>Online</Text>
+                  </View>
+                </View>
+                <Animated.View style={{ opacity: animations.fadeAnim }}>
+                  <MaterialCommunityIcons 
+                    name="account-star" 
+                    size={24} 
+                    color="rgba(255,255,255,0.8)" 
+                  />
+                </Animated.View>
               </View>
-            </Card.Content>
-          </AnimatedCard>
+            </LinearGradient>
+          </View>
         </Animated.View>
 
-        {/* Estatísticas Rápidas */}
-        <AnimatedCard delay={100} style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="analytics-outline" size={24} color="#4CAF50" />
-              <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
-                Visão Geral
-              </Title>
-            </View>
-            
-            <View style={styles.statsGrid}>
-              <Animated.View
-                style={{
-                  opacity: animations.fadeAnim,
-                  transform: [{ scale: animations.scaleAnim }],
-                }}
-              >
-                <Surface style={styles.statItem}>
-                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
-                    {dashboardData.myClasses.length}
-                  </Text>
-                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
-                    Minhas Turmas
-                  </Text>
-                </Surface>
-              </Animated.View>
-              
-              <Animated.View
-                style={{
-                  opacity: animations.fadeAnim,
-                  transform: [{ scale: animations.scaleAnim }],
-                }}
-              >
-                <Surface style={styles.statItem}>
-                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
-                    {dashboardData.totalStudents}
-                  </Text>
-                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
-                    Total Alunos
-                  </Text>
-                </Surface>
-              </Animated.View>
-              
-              <Animated.View
-                style={{
-                  opacity: animations.fadeAnim,
-                  transform: [{ scale: animations.scaleAnim }],
-                }}
-              >
-                <Surface style={styles.statItem}>
-                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
-                    {dashboardData.todayClasses.length}
-                  </Text>
-                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
-                    Aulas Hoje
-                  </Text>
-                </Surface>
-              </Animated.View>
-              
-              <Animated.View
-                style={{
-                  opacity: animations.fadeAnim,
-                  transform: [{ scale: animations.scaleAnim }],
-                }}
-              >
-                <Surface style={styles.statItem}>
-                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
-                    {dashboardData.activeCheckIns}
-                  </Text>
-                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
-                    Check-ins Ativos
-                  </Text>
-                </Surface>
-              </Animated.View>
-            </View>
-          </Card.Content>
-        </AnimatedCard>
+        {/* Cards de Estatísticas Modernos */}
+        <View style={styles.statsContainer}>
+          <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
+            <LinearGradient
+              colors={['#4CAF50', '#45A049']}
+              style={styles.statGradient}
+            >
+              <MaterialCommunityIcons name="school-outline" size={32} color="white" />
+              <Text style={styles.statNumber}>{dashboardData.myClasses.length}</Text>
+              <Text style={styles.statLabel}>Minhas Turmas</Text>
+            </LinearGradient>
+          </Animated.View>
 
-        {/* Aulas de Hoje */}
-        <AnimatedCard delay={200} style={styles.card}>
+          <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
+            <LinearGradient
+              colors={['#2196F3', '#1976D2']}
+              style={styles.statGradient}
+            >
+              <MaterialCommunityIcons name="account-group" size={32} color="white" />
+              <Text style={styles.statNumber}>{dashboardData.totalStudents}</Text>
+              <Text style={styles.statLabel}>Total Alunos</Text>
+            </LinearGradient>
+          </Animated.View>
+
+          <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
+            <LinearGradient
+              colors={['#FF9800', '#F57C00']}
+              style={styles.statGradient}
+            >
+              <MaterialCommunityIcons name="calendar-today" size={32} color="white" />
+              <Text style={styles.statNumber}>{dashboardData.todayClasses.length}</Text>
+              <Text style={styles.statLabel}>Aulas Hoje</Text>
+            </LinearGradient>
+          </Animated.View>
+
+          <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
+            <LinearGradient
+              colors={['#9C27B0', '#7B1FA2']}
+              style={styles.statGradient}
+            >
+              <MaterialCommunityIcons name="check-circle" size={32} color="white" />
+              <Text style={styles.statNumber}>{dashboardData.activeCheckIns}</Text>
+              <Text style={styles.statLabel}>Check-ins</Text>
+            </LinearGradient>
+          </Animated.View>
+        </View>
+
+        {/* Timeline de Aulas Hoje */}
+        <AnimatedCard delay={200} style={styles.modernCard}>
           <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="today-outline" size={24} color="#2196F3" />
-              <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
-                Aulas de Hoje
-              </Title>
+            <View style={styles.modernCardHeader}>
+              <View style={styles.headerIconContainer}>
+                <MaterialCommunityIcons name="clock-time-four" size={24} color="#2196F3" />
+              </View>
+              <View>
+                <Title style={styles.modernCardTitle}>Agenda de Hoje</Title>
+                <Text style={styles.modernCardSubtitle}>
+                  {dashboardData.todayClasses.length} aula(s) programada(s)
+                </Text>
+              </View>
             </View>
             
             {dashboardData.todayClasses.length > 0 ? (
-              dashboardData.todayClasses.map((classItem, index) => (
-                <Animated.View 
-                  key={index} 
-                  style={[
-                    styles.classItem,
-                    {
-                      opacity: animations.fadeAnim,
-                      transform: [{
-                        translateY: animations.slideAnim.interpolate({
-                          inputRange: [-50, 0],
-                          outputRange: [-20, 0],
-                        })
-                      }]
-                    }
-                  ]}
-                >
-                  <View style={styles.classHeader}>
-                    <Text style={[styles.className, { fontSize: ResponsiveUtils.fontSize.medium }]}>
-                      {classItem.name}
-                    </Text>
-                    <Chip mode="outlined" style={styles.modalityChip}>
-                      {classItem.modality}
-                    </Chip>
-                  </View>
-                  
-                  <View style={styles.classDetails}>
-                    <Text style={[styles.classTime, { fontSize: ResponsiveUtils.fontSize.small }]}>
-                      {classItem.schedule?.map(s => 
-                        `${getDayName(s.dayOfWeek)} ${formatTime(s.hour, s.minute)}`
-                      ).join(', ')}
-                    </Text>
-                    <Text style={[styles.classCapacity, { fontSize: ResponsiveUtils.fontSize.small }]}>
-                      Capacidade: {classItem.currentStudents || 0}/{classItem.maxCapacity || 'N/A'}
-                    </Text>
-                  </View>
-                  
-                  <AnimatedButton 
-                    mode="outlined" 
-                    onPress={() => navigation.navigate('Turmas', { classId: classItem.id })}
-                    style={styles.classButton}
-                    icon="eye"
+              <View style={styles.timelineContainer}>
+                {dashboardData.todayClasses.map((classItem, index) => (
+                  <Animated.View 
+                    key={index} 
+                    style={[
+                      styles.timelineItem,
+                      { opacity: animations.fadeAnim }
+                    ]}
                   >
-                    Ver Detalhes
-                  </AnimatedButton>
-                  
-                  {index < dashboardData.todayClasses.length - 1 && (
-                    <Divider style={styles.divider} />
-                  )}
-                </Animated.View>
-              ))
+                    <View style={styles.timelineDot} />
+                    <View style={styles.timelineContent}>
+                      <View style={styles.timelineHeader}>
+                        <Text style={styles.timelineTitle}>{classItem.name}</Text>
+                        <Chip 
+                          mode="flat" 
+                          style={styles.modernChip}
+                          textStyle={styles.chipText}
+                        >
+                          {classItem.modality}
+                        </Chip>
+                      </View>
+                      
+                      <View style={styles.timelineDetails}>
+                        <View style={styles.timelineInfo}>
+                          <MaterialCommunityIcons name="clock" size={16} color="#666" />
+                          <Text style={styles.timelineText}>
+                            {classItem.schedule?.map(s => 
+                              `${formatTime(s.hour, s.minute)}`
+                            ).join(', ')}
+                          </Text>
+                        </View>
+                        
+                        <View style={styles.timelineInfo}>
+                          <MaterialCommunityIcons name="account-multiple" size={16} color="#666" />
+                          <Text style={styles.timelineText}>
+                            {classItem.currentStudents || 0}/{classItem.maxCapacity || 'N/A'} alunos
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      <AnimatedButton 
+                        mode="contained" 
+                        onPress={() => navigation.navigate('Turmas', { classId: classItem.id })}
+                        style={styles.timelineButton}
+                        compact
+                      >
+                        Gerenciar Aula
+                      </AnimatedButton>
+                    </View>
+                    {index < dashboardData.todayClasses.length - 1 && (
+                      <View style={styles.timelineLine} />
+                    )}
+                  </Animated.View>
+                ))}
+              </View>
             ) : (
-              <Paragraph style={[styles.emptyText, { fontSize: ResponsiveUtils.fontSize.small }]}>
-                Nenhuma aula agendada para hoje
-              </Paragraph>
+              <View style={styles.emptyState}>
+                <MaterialCommunityIcons name="calendar-blank" size={48} color="#ccc" />
+                <Text style={styles.emptyStateText}>Nenhuma aula hoje</Text>
+                <Text style={styles.emptyStateSubtext}>Aproveite para planejar suas próximas aulas</Text>
+              </View>
             )}
           </Card.Content>
         </AnimatedCard>
 
-        {/* Ações Rápidas */}
-        <AnimatedCard delay={300} style={styles.card}>
+        {/* Ações Rápidas Modernizadas */}
+        <AnimatedCard delay={300} style={styles.modernCard}>
           <Card.Content>
-            <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
-              Ações Rápidas
-            </Title>
-            
-            <View style={styles.quickActions}>
-              <AnimatedButton 
-                mode="contained" 
-                onPress={() => navigation.navigate('Turmas')}
-                style={[styles.quickActionButton, { backgroundColor: '#4CAF50' }]}
-                icon="school"
-              >
-                Minhas Turmas
-              </AnimatedButton>
-              
-              <AnimatedButton 
-                mode="contained" 
-                onPress={() => navigation.navigate('Alunos')}
-                style={[styles.quickActionButton, { backgroundColor: '#2196F3' }]}
-                icon="account"
-              >
-                Meus Alunos
-              </AnimatedButton>
+            <View style={styles.modernCardHeader}>
+              <View style={styles.headerIconContainer}>
+                <MaterialCommunityIcons name="lightning-bolt" size={24} color="#FF9800" />
+              </View>
+              <View>
+                <Title style={styles.modernCardTitle}>Ações Rápidas</Title>
+                <Text style={styles.modernCardSubtitle}>Acesso direto às principais funcionalidades</Text>
+              </View>
             </View>
             
-            <View style={styles.quickActions}>
-              <AnimatedButton 
-                mode="outlined" 
-                onPress={() => {/* Implementar graduação rápida */}}
-                style={styles.quickActionButton}
-                icon="trophy"
-              >
-                Registrar Graduação
-              </AnimatedButton>
+            <View style={styles.modernQuickActions}>
+              <Animated.View style={[styles.actionCard, { opacity: animations.fadeAnim }]}>
+                <LinearGradient
+                  colors={['#4CAF50', '#45A049']}
+                  style={styles.actionGradient}
+                >
+                  <MaterialCommunityIcons name="plus-circle" size={28} color="white" />
+                  <Text style={styles.actionTitle}>Nova Aula</Text>
+                  <Text style={styles.actionSubtitle}>Criar nova turma</Text>
+                  <AnimatedButton
+                    mode="contained"
+                    onPress={() => navigation.navigate('NovaAula')}
+                    style={styles.modernActionButton}
+                    buttonColor="rgba(255,255,255,0.2)"
+                    textColor="white"
+                    compact
+                  >
+                    Criar
+                  </AnimatedButton>
+                </LinearGradient>
+              </Animated.View>
               
-              <AnimatedButton 
-                mode="outlined" 
-                onPress={() => {/* Implementar check-in */}}
-                style={styles.quickActionButton}
-                icon="check"
-              >
-                Ver Check-ins
-              </AnimatedButton>
+              <Animated.View style={[styles.actionCard, { opacity: animations.fadeAnim }]}>
+                <LinearGradient
+                  colors={['#2196F3', '#1976D2']}
+                  style={styles.actionGradient}
+                >
+                  <MaterialCommunityIcons name="qrcode-scan" size={28} color="white" />
+                  <Text style={styles.actionTitle}>Check-in</Text>
+                  <Text style={styles.actionSubtitle}>Presença digital</Text>
+                  <AnimatedButton
+                    mode="contained"
+                    onPress={() => navigation.navigate('CheckIn')}
+                    style={styles.modernActionButton}
+                    buttonColor="rgba(255,255,255,0.2)"
+                    textColor="white"
+                    compact
+                  >
+                    Abrir
+                  </AnimatedButton>
+                </LinearGradient>
+              </Animated.View>
+              
+              <Animated.View style={[styles.actionCard, { opacity: animations.fadeAnim }]}>
+                <LinearGradient
+                  colors={['#9C27B0', '#7B1FA2']}
+                  style={styles.actionGradient}
+                >
+                  <MaterialCommunityIcons name="chart-line" size={28} color="white" />
+                  <Text style={styles.actionTitle}>Relatórios</Text>
+                  <Text style={styles.actionSubtitle}>Análise de dados</Text>
+                  <AnimatedButton
+                    mode="contained"
+                    onPress={() => navigation.navigate('Relatorios')}
+                    style={styles.modernActionButton}
+                    buttonColor="rgba(255,255,255,0.2)"
+                    textColor="white"
+                    compact
+                  >
+                    Ver
+                  </AnimatedButton>
+                </LinearGradient>
+              </Animated.View>
             </View>
             
+            {/* Botão de Logout */}
             <View style={styles.logoutContainer}>
               <AnimatedButton 
                 mode="outlined" 
@@ -485,38 +517,252 @@ const InstructorDashboard = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f9fa',
   },
   scrollView: {
     flex: 1,
   },
-  headerCard: {
+  // Header moderno
+  headerContainer: {
     margin: ResponsiveUtils.spacing.md,
-    marginBottom: ResponsiveUtils.spacing.sm,
+    marginBottom: ResponsiveUtils.spacing.lg,
+    borderRadius: ResponsiveUtils.borderRadius.large,
+    overflow: 'hidden',
     ...ResponsiveUtils.elevation,
+  },
+  headerGradient: {
+    padding: ResponsiveUtils.spacing.lg,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: ResponsiveUtils.spacing.md,
   },
   avatar: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   headerText: {
     marginLeft: ResponsiveUtils.spacing.md,
     flex: 1,
   },
   welcomeText: {
+    fontSize: ResponsiveUtils.fontSize.large,
     fontWeight: 'bold',
-    marginBottom: ResponsiveUtils.spacing.xs,
+    color: 'white',
+    marginBottom: 4,
   },
   roleText: {
+    fontSize: ResponsiveUtils.fontSize.medium,
+    color: 'rgba(255,255,255,0.9)',
+    marginBottom: 8,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  statusText: {
+    color: 'white',
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  
+  // Cards de estatísticas modernos
+  statsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: ResponsiveUtils.spacing.md,
+    marginBottom: ResponsiveUtils.spacing.md,
+  },
+  statCard: {
+    width: '48%',
+    marginBottom: ResponsiveUtils.spacing.md,
+    borderRadius: ResponsiveUtils.borderRadius.medium,
+    overflow: 'hidden',
+    ...ResponsiveUtils.elevation,
+  },
+  statGradient: {
+    padding: ResponsiveUtils.spacing.md,
+    alignItems: 'center',
+    minHeight: 120,
+    justifyContent: 'center',
+  },
+  statNumber: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 8,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  
+  // Cards modernos
+  modernCard: {
+    margin: ResponsiveUtils.spacing.md,
+    marginBottom: ResponsiveUtils.spacing.md,
+    borderRadius: ResponsiveUtils.borderRadius.large,
+    ...ResponsiveUtils.elevation,
+  },
+  modernCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: ResponsiveUtils.spacing.md,
+  },
+  headerIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: ResponsiveUtils.spacing.md,
+  },
+  modernCardTitle: {
+    fontSize: ResponsiveUtils.fontSize.large,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 2,
+  },
+  modernCardSubtitle: {
+    fontSize: ResponsiveUtils.fontSize.small,
     color: '#666',
   },
+  
+  // Ações rápidas modernizadas
+  modernQuickActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  actionCard: {
+    width: '48%',
+    marginBottom: ResponsiveUtils.spacing.sm,
+    borderRadius: ResponsiveUtils.borderRadius.medium,
+    overflow: 'hidden',
+  },
+  actionGradient: {
+    padding: ResponsiveUtils.spacing.md,
+    alignItems: 'center',
+    minHeight: 140,
+    justifyContent: 'space-between',
+  },
+  actionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 8,
+  },
+  actionSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modernActionButton: {
+    borderRadius: 20,
+  },
+  
+  // Timeline
+  timelineContainer: {
+    marginTop: ResponsiveUtils.spacing.md,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    marginBottom: ResponsiveUtils.spacing.md,
+  },
+  timelineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#4CAF50',
+    marginTop: 6,
+    marginRight: ResponsiveUtils.spacing.md,
+  },
+  timelineContent: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    borderRadius: ResponsiveUtils.borderRadius.medium,
+    padding: ResponsiveUtils.spacing.md,
+  },
+  timelineHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  timelineTitle: {
+    fontSize: ResponsiveUtils.fontSize.medium,
+    fontWeight: 'bold',
+    color: '#333',
+    flex: 1,
+  },
+  modernChip: {
+    backgroundColor: '#e3f2fd',
+  },
+  chipText: {
+    fontSize: 12,
+    color: '#1976d2',
+  },
+  timelineDetails: {
+    marginBottom: ResponsiveUtils.spacing.sm,
+  },
+  timelineInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  timelineText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 6,
+  },
+  timelineButton: {
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  timelineLine: {
+    position: 'absolute',
+    left: 5,
+    top: 18,
+    bottom: -ResponsiveUtils.spacing.md,
+    width: 2,
+    backgroundColor: '#e0e0e0',
+  },
+  
+  // Estados vazios
+  emptyState: {
+    alignItems: 'center',
+    padding: ResponsiveUtils.spacing.xl,
+  },
+  emptyStateText: {
+    fontSize: ResponsiveUtils.fontSize.medium,
+    fontWeight: 'bold',
+    color: '#666',
+    marginTop: ResponsiveUtils.spacing.sm,
+  },
+  emptyStateSubtext: {
+    fontSize: ResponsiveUtils.fontSize.small,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  
+  // Estilos legados mantidos para compatibilidade
   card: {
     margin: ResponsiveUtils.spacing.md,
-    marginTop: ResponsiveUtils.spacing.sm,
+    marginBottom: ResponsiveUtils.spacing.sm,
+    borderRadius: ResponsiveUtils.borderRadius.medium,
     ...ResponsiveUtils.elevation,
   },
   cardHeader: {
@@ -527,29 +773,15 @@ const styles = StyleSheet.create({
   cardTitle: {
     marginLeft: ResponsiveUtils.spacing.sm,
     fontWeight: 'bold',
+    marginBottom: ResponsiveUtils.spacing.xs,
   },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  statItem: {
-    width: ResponsiveUtils.isTablet() ? '23%' : '48%',
+  logoutContainer: {
+    marginTop: ResponsiveUtils.spacing.lg,
     alignItems: 'center',
-    padding: ResponsiveUtils.spacing.md,
+  },
+  logoutButton: {
+    borderColor: '#F44336',
     borderRadius: ResponsiveUtils.borderRadius.medium,
-    ...ResponsiveUtils.elevation,
-    backgroundColor: '#fff',
-    marginBottom: ResponsiveUtils.spacing.sm,
-  },
-  statNumber: {
-    fontWeight: 'bold',
-    color: '#4CAF50',
-  },
-  statLabel: {
-    color: '#666',
-    marginTop: ResponsiveUtils.spacing.xs,
-    textAlign: 'center',
   },
   classItem: {
     marginBottom: ResponsiveUtils.spacing.md,
