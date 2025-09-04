@@ -238,7 +238,7 @@ const ProfileScreen = ({ navigation }) => {
               <List.Item
                 title="Plano Atual"
                 description={userProfile?.currentPlan || 'Não definido'}
-                left={() => <List.Icon icon="card-membership" />}
+                left={() => <List.Icon icon="card" />}
               />
               <Divider />
               

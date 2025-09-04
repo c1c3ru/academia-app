@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { Appbar, Avatar, Menu, Divider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,8 +16,14 @@ const UniversalHeader = ({
   const { user, userProfile, logout } = useAuth();
   const [menuVisible, setMenuVisible] = React.useState(false);
 
-  const openMenu = () => setMenuVisible(true);
-  const closeMenu = () => setMenuVisible(false);
+  const openMenu = () => {
+    console.log('🔐 Avatar clicado - abrindo menu');
+    setMenuVisible(true);
+  };
+  const closeMenu = () => {
+    console.log('🔐 Fechando menu');
+    setMenuVisible(false);
+  };
 
   const handleLogout = () => {
     console.log('🔐 Botão de logout clicado');
@@ -90,6 +96,8 @@ const UniversalHeader = ({
     }
   };
 
+  console.log('🔐 UniversalHeader renderizando - showMenu:', showMenu, 'menuVisible:', menuVisible);
+
   return (
     <Appbar.Header style={[styles.header, { backgroundColor: getUserTypeColor() }]}>
       {showBack && (
@@ -111,15 +119,18 @@ const UniversalHeader = ({
           visible={menuVisible}
           onDismiss={closeMenu}
           anchor={
-            <View style={styles.menuAnchor}>
+            <TouchableOpacity 
+              style={styles.menuAnchor}
+              onPress={openMenu}
+              activeOpacity={0.7}
+            >
               <Avatar.Text 
-                size={ResponsiveUtils.isTablet() ? 40 : 36}
+                size={ResponsiveUtils?.isTablet?.() ? 40 : 36}
                 label={userProfile?.name?.charAt(0) || 'U'}
                 style={[styles.avatar, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
                 labelStyle={styles.avatarLabel}
-                onPress={openMenu}
               />
-            </View>
+            </TouchableOpacity>
           }
           contentStyle={styles.menuContent}
         >
@@ -196,21 +207,21 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    paddingHorizontal: ResponsiveUtils.spacing.xs,
-    minHeight: ResponsiveUtils.isTablet() ? 64 : 56,
+    paddingHorizontal: ResponsiveUtils?.spacing?.xs || 4,
+    minHeight: ResponsiveUtils?.isTablet?.() ? 64 : 56,
   },
   appName: {
     color: 'white',
-    fontSize: ResponsiveUtils.fontSize.large,
+    fontSize: ResponsiveUtils?.fontSize?.large || 20,
     fontWeight: 'bold',
   },
   subtitle: {
     color: 'rgba(255,255,255,0.9)',
-    fontSize: ResponsiveUtils.fontSize.small,
+    fontSize: ResponsiveUtils?.fontSize?.small || 12,
   },
   menuAnchor: {
-    paddingRight: ResponsiveUtils.spacing.sm,
-    paddingVertical: ResponsiveUtils.spacing.xs,
+    paddingRight: ResponsiveUtils?.spacing?.sm || 8,
+    paddingVertical: ResponsiveUtils?.spacing?.xs || 4,
   },
   avatar: {
     borderWidth: 2,
@@ -218,40 +229,40 @@ const styles = StyleSheet.create({
   },
   avatarLabel: {
     color: 'white',
-    fontSize: ResponsiveUtils.fontSize.medium,
+    fontSize: ResponsiveUtils?.fontSize?.medium || 16,
     fontWeight: 'bold',
   },
   menuContent: {
     backgroundColor: 'white',
-    borderRadius: ResponsiveUtils.borderRadius.medium,
+    borderRadius: ResponsiveUtils?.borderRadius?.medium || 8,
     minWidth: 280,
     marginTop: 8,
   },
   menuHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: ResponsiveUtils.spacing.md,
+    padding: ResponsiveUtils?.spacing?.md || 16,
     backgroundColor: '#f8f9fa',
   },
   menuAvatar: {
-    marginRight: ResponsiveUtils.spacing.md,
+    marginRight: ResponsiveUtils?.spacing?.md || 16,
   },
   menuAvatarLabel: {
     color: 'white',
-    fontSize: ResponsiveUtils.fontSize.medium,
+    fontSize: ResponsiveUtils?.fontSize?.medium || 16,
     fontWeight: 'bold',
   },
   menuUserInfo: {
     flex: 1,
   },
   menuUserName: {
-    fontSize: ResponsiveUtils.fontSize.medium,
+    fontSize: ResponsiveUtils?.fontSize?.medium || 16,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: -8,
   },
   menuUserType: {
-    fontSize: ResponsiveUtils.fontSize.small,
+    fontSize: ResponsiveUtils?.fontSize?.small || 12,
     color: '#666',
     marginTop: -8,
   },
@@ -259,7 +270,7 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   menuItemTitle: {
-    fontSize: ResponsiveUtils.fontSize.medium,
+    fontSize: ResponsiveUtils?.fontSize?.medium || 16,
     color: '#333',
   },
 });
