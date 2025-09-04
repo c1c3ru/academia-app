@@ -99,14 +99,14 @@ const StudentEvolution = ({ navigation }) => {
 
   const getGraduationIcon = (modality) => {
     const icons = {
-      'Jiu-Jitsu': 'fitness',
-      'Muay Thai': 'hand-left',
-      'Boxe': 'hand-right',
-      'MMA': 'shield',
-      'Karatê': 'body',
-      'Judô': 'account'
+      'Jiu-Jitsu': 'fitness-outline',
+      'Muay Thai': 'hand-left-outline',
+      'Boxe': 'hand-right-outline',
+      'MMA': 'shield-outline',
+      'Karatê': 'body-outline',
+      'Judô': 'person-outline'
     };
-    return icons[modality] || 'medal';
+    return icons[modality] || 'medal-outline';
   };
 
   return (
@@ -165,7 +165,7 @@ const StudentEvolution = ({ navigation }) => {
         <Card style={styles.card}>
           <Card.Content>
             <View style={styles.cardHeader}>
-              <Ionicons name="timeline-outline" size={24} color="#2196F3" />
+              <Ionicons name="git-branch-outline" size={24} color="#2196F3" />
               <Title style={styles.cardTitle}>Timeline de Graduações</Title>
             </View>
             
@@ -250,7 +250,7 @@ const StudentEvolution = ({ navigation }) => {
         <Card style={styles.card}>
           <Card.Content>
             <View style={styles.cardHeader}>
-              <Ionicons name="target-outline" size={24} color="#FF9800" />
+              <Ionicons name="flag-outline" size={24} color="#FF9800" />
               <Title style={styles.cardTitle}>Próximos Objetivos</Title>
             </View>
             

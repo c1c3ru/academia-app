@@ -22,6 +22,14 @@ const UniversalHeader = ({
   const handleLogout = () => {
     console.log('🔐 Botão de logout clicado');
     console.log('🔐 Função logout disponível:', typeof logout);
+    console.log('🔐 User atual:', user?.email);
+    console.log('🔐 UserProfile atual:', userProfile?.name);
+    
+    if (!logout) {
+      console.error('🔐 Função logout não está disponível!');
+      Alert.alert('Erro', 'Função de logout não está disponível. Recarregue o app.');
+      return;
+    }
     
     Alert.alert(
       'Confirmar Saída',
@@ -38,6 +46,7 @@ const UniversalHeader = ({
           onPress: async () => {
             try {
               console.log('🔐 Iniciando processo de logout...');
+              closeMenu(); // Fechar menu antes do logout
               await logout();
               console.log('🔐 Logout executado com sucesso');
             } catch (error) {
@@ -108,7 +117,7 @@ const UniversalHeader = ({
                 label={userProfile?.name?.charAt(0) || 'U'}
                 style={[styles.avatar, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
                 labelStyle={styles.avatarLabel}
-                onTouchEnd={openMenu}
+                onPress={openMenu}
               />
             </View>
           }

@@ -27,11 +27,15 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('🔐 AuthStateChanged: Firebase user mudou:', firebaseUser?.email || 'null');
+      
       if (firebaseUser) {
+        console.log('🔐 AuthStateChanged: Usuário logado, definindo user state');
         setUser(firebaseUser);
         // Buscar perfil do usuário no Firestore
         await fetchUserProfile(firebaseUser.uid);
       } else {
+        console.log('🔐 AuthStateChanged: Usuário deslogado, limpando states');
         setUser(null);
         setUserProfile(null);
       }
@@ -146,14 +150,24 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       console.log('🔐 AuthContext: Iniciando signOut do Firebase...');
+      console.log('🔐 AuthContext: User atual antes do logout:', user?.email);
+      console.log('🔐 AuthContext: Auth object:', auth);
+      
       await signOut(auth);
       console.log('🔐 AuthContext: SignOut executado com sucesso');
+      
       console.log('🔐 AuthContext: Limpando estados locais...');
       setUser(null);
       setUserProfile(null);
-      console.log('🔐 AuthContext: Logout completo');
+      
+      console.log('🔐 AuthContext: Logout completo - estados limpos');
     } catch (error) {
       console.error('🔐 AuthContext: Erro no signOut:', error);
+      console.error('🔐 AuthContext: Detalhes do erro:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack
+      });
       throw error;
     }
   };
