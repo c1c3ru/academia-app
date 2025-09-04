@@ -346,11 +346,11 @@ const AdminDashboard = ({ navigation }) => {
             
             <AnimatedButton 
               mode="outlined" 
-              onPress={() => navigation.navigate('Relatórios')}
+              onPress={() => navigation.navigate('Gestão')}
               style={styles.viewReportsButton}
               icon="chart-line"
             >
-              Ver Relatórios Completos
+              Acessar Gestão e Relatórios
             </AnimatedButton>
           </Card.Content>
         </AnimatedCard>
@@ -401,19 +401,6 @@ const AdminDashboard = ({ navigation }) => {
                 contentStyle={styles.quickActionContent}
               >
                 Modalidades
-              </AnimatedButton>
-            </View>
-            
-            <View style={styles.logoutContainer}>
-              <AnimatedButton 
-                mode="outlined" 
-                onPress={handleLogout}
-                style={styles.logoutButton}
-                icon="logout"
-                buttonColor="#FFEBEE"
-                textColor="#F44336"
-              >
-                Sair
               </AnimatedButton>
             </View>
           </Card.Content>
@@ -628,14 +615,7 @@ const styles = StyleSheet.create({
     height: ResponsiveUtils.isTablet() ? 50 : 40,
     paddingHorizontal: ResponsiveUtils.spacing.sm,
   },
-  logoutContainer: {
-    marginTop: ResponsiveUtils.spacing.lg,
-    alignItems: 'center',
-  },
-  logoutButton: {
-    width: ResponsiveUtils.isTablet() ? '40%' : '60%',
-    borderColor: '#F44336',
-  },
+  
   viewAllButton: {
     marginTop: ResponsiveUtils.spacing.sm,
   },

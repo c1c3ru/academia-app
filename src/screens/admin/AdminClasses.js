@@ -159,12 +159,18 @@ const AdminClasses = ({ navigation }) => {
   };
 
   const formatSchedule = (schedule) => {
-    if (!schedule || schedule.length === 0) return 'Horário não definido';
-    
+    if (!Array.isArray(schedule) || schedule.length === 0) return 'Horário não definido';
     const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    return schedule.map(s => 
-      `${days[s.dayOfWeek]} ${s.hour.toString().padStart(2, '0')}:${(s.minute || 0).toString().padStart(2, '0')}`
-    ).join(', ');
+    try {
+      return schedule.map((s) => {
+        const day = typeof s.dayOfWeek === 'number' ? days[s.dayOfWeek] : 'Dia';
+        const hour = (s.hour ?? '').toString().padStart(2, '0');
+        const minute = (s.minute ?? 0).toString().padStart(2, '0');
+        return `${day} ${hour}:${minute}`;
+      }).join(', ');
+    } catch (e) {
+      return 'Horário não definido';
+    }
   };
 
   const getCapacityColor = (current, max) => {
