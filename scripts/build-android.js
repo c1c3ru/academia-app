@@ -1,4 +1,3 @@
-
 #!/usr/bin/env node
 
 const { execSync } = require('child_process');
@@ -13,7 +12,7 @@ try {
   console.log('✅ EAS CLI encontrado');
 } catch (error) {
   console.log('📦 Instalando EAS CLI...');
-  execSync('npm install -g @expo/eas-cli', { stdio: 'inherit' });
+  execSync('npm install -g eas-cli', { stdio: 'inherit' });
 }
 
 // Verificar se está logado no EAS
