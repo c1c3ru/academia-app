@@ -16,6 +16,7 @@ const AddClassScreen = ({ navigation, route }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [instructors, setInstructors] = useState([]);
+  const [modalities, setModalities] = useState([]);
   
   // Form data
   const [formData, setFormData] = useState({
@@ -62,19 +63,9 @@ const AddClassScreen = ({ navigation, route }) => {
     return items;
   };
 
-  const modalities = [
-    'Musculação',
-    'CrossFit',
-    'Pilates',
-    'Yoga',
-    'Natação',
-    'Dança',
-    'Artes Marciais',
-    'Funcional'
-  ];
-
   useEffect(() => {
     loadInstructors();
+    loadModalities();
   }, []);
 
   const loadInstructors = async () => {
@@ -87,11 +78,27 @@ const AddClassScreen = ({ navigation, route }) => {
     }
   };
 
+  const loadModalities = async () => {
+    try {
+      const list = await firestoreService.getAll('modalities');
+      // Normalizar: garantir pelo menos name
+      const normalized = (list || []).map((m) => ({ id: m.id || m.name, name: m.name }));
+      setModalities(normalized);
+    } catch (error) {
+      console.error('Erro ao carregar modalidades:', error);
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.name.trim()) {
       newErrors.name = 'Nome da turma é obrigatório';
+    }
+
+    // Bloquear quando não houver modalidades cadastradas no sistema
+    if (!modalities || modalities.length === 0) {
+      newErrors.modality = 'Nenhuma modalidade cadastrada. Vá em Admin > Modalidades para cadastrar antes de continuar.';
     }
 
     if (!formData.modality) {
@@ -213,15 +220,18 @@ const AddClassScreen = ({ navigation, route }) => {
             <View style={styles.pickerContainer}>
               <Text style={styles.label}>Modalidade</Text>
               <View style={styles.chipContainer}>
-                {modalities.map((modality) => (
+                {modalities.length === 0 && (
+                  <Text style={{ color: '#666' }}>Nenhuma modalidade cadastrada</Text>
+                )}
+                {modalities.map((m) => (
                   <Chip
-                    key={modality}
-                    selected={formData.modality === modality}
-                    onPress={() => updateFormData('modality', modality)}
+                    key={m.id}
+                    selected={formData.modality === m.name}
+                    onPress={() => updateFormData('modality', m.name)}
                     style={styles.chip}
-                    mode={formData.modality === modality ? 'flat' : 'outlined'}
+                    mode={formData.modality === m.name ? 'flat' : 'outlined'}
                   >
-                    {modality}
+                    {m.name}
                   </Chip>
                 ))}
               </View>
@@ -334,7 +344,7 @@ const AddClassScreen = ({ navigation, route }) => {
                 onPress={handleSubmit}
                 style={styles.button}
                 loading={loading}
-                disabled={loading}
+                disabled={loading || modalities.length === 0}
               >
                 Criar Turma
               </Button>

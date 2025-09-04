@@ -18,6 +18,7 @@ const EditClassScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [instructors, setInstructors] = useState([]);
+  const [modalities, setModalities] = useState([]);
   
   // Form data
   const [formData, setFormData] = useState({
@@ -69,20 +70,21 @@ const EditClassScreen = ({ navigation, route }) => {
     return scheduleArr.map(s => `${days[s.dayOfWeek]} ${String(s.hour ?? '').padStart(2, '0')}:${String(s.minute ?? 0).padStart(2, '0')}`).join(', ');
   };
 
-  const modalities = [
-    'Musculação',
-    'CrossFit',
-    'Pilates',
-    'Yoga',
-    'Natação',
-    'Dança',
-    'Artes Marciais',
-    'Funcional'
-  ];
+  // Carregar modalidades do Firestore
+  const loadModalities = async () => {
+    try {
+      const list = await firestoreService.getAll('modalities');
+      const normalized = (list || []).map((m) => ({ id: m.id || m.name, name: m.name }));
+      setModalities(normalized);
+    } catch (error) {
+      console.error('Erro ao carregar modalidades:', error);
+    }
+  };
 
   useEffect(() => {
     loadClassData();
     loadInstructors();
+    loadModalities();
   }, []);
 
   const loadClassData = async () => {
@@ -134,6 +136,11 @@ const EditClassScreen = ({ navigation, route }) => {
 
     if (!formData.name.trim()) {
       newErrors.name = 'Nome da turma é obrigatório';
+    }
+
+    // Bloquear quando não houver modalidades cadastradas no sistema
+    if (!modalities || modalities.length === 0) {
+      newErrors.modality = 'Nenhuma modalidade cadastrada. Vá em Admin > Modalidades para cadastrar antes de continuar.';
     }
 
     if (!formData.modality) {
@@ -302,15 +309,18 @@ const EditClassScreen = ({ navigation, route }) => {
             <View style={styles.pickerContainer}>
               <Text style={styles.label}>Modalidade</Text>
               <View style={styles.chipContainer}>
-                {modalities.map((modality) => (
+                {modalities.length === 0 && (
+                  <Text style={{ color: '#666' }}>Nenhuma modalidade cadastrada</Text>
+                )}
+                {modalities.map((m) => (
                   <Chip
-                    key={modality}
-                    selected={formData.modality === modality}
-                    onPress={() => updateFormData('modality', modality)}
+                    key={m.id}
+                    selected={formData.modality === m.name}
+                    onPress={() => updateFormData('modality', m.name)}
                     style={styles.chip}
-                    mode={formData.modality === modality ? 'flat' : 'outlined'}
+                    mode={formData.modality === m.name ? 'flat' : 'outlined'}
                   >
-                    {modality}
+                    {m.name}
                   </Chip>
                 ))}
               </View>
@@ -423,7 +433,7 @@ const EditClassScreen = ({ navigation, route }) => {
                 onPress={handleSubmit}
                 style={styles.button}
                 loading={loading}
-                disabled={loading}
+                disabled={loading || modalities.length === 0}
               >
                 Salvar
               </Button>
