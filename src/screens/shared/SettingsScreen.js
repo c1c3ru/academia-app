@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Platform, Dimensions } from 'react-native';
 import { 
   Card, 
   Text, 
@@ -11,6 +11,7 @@ import {
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
+import { ResponsiveUtils } from '../../utils/animations';
 
 const SettingsScreen = ({ navigation }) => {
   const { user, userProfile, logout } = useAuth();
@@ -66,7 +67,11 @@ const SettingsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.container}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Informações da Conta */}
         <Card containerStyle={styles.card}>
           <View style={styles.cardHeader}>
@@ -250,25 +255,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: ResponsiveUtils?.spacing?.xl || 32,
+  },
   card: {
-    margin: 16,
-    marginTop: 8,
+    margin: ResponsiveUtils?.spacing?.md || 16,
+    marginTop: ResponsiveUtils?.spacing?.sm || 8,
+    maxWidth: ResponsiveUtils?.isTablet?.() ? 600 : '100%',
+    alignSelf: 'center',
+    width: '100%',
     ...Platform.select({
-
       ios: {},
-
       android: {
-
         elevation: 4,
-
       },
-
       web: {
-
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-
       },
-
     }),
   },
   dangerCard: {
@@ -279,18 +285,18 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: ResponsiveUtils?.spacing?.md || 16,
   },
   cardTitle: {
-    marginLeft: 8,
-    fontSize: 18,
+    marginLeft: ResponsiveUtils?.spacing?.sm || 8,
+    fontSize: ResponsiveUtils?.fontSize?.large || 18,
   },
   dangerTitle: {
     color: '#F44336',
   },
   dangerButton: {
-    borderRadius: 12,
-    marginBottom: 8,
+    borderRadius: ResponsiveUtils?.borderRadius?.medium || 12,
+    marginBottom: ResponsiveUtils?.spacing?.sm || 8,
   },
 });
 

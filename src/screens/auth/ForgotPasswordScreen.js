@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { 
   TextInput, 
   Card, 
@@ -16,6 +16,7 @@ import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../services/firebase';
 import AnimatedCard from '../../components/AnimatedCard';
 import AnimatedButton from '../../components/AnimatedButton';
+import { ResponsiveUtils } from '../../utils/animations';
 
 export default function ForgotPasswordScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -69,22 +70,32 @@ export default function ForgotPasswordScreen({ navigation }) {
       style={styles.gradient}
     >
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <MaterialCommunityIcons 
-            name="lock-reset" 
-            size={60} 
-            color="white" 
-            style={styles.headerIcon}
-          />
-          <Title style={styles.headerTitle}>Recuperar Senha</Title>
-          <Paragraph style={styles.headerSubtitle}>
-            Digite seu email para receber instruções
-          </Paragraph>
-        </View>
+        <KeyboardAvoidingView 
+          style={styles.keyboardAvoidingView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.header}>
+              <MaterialCommunityIcons 
+                name="lock-reset" 
+                size={ResponsiveUtils?.isTablet?.() ? 80 : 60} 
+                color="white" 
+                style={styles.headerIcon}
+              />
+              <Title style={styles.headerTitle}>Recuperar Senha</Title>
+              <Paragraph style={styles.headerSubtitle}>
+                Digite seu email para receber instruções
+              </Paragraph>
+            </View>
 
-        <View style={styles.content}>
-          <AnimatedCard elevation="medium" animationType="fadeIn">
-            <Card.Content style={styles.cardContent}>
+            <View style={styles.content}>
+              <AnimatedCard elevation="medium" animationType="fadeIn">
+                <Card.Content style={styles.cardContent}>
               {!emailSent ? (
                 <>
                   <TextInput
@@ -138,6 +149,8 @@ export default function ForgotPasswordScreen({ navigation }) {
             </Card.Content>
           </AnimatedCard>
         </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -151,55 +164,65 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: ResponsiveUtils?.spacing?.xl || 32,
+  },
   header: {
     alignItems: 'center',
-    padding: 32,
-    paddingBottom: 16,
+    padding: ResponsiveUtils?.spacing?.xl || 32,
+    paddingBottom: ResponsiveUtils?.spacing?.md || 16,
   },
   headerIcon: {
     marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: ResponsiveUtils?.fontSize?.xlarge || 28,
     fontWeight: 'bold',
     color: 'white',
-    marginBottom: 8,
+    marginBottom: ResponsiveUtils?.spacing?.sm || 8,
     textAlign: 'center',
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: ResponsiveUtils?.fontSize?.medium || 16,
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
-    maxWidth: 400,
+    paddingHorizontal: ResponsiveUtils?.spacing?.md || 16,
+    maxWidth: ResponsiveUtils?.isTablet?.() ? 500 : 400,
     alignSelf: 'center',
     width: '100%',
   },
   cardContent: {
-    padding: 24,
+    padding: ResponsiveUtils?.spacing?.lg || 24,
   },
   input: {
-    marginBottom: 16,
+    marginBottom: ResponsiveUtils?.spacing?.md || 16,
     backgroundColor: 'white',
   },
   resetButton: {
-    marginTop: 8,
-    paddingVertical: 8,
-    borderRadius: 25,
+    marginTop: ResponsiveUtils?.spacing?.sm || 8,
+    paddingVertical: ResponsiveUtils?.spacing?.sm || 8,
+    borderRadius: ResponsiveUtils?.borderRadius?.large || 25,
   },
   successContainer: {
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: ResponsiveUtils?.spacing?.md || 16,
   },
   successIcon: {
-    marginBottom: 16,
+    marginBottom: ResponsiveUtils?.spacing?.md || 16,
   },
   successTitle: {
     color: '#4CAF50',
-    marginBottom: 8,
+    marginBottom: ResponsiveUtils?.spacing?.sm || 8,
     textAlign: 'center',
   },
   successText: {
@@ -208,6 +231,6 @@ const styles = StyleSheet.create({
   },
   backContainer: {
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: ResponsiveUtils?.spacing?.md || 16,
   },
 });

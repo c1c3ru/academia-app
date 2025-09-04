@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Dimensions } from 'react-native';
 import { 
   Card, 
   Title, 
@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import AnimatedCard from '../../components/AnimatedCard';
 import AnimatedButton from '../../components/AnimatedButton';
+import { ResponsiveUtils } from '../../utils/animations';
 
 const StudentDashboard = () => {
   const { userProfile } = useAuth();
@@ -57,13 +58,17 @@ const StudentDashboard = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         
         {/* Header de Boas-vindas */}
         <AnimatedCard style={styles.welcomeCard} animationType="fadeIn" delay={0}>
           <Card.Content style={styles.welcomeContent}>
             <Avatar.Icon 
-              size={60} 
+              size={ResponsiveUtils?.isTablet?.() ? 80 : 60} 
               icon="account" 
               style={styles.avatar}
             />
@@ -190,11 +195,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
-    padding: 8,
+    padding: ResponsiveUtils?.spacing?.sm || 8,
+    paddingBottom: ResponsiveUtils?.spacing?.xl || 32,
   },
   welcomeCard: {
-    marginBottom: 8,
+    marginBottom: ResponsiveUtils?.spacing?.sm || 8,
     backgroundColor: '#2196F3',
   },
   welcomeContent: {
@@ -205,32 +214,32 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   welcomeText: {
-    marginLeft: 16,
+    marginLeft: ResponsiveUtils?.spacing?.md || 16,
     flex: 1,
   },
   welcomeTitle: {
     color: 'white',
-    fontSize: 20,
+    fontSize: ResponsiveUtils?.fontSize?.large || 20,
     fontWeight: 'bold',
   },
   welcomeSubtitle: {
     color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
+    fontSize: ResponsiveUtils?.fontSize?.small || 14,
   },
   card: {
-    marginBottom: 8,
+    marginBottom: ResponsiveUtils?.spacing?.sm || 8,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: ResponsiveUtils?.fontSize?.large || 18,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: ResponsiveUtils?.spacing?.md || 12,
     color: '#2196F3',
   },
   graduationStatus: {
     alignItems: 'center',
   },
   graduationChip: {
-    marginBottom: 8,
+    marginBottom: ResponsiveUtils?.spacing?.sm || 8,
   },
   graduationText: {
     textAlign: 'center',
@@ -243,38 +252,38 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#999',
     fontStyle: 'italic',
-    marginVertical: 16,
+    marginVertical: ResponsiveUtils?.spacing?.md || 16,
   },
   viewAllButton: {
-    marginTop: 8,
+    marginTop: ResponsiveUtils?.spacing?.sm || 8,
   },
   announcementItem: {
-    marginBottom: 12,
+    marginBottom: ResponsiveUtils?.spacing?.md || 12,
   },
   announcementTitle: {
     fontWeight: '600',
     color: '#333',
-    marginBottom: 4,
+    marginBottom: ResponsiveUtils?.spacing?.xs || 4,
   },
   announcementMessage: {
     color: '#666',
-    marginBottom: 4,
+    marginBottom: ResponsiveUtils?.spacing?.xs || 4,
   },
   announcementDate: {
     color: '#999',
-    fontSize: 12,
+    fontSize: ResponsiveUtils?.fontSize?.small || 12,
   },
   announcementDivider: {
-    marginTop: 12,
+    marginTop: ResponsiveUtils?.spacing?.md || 12,
   },
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 8,
+    marginTop: ResponsiveUtils?.spacing?.sm || 8,
   },
   quickActionButton: {
     flex: 1,
-    marginHorizontal: 4,
+    marginHorizontal: ResponsiveUtils?.spacing?.xs || 4,
   },
 });
 
