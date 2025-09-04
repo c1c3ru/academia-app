@@ -158,9 +158,10 @@ const AdminClasses = ({ navigation }) => {
     );
   };
 
-  const formatSchedule = (schedule) => {
-    // Suporta novo formato (array de objetos) e legado (string)
+  const formatSchedule = (classItem) => {
+    // Suporta novo formato (array de objetos), legado (string) e scheduleText
     try {
+      const schedule = classItem?.schedule;
       if (Array.isArray(schedule) && schedule.length > 0) {
         const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
         return schedule.map((s) => {
@@ -172,6 +173,9 @@ const AdminClasses = ({ navigation }) => {
       }
       if (typeof schedule === 'string' && schedule.trim()) {
         return schedule.trim();
+      }
+      if (typeof classItem?.scheduleText === 'string' && classItem.scheduleText.trim()) {
+        return classItem.scheduleText.trim();
       }
       return 'Horário não definido';
     } catch (e) {
@@ -279,7 +283,7 @@ const AdminClasses = ({ navigation }) => {
                   <View style={styles.detailRow}>
                     <Ionicons name="time-outline" size={16} color="#666" />
                     <Text style={styles.detailText}>
-                      {formatSchedule(classItem.schedule)}
+                      {formatSchedule(classItem)}
                     </Text>
                   </View>
 

@@ -288,6 +288,11 @@ const AddClassScreen = ({ navigation, route }) => {
               error={!!errors.schedule}
             />
             {errors.schedule && <HelperText type="error">{errors.schedule}</HelperText>}
+            {!errors.schedule && (
+              <Text style={styles.helperTip}>
+                Dica: você pode informar vários horários separados por vírgula. Exemplos: "Seg 08:00, Qua 19:30" ou "Terça-feira 07:15".
+              </Text>
+            )}
 
             {/* Preço */}
             <TextInput
@@ -416,6 +421,12 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     marginHorizontal: 8,
+  },
+  helperTip: {
+    marginTop: -4,
+    marginBottom: 12,
+    color: '#666',
+    fontSize: 12,
   },
 });
 

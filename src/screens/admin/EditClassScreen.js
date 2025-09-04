@@ -39,6 +39,41 @@ const EditClassScreen = ({ navigation, route }) => {
 
   const [errors, setErrors] = useState({});
 
+  // Utilitário: converte texto de horário em array estruturado [{ dayOfWeek, hour, minute }]
+  const parseScheduleTextToArray = (text) => {
+    if (!text || typeof text !== 'string') return [];
+    const dayMap = {
+      'domingo': 0, 'dom': 0,
+      'segunda': 1, 'segunda-feira': 1, 'seg': 1,
+      'terca': 2, 'terça': 2, 'terça-feira': 2, 'ter': 2,
+      'quarta': 3, 'quarta-feira': 3, 'qua': 3,
+      'quinta': 4, 'quinta-feira': 4, 'qui': 4,
+      'sexta': 5, 'sexta-feira': 5, 'sex': 5,
+      'sabado': 6, 'sábado': 6, 'sab': 6, 'sáb': 6
+    };
+    const parts = text.split(/[\,\n]+/).map(p => p.trim()).filter(Boolean);
+    const items = [];
+    for (const part of parts) {
+      const m = part.match(/^(\D+?)\s+(\d{1,2}):(\d{2})/i);
+      if (!m) continue;
+      const dayRaw = m[1].trim().toLowerCase();
+      const hour = parseInt(m[2], 10);
+      const minute = parseInt(m[3], 10) || 0;
+      const dayOfWeek = dayMap[dayRaw];
+      if (typeof dayOfWeek === 'number' && !isNaN(hour)) {
+        items.push({ dayOfWeek, hour, minute });
+      }
+    }
+    return items;
+  };
+
+  // Formata array de horários para texto humano para preencher o input
+  const formatScheduleArrayToText = (scheduleArr) => {
+    if (!Array.isArray(scheduleArr) || scheduleArr.length === 0) return '';
+    const days = ['Dom', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+    return scheduleArr.map(s => `${days[s.dayOfWeek]} ${String(s.hour ?? '').padStart(2, '0')}:${String(s.minute ?? 0).padStart(2, '0')}`).join(', ');
+  };
+
   const modalities = [
     'Musculação',
     'CrossFit',
@@ -68,9 +103,12 @@ const EditClassScreen = ({ navigation, route }) => {
           maxStudents: classData.maxStudents?.toString() || '',
           instructorId: classData.instructorId || '',
           instructorName: classData.instructorName || '',
-          schedule: typeof classData.schedule === 'object' 
-            ? `${classData.schedule.dayOfWeek} ${classData.schedule.startTime}-${classData.schedule.endTime}`
-            : classData.schedule || '',
+          // Preferir preencher o input com texto legível
+          schedule: Array.isArray(classData.schedule)
+            ? formatScheduleArrayToText(classData.schedule)
+            : (typeof classData.schedule === 'string' && classData.schedule)
+              ? classData.schedule
+              : (classData.scheduleText || ''),
           price: classData.price?.toString() || '',
           status: classData.status || 'active'
         });
@@ -142,7 +180,9 @@ const EditClassScreen = ({ navigation, route }) => {
         maxStudents: parseInt(formData.maxStudents),
         instructorId: formData.instructorId,
         instructorName: formData.instructorName,
-        schedule: formData.schedule.trim(),
+        // Armazenar formato estruturado e manter texto para compatibilidade
+        schedule: parseScheduleTextToArray(formData.schedule.trim()),
+        scheduleText: formData.schedule.trim(),
         price: parseFloat(formData.price),
         status: formData.status,
         updatedAt: new Date(),
@@ -337,6 +377,11 @@ const EditClassScreen = ({ navigation, route }) => {
               error={!!errors.schedule}
             />
             {errors.schedule && <HelperText type="error">{errors.schedule}</HelperText>}
+            {!errors.schedule && (
+              <Text style={styles.helperTip}>
+                Dica: você pode informar vários horários separados por vírgula. Exemplos: "Seg 08:00, Qua 19:30" ou "Terça-feira 07:15".
+              </Text>
+            )}
 
             {/* Preço */}
             <TextInput
@@ -485,6 +530,12 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     borderColor: '#d32f2f',
+  },
+  helperTip: {
+    marginTop: -4,
+    marginBottom: 12,
+    color: '#666',
+    fontSize: 12,
   },
 });
 
