@@ -36,7 +36,7 @@ const InstructorClasses = ({ navigation }) => {
   const loadClasses = async () => {
     try {
       setLoading(true);
-      const instructorClasses = await classService.getClassesByInstructor(user.uid);
+      const instructorClasses = await classService.getClassesByInstructor(user.uid, user?.email);
       
       // Buscar número de alunos para cada turma
       const classesWithStudents = await Promise.all(
@@ -86,13 +86,25 @@ const InstructorClasses = ({ navigation }) => {
     navigation.navigate('CheckIns', { classId: classItem.id, className: classItem.name });
   };
 
-  const formatSchedule = (schedule) => {
-    if (!schedule || schedule.length === 0) return 'Horário não definido';
-    
-    const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    return schedule.map(s => 
-      `${days[s.dayOfWeek]} ${s.hour.toString().padStart(2, '0')}:${(s.minute || 0).toString().padStart(2, '0')}`
-    ).join(', ');
+  const formatSchedule = (classItem) => {
+    try {
+      const schedule = classItem?.schedule;
+      if (Array.isArray(schedule) && schedule.length > 0) {
+        const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        return schedule.map(s => 
+          `${days[s.dayOfWeek]} ${String(s.hour ?? '').padStart(2, '0')}:${String(s.minute ?? 0).padStart(2, '0')}`
+        ).join(', ');
+      }
+      if (typeof schedule === 'string' && schedule.trim()) {
+        return schedule.trim();
+      }
+      if (typeof classItem?.scheduleText === 'string' && classItem.scheduleText.trim()) {
+        return classItem.scheduleText.trim();
+      }
+      return 'Horário não definido';
+    } catch (e) {
+      return 'Horário não definido';
+    }
   };
 
   const getCapacityColor = (current, max) => {
@@ -137,7 +149,7 @@ const InstructorClasses = ({ navigation }) => {
                   <View style={styles.detailRow}>
                     <Ionicons name="time-outline" size={16} color="#666" />
                     <Text style={styles.detailText}>
-                      {formatSchedule(classItem.schedule)}
+                      {formatSchedule(classItem)}
                     </Text>
                   </View>
 

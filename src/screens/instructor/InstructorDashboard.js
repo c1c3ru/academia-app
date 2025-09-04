@@ -47,8 +47,8 @@ const InstructorDashboard = ({ navigation }) => {
     try {
       setLoading(true);
       
-      // Buscar turmas do professor
-      const instructorClasses = await classService.getClassesByInstructor(user.uid);
+      // Buscar turmas do professor (suporta schemas legados por email)
+      const instructorClasses = await classService.getClassesByInstructor(user.uid, user?.email);
       
       // Buscar alunos do professor
       const instructorStudents = await studentService.getStudentsByInstructor(user.uid);

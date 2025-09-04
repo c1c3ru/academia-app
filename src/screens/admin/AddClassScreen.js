@@ -37,6 +37,36 @@ const AddClassScreen = ({ navigation, route }) => {
 
   const [errors, setErrors] = useState({});
 
+  // Utilitário: converte texto de horário em array estruturado [{ dayOfWeek, hour, minute }]
+  const parseScheduleTextToArray = (text) => {
+    if (!text || typeof text !== 'string') return [];
+    const dayMap = {
+      'domingo': 0, 'dom': 0,
+      'segunda': 1, 'segunda-feira': 1, 'seg': 1,
+      'terca': 2, 'terça': 2, 'terça-feira': 2, 'ter': 2,
+      'quarta': 3, 'quarta-feira': 3, 'qua': 3,
+      'quinta': 4, 'quinta-feira': 4, 'qui': 4,
+      'sexta': 5, 'sexta-feira': 5, 'sex': 5,
+      'sabado': 6, 'sábado': 6, 'sab': 6, 'sáb': 6
+    };
+    // Suporta múltiplos horários separados por "," ou "\n"
+    const parts = text.split(/[\,\n]+/).map(p => p.trim()).filter(Boolean);
+    const items = [];
+    for (const part of parts) {
+      // Ex: "Seg 08:00-09:00" ou "Segunda-feira 08:00"
+      const m = part.match(/^(\D+?)\s+(\d{1,2}):(\d{2})/i);
+      if (!m) continue;
+      const dayRaw = m[1].trim().toLowerCase();
+      const hour = parseInt(m[2], 10);
+      const minute = parseInt(m[3], 10) || 0;
+      const dayOfWeek = dayMap[dayRaw];
+      if (typeof dayOfWeek === 'number' && !isNaN(hour)) {
+        items.push({ dayOfWeek, hour, minute });
+      }
+    }
+    return items;
+  };
+
   const modalities = [
     'Musculação',
     'CrossFit',
@@ -109,7 +139,9 @@ const AddClassScreen = ({ navigation, route }) => {
         currentStudents: 0,
         instructorId: formData.instructorId,
         instructorName: formData.instructorName,
-        schedule: formData.schedule.trim(),
+        // Armazenar formato estruturado e manter texto para compatibilidade
+        schedule: parseScheduleTextToArray(formData.schedule.trim()),
+        scheduleText: formData.schedule.trim(),
         price: parseFloat(formData.price),
         status: formData.status,
         createdBy: user.uid,

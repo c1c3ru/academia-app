@@ -196,8 +196,24 @@ export const studentService = {
 };
 
 export const classService = {
-  getClassesByInstructor: async (instructorId) => {
-    return await firestoreService.getWhere('classes', 'instructorId', '==', instructorId);
+  // Busca turmas vinculadas ao instrutor, cobrindo diferentes variantes de schema
+  // Preferência: instructorId == uid, depois instructorIds array-contains uid, e opcionalmente por email
+  getClassesByInstructor: async (instructorId, instructorEmail) => {
+    // Consulta principal: campo simples
+    const byId = await firestoreService.getWhere('classes', 'instructorId', '==', instructorId);
+    // Alternativa: campo array com múltiplos instrutores
+    const byIdsArray = await firestoreService.getWhere('classes', 'instructorIds', 'array-contains', instructorId).catch(() => []);
+    // Alternativa opcional por email (alguns dados antigos podem referenciar email)
+    const byEmail = instructorEmail
+      ? await firestoreService.getWhere('classes', 'instructorEmail', '==', instructorEmail).catch(() => [])
+      : [];
+
+    // Mesclar e remover duplicados por id
+    const map = new Map();
+    [...(byId || []), ...(byIdsArray || []), ...(byEmail || [])].forEach((c) => {
+      if (c && c.id && !map.has(c.id)) map.set(c.id, c);
+    });
+    return Array.from(map.values());
   },
 
   getClassesByModality: async (modalityId) => {
