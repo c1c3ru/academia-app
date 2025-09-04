@@ -6,7 +6,7 @@ import {
   Alert, 
   Platform
 } from 'react-native';
-import { Card, Text, Button, TextInput, HelperText, Chip, RadioButton } from 'react-native-paper';
+import { Card, Text, Button, TextInput, HelperText, Chip, RadioButton, Snackbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import { Picker } from '@react-native-picker/picker'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthContext';
@@ -19,6 +19,7 @@ const EditClassScreen = ({ navigation, route }) => {
   const [loadingData, setLoadingData] = useState(true);
   const [instructors, setInstructors] = useState([]);
   const [modalities, setModalities] = useState([]);
+  const [snackbar, setSnackbar] = useState({ visible: false, message: '', type: 'info' });
   
   // Form data
   const [formData, setFormData] = useState({
@@ -110,12 +111,12 @@ const EditClassScreen = ({ navigation, route }) => {
           status: classData.status || 'active'
         });
       } else {
-        Alert.alert('Erro', 'Turma não encontrada');
-        navigation.goBack();
+        setSnackbar({ visible: true, message: 'Turma não encontrada', type: 'error' });
+        setTimeout(() => navigation.goBack(), 800);
       }
     } catch (error) {
       console.error('Erro ao carregar turma:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os dados da turma');
+      setSnackbar({ visible: true, message: 'Erro ao carregar dados da turma', type: 'error' });
     } finally {
       setLoadingData(false);
     }
@@ -192,63 +193,32 @@ const EditClassScreen = ({ navigation, route }) => {
       };
 
       await firestoreService.update('classes', classId, classData);
-
-      Alert.alert(
-        'Sucesso',
-        'Turma atualizada com sucesso!',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack()
-          }
-        ]
-      );
+      setSnackbar({ visible: true, message: 'Turma atualizada com sucesso!', type: 'success' });
+      setTimeout(() => navigation.goBack(), 800);
 
     } catch (error) {
       console.error('Erro ao atualizar turma:', error);
-      Alert.alert('Erro', 'Não foi possível atualizar a turma. Tente novamente.');
+      setSnackbar({ visible: true, message: 'Erro ao atualizar turma. Tente novamente.', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Confirmar Exclusão',
-      'Tem certeza que deseja excluir esta turma? Esta ação não pode ser desfeita.',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel'
-        },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-              await firestoreService.delete('classes', classId);
-              
-              Alert.alert(
-                'Sucesso',
-                'Turma excluída com sucesso!',
-                [
-                  {
-                    text: 'OK',
-                    onPress: () => navigation.goBack()
-                  }
-                ]
-              );
-            } catch (error) {
-              console.error('Erro ao excluir turma:', error);
-              Alert.alert('Erro', 'Não foi possível excluir a turma.');
-            } finally {
-              setLoading(false);
-            }
-          }
-        }
-      ]
-    );
+    // Exclusão direta com feedback. Em produção, pode-se reintroduzir um Dialog de confirmação.
+    (async () => {
+      try {
+        setLoading(true);
+        await firestoreService.delete('classes', classId);
+        setSnackbar({ visible: true, message: 'Turma excluída com sucesso!', type: 'success' });
+        setTimeout(() => navigation.goBack(), 800);
+      } catch (error) {
+        console.error('Erro ao excluir turma:', error);
+        setSnackbar({ visible: true, message: 'Não foi possível excluir a turma.', type: 'error' });
+      } finally {
+        setLoading(false);
+      }
+    })();
   };
 
   const updateFormData = (field, value) => {
@@ -453,6 +423,13 @@ const EditClassScreen = ({ navigation, route }) => {
           </Card.Content>
         </Card>
       </ScrollView>
+      <Snackbar
+        visible={snackbar.visible}
+        onDismiss={() => setSnackbar((s) => ({ ...s, visible: false }))}
+        duration={2500}
+      >
+        {snackbar.message}
+      </Snackbar>
     </SafeAreaView>
   );
 };

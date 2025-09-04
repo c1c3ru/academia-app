@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   View, 
   StyleSheet, 
-  ScrollView, 
-  Alert, 
-  Platform
+  ScrollView
 } from 'react-native';
-import { Card, Text, Button, TextInput, HelperText, Chip, RadioButton } from 'react-native-paper';
+import { Card, Text, Button, TextInput, HelperText, Chip, RadioButton, Snackbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import * as FileSystem from 'expo-file-system'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthContext';
@@ -17,6 +15,7 @@ const AddClassScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [instructors, setInstructors] = useState([]);
   const [modalities, setModalities] = useState([]);
+  const [snackbar, setSnackbar] = useState({ visible: false, message: '', type: 'info' });
   
   // Form data
   const [formData, setFormData] = useState({
@@ -152,21 +151,13 @@ const AddClassScreen = ({ navigation, route }) => {
       };
 
       await firestoreService.create('classes', classData);
-
-      Alert.alert(
-        'Sucesso',
-        'Turma criada com sucesso!',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack()
-          }
-        ]
-      );
+      setSnackbar({ visible: true, message: 'Turma criada com sucesso!', type: 'success' });
+      // Voltar após pequeno atraso para permitir ver o feedback
+      setTimeout(() => navigation.goBack(), 800);
 
     } catch (error) {
       console.error('Erro ao criar turma:', error);
-      Alert.alert('Erro', 'Não foi possível criar a turma. Tente novamente.');
+      setSnackbar({ visible: true, message: 'Erro ao criar turma. Tente novamente.', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -352,6 +343,13 @@ const AddClassScreen = ({ navigation, route }) => {
           </Card.Content>
         </Card>
       </ScrollView>
+      <Snackbar
+        visible={snackbar.visible}
+        onDismiss={() => setSnackbar((s) => ({ ...s, visible: false }))}
+        duration={2500}
+      >
+        {snackbar.message}
+      </Snackbar>
     </SafeAreaView>
   );
 };
