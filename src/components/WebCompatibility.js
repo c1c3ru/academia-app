@@ -19,11 +19,19 @@ const WebCompatibility = ({ children }) => {
       // Configurar CSS global para web
       const style = document.createElement('style');
       style.textContent = `
+        html, body, #root, #app {
+          height: 100%;
+        }
         body {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
           margin: 0;
           padding: 0;
           overflow-x: hidden;
+          overflow-y: auto;
+        }
+        
+        #root > div {
+          min-height: 100vh;
         }
         
         * {

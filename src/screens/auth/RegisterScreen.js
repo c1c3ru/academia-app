@@ -182,7 +182,13 @@ const RegisterScreen = ({ navigation }) => {
       style={styles.gradient}
     >
       <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView
+          horizontal={false}
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={true}
+        >
           <Animated.View 
             style={[
               styles.header,
@@ -412,15 +418,21 @@ const RegisterScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
+    ...(Platform.OS === 'web' ? { minHeight: '100vh' } : {}),
   },
   container: {
     flex: 1,
     backgroundColor: 'transparent',
+    ...(Platform.OS === 'web' ? { minHeight: '100vh' } : {}),
+  },
+  scroll: {
+    flex: 1,
+    ...(Platform.OS === 'web' ? { maxHeight: '100vh', overflowY: 'auto' } : {}),
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
     padding: 20,
+    paddingBottom: 120,
   },
   header: {
     alignItems: 'center',
