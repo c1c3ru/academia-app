@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Animated, Platform } from 'react-native';
 import { 
   Card, 
   Title, 
@@ -13,12 +14,19 @@ import {
   List
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, classService, studentService } from '../../services/firestoreService';
+import AnimatedCard from '../../components/AnimatedCard';
+import AnimatedButton from '../../components/AnimatedButton';
+import { useAnimation, ResponsiveUtils } from '../../utils/animations';
 
 const InstructorDashboard = ({ navigation }) => {
-  const { user, userProfile, logout } = useAuth();
+  const { user, userProfile } = useAuth();
+  const { animations, startEntryAnimation } = useAnimation();
+  const scrollY = new Animated.Value(0);
+  
   const [dashboardData, setDashboardData] = useState({
     myClasses: [],
     todayClasses: [],
@@ -32,6 +40,7 @@ const InstructorDashboard = ({ navigation }) => {
 
   useEffect(() => {
     loadDashboardData();
+    startEntryAnimation();
   }, []);
 
   const loadDashboardData = async () => {
@@ -96,230 +105,365 @@ const InstructorDashboard = ({ navigation }) => {
     return days[dayNumber] || 'N/A';
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-    }
+
+  const headerTransform = {
+    transform: [
+      {
+        translateY: scrollY.interpolate({
+          inputRange: [0, 100],
+          outputRange: [0, -20],
+          extrapolate: 'clamp',
+        }),
+      },
+    ],
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <Animated.ScrollView 
         style={styles.scrollView}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: Platform.OS !== 'web' }
+        )}
+        scrollEventThrottle={16}
       >
-        {/* Header do Professor */}
-        <Card style={styles.headerCard}>
-          <Card.Content style={styles.headerContent}>
-            <Avatar.Text 
-              size={60} 
-              label={userProfile?.name?.charAt(0) || 'P'} 
-              style={styles.avatar}
-            />
-            <View style={styles.headerText}>
-              <Title style={styles.welcomeText}>
-                Professor {userProfile?.name?.split(' ')[0] || 'Usuário'}
-              </Title>
-              <Paragraph style={styles.roleText}>
-                {userProfile?.specialties?.join(', ') || 'Instrutor'}
-              </Paragraph>
-            </View>
-          </Card.Content>
-        </Card>
+        {/* Header Moderno com Gradiente */}
+        <Animated.View style={[headerTransform]}>
+          <View style={styles.headerContainer}>
+            <LinearGradient
+              colors={['#4CAF50', '#45A049', '#388E3C']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.headerGradient}
+            >
+              <View style={styles.headerContent}>
+                <Animated.View
+                  style={{
+                    transform: [{ scale: animations.scaleAnim }],
+                  }}
+                >
+                  <Avatar.Text 
+                    size={ResponsiveUtils.isTablet() ? 85 : 65} 
+                    label={userProfile?.name?.charAt(0) || 'P'} 
+                    style={styles.avatar}
+                  />
+                </Animated.View>
+                <View style={styles.headerText}>
+                  <Text style={styles.welcomeText}>
+                    Olá, {userProfile?.name?.split(' ')[0] || 'Professor'}! 👋
+                  </Text>
+                  <Text style={styles.roleText}>
+                    {userProfile?.specialties?.join(' • ') || 'Instrutor de Artes Marciais'}
+                  </Text>
+                  <View style={styles.statusBadge}>
+                    <MaterialCommunityIcons name="circle" size={8} color="#4CAF50" />
+                    <Text style={styles.statusText}>Online</Text>
+                  </View>
+                </View>
+                <Animated.View style={{ opacity: animations.fadeAnim }}>
+                  <MaterialCommunityIcons 
+                    name="account-star" 
+                    size={24} 
+                    color="rgba(255,255,255,0.8)" 
+                  />
+                </Animated.View>
+              </View>
+            </LinearGradient>
+          </View>
+        </Animated.View>
 
-        {/* Estatísticas Rápidas */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="analytics-outline" size={24} color="#4CAF50" />
-              <Title style={styles.cardTitle}>Visão Geral</Title>
-            </View>
-            
-            <View style={styles.statsGrid}>
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.myClasses.length}</Text>
-                <Text style={styles.statLabel}>Minhas Turmas</Text>
-              </Surface>
-              
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.totalStudents}</Text>
-                <Text style={styles.statLabel}>Total Alunos</Text>
-              </Surface>
-              
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.todayClasses.length}</Text>
-                <Text style={styles.statLabel}>Aulas Hoje</Text>
-              </Surface>
-              
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.activeCheckIns}</Text>
-                <Text style={styles.statLabel}>Check-ins Ativos</Text>
-              </Surface>
-            </View>
-          </Card.Content>
-        </Card>
+        {/* Cards de Estatísticas Modernos */}
+        <View style={styles.statsContainer}>
+          <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
+            <LinearGradient
+              colors={['#4CAF50', '#45A049']}
+              style={styles.statGradient}
+            >
+              <MaterialCommunityIcons name="school-outline" size={32} color="white" />
+              <Text style={styles.statNumber}>{dashboardData.myClasses.length}</Text>
+              <Text style={styles.statLabel}>Minhas Turmas</Text>
+            </LinearGradient>
+          </Animated.View>
 
-        {/* Aulas de Hoje */}
-        <Card style={styles.card}>
+          <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
+            <LinearGradient
+              colors={['#2196F3', '#1976D2']}
+              style={styles.statGradient}
+            >
+              <MaterialCommunityIcons name="account-group" size={32} color="white" />
+              <Text style={styles.statNumber}>{dashboardData.totalStudents}</Text>
+              <Text style={styles.statLabel}>Total Alunos</Text>
+            </LinearGradient>
+          </Animated.View>
+
+          <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
+            <LinearGradient
+              colors={['#FF9800', '#F57C00']}
+              style={styles.statGradient}
+            >
+              <MaterialCommunityIcons name="calendar-today" size={32} color="white" />
+              <Text style={styles.statNumber}>{dashboardData.todayClasses.length}</Text>
+              <Text style={styles.statLabel}>Aulas Hoje</Text>
+            </LinearGradient>
+          </Animated.View>
+
+          <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
+            <LinearGradient
+              colors={['#9C27B0', '#7B1FA2']}
+              style={styles.statGradient}
+            >
+              <MaterialCommunityIcons name="check-circle" size={32} color="white" />
+              <Text style={styles.statNumber}>{dashboardData.activeCheckIns}</Text>
+              <Text style={styles.statLabel}>Check-ins</Text>
+            </LinearGradient>
+          </Animated.View>
+        </View>
+
+        {/* Timeline de Aulas Hoje */}
+        <AnimatedCard delay={200} style={styles.modernCard}>
           <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="today-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Aulas de Hoje</Title>
+            <View style={styles.modernCardHeader}>
+              <View style={styles.headerIconContainer}>
+                <MaterialCommunityIcons name="clock-time-four" size={24} color="#2196F3" />
+              </View>
+              <View>
+                <Title style={styles.modernCardTitle}>Agenda de Hoje</Title>
+                <Text style={styles.modernCardSubtitle}>
+                  {dashboardData.todayClasses.length} aula(s) programada(s)
+                </Text>
+              </View>
             </View>
             
             {dashboardData.todayClasses.length > 0 ? (
-              dashboardData.todayClasses.map((classItem, index) => (
-                <View key={index} style={styles.classItem}>
-                  <View style={styles.classHeader}>
-                    <Text style={styles.className}>{classItem.name}</Text>
-                    <Chip mode="outlined" style={styles.modalityChip}>
-                      {classItem.modality}
-                    </Chip>
-                  </View>
-                  
-                  <View style={styles.classDetails}>
-                    <Text style={styles.classTime}>
-                      {classItem.schedule?.map(s => 
-                        `${getDayName(s.dayOfWeek)} ${formatTime(s.hour, s.minute)}`
-                      ).join(', ')}
-                    </Text>
-                    <Text style={styles.classCapacity}>
-                      Capacidade: {classItem.currentStudents || 0}/{classItem.maxCapacity || 'N/A'}
-                    </Text>
-                  </View>
-                  
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => navigation.navigate('Turmas', { classId: classItem.id })}
-                    style={styles.classButton}
-                    icon="eye"
+              <View style={styles.timelineContainer}>
+                {dashboardData.todayClasses.map((classItem, index) => (
+                  <Animated.View 
+                    key={index} 
+                    style={[
+                      styles.timelineItem,
+                      { opacity: animations.fadeAnim }
+                    ]}
                   >
-                    Ver Detalhes
-                  </Button>
-                  
-                  {index < dashboardData.todayClasses.length - 1 && (
-                    <Divider style={styles.divider} />
-                  )}
-                </View>
-              ))
+                    <View style={styles.timelineDot} />
+                    <View style={styles.timelineContent}>
+                      <View style={styles.timelineHeader}>
+                        <Text style={styles.timelineTitle}>{classItem.name}</Text>
+                        <Chip 
+                          mode="flat" 
+                          style={styles.modernChip}
+                          textStyle={styles.chipText}
+                        >
+                          {classItem.modality}
+                        </Chip>
+                      </View>
+                      
+                      <View style={styles.timelineDetails}>
+                        <View style={styles.timelineInfo}>
+                          <MaterialCommunityIcons name="clock" size={16} color="#666" />
+                          <Text style={styles.timelineText}>
+                            {classItem.schedule?.map(s => 
+                              `${formatTime(s.hour, s.minute)}`
+                            ).join(', ')}
+                          </Text>
+                        </View>
+                        
+                        <View style={styles.timelineInfo}>
+                          <MaterialCommunityIcons name="account-multiple" size={16} color="#666" />
+                          <Text style={styles.timelineText}>
+                            {classItem.currentStudents || 0}/{classItem.maxCapacity || 'N/A'} alunos
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      <AnimatedButton 
+                        mode="contained" 
+                        onPress={() => navigation.navigate('Turmas', { classId: classItem.id })}
+                        style={styles.timelineButton}
+                        compact
+                      >
+                        Gerenciar Aula
+                      </AnimatedButton>
+                    </View>
+                    {index < dashboardData.todayClasses.length - 1 && (
+                      <View style={styles.timelineLine} />
+                    )}
+                  </Animated.View>
+                ))}
+              </View>
             ) : (
-              <Paragraph style={styles.emptyText}>
-                Nenhuma aula agendada para hoje
-              </Paragraph>
+              <View style={styles.emptyState}>
+                <MaterialCommunityIcons name="calendar-blank" size={48} color="#ccc" />
+                <Text style={styles.emptyStateText}>Nenhuma aula hoje</Text>
+                <Text style={styles.emptyStateSubtext}>Aproveite para planejar suas próximas aulas</Text>
+              </View>
             )}
           </Card.Content>
-        </Card>
+        </AnimatedCard>
 
-        {/* Ações Rápidas */}
-        <Card style={styles.card}>
+        {/* Ações Rápidas Modernizadas */}
+        <AnimatedCard delay={300} style={styles.modernCard}>
           <Card.Content>
-            <Title style={styles.cardTitle}>Ações Rápidas</Title>
-            
-            <View style={styles.quickActions}>
-              <Button 
-                mode="contained" 
-                onPress={() => navigation.navigate('Turmas')}
-                style={[styles.quickActionButton, { backgroundColor: '#4CAF50' }]}
-                icon="school"
-              >
-                Minhas Turmas
-              </Button>
-              
-              <Button 
-                mode="contained" 
-                onPress={() => navigation.navigate('Alunos')}
-                style={[styles.quickActionButton, { backgroundColor: '#2196F3' }]}
-                icon="account"
-              >
-                Meus Alunos
-              </Button>
+            <View style={styles.modernCardHeader}>
+              <View style={styles.headerIconContainer}>
+                <MaterialCommunityIcons name="lightning-bolt" size={24} color="#FF9800" />
+              </View>
+              <View>
+                <Title style={styles.modernCardTitle}>Ações Rápidas</Title>
+                <Text style={styles.modernCardSubtitle}>Acesso direto às principais funcionalidades</Text>
+              </View>
             </View>
             
-            <View style={styles.quickActions}>
-              <Button 
-                mode="outlined" 
-                onPress={() => {/* Implementar graduação rápida */}}
-                style={styles.quickActionButton}
-                icon="trophy"
-              >
-                Registrar Graduação
-              </Button>
+            <View style={styles.modernQuickActions}>
+              <Animated.View style={[styles.actionCard, { opacity: animations.fadeAnim }]}>
+                <LinearGradient
+                  colors={['#4CAF50', '#45A049']}
+                  style={styles.actionGradient}
+                >
+                  <MaterialCommunityIcons name="plus-circle" size={28} color="white" />
+                  <Text style={styles.actionTitle}>Nova Aula</Text>
+                  <Text style={styles.actionSubtitle}>Criar nova turma</Text>
+                  <AnimatedButton
+                    mode="contained"
+                    onPress={() => navigation.navigate('NovaAula')}
+                    style={styles.modernActionButton}
+                    buttonColor="rgba(255,255,255,0.2)"
+                    textColor="white"
+                    compact
+                  >
+                    Criar
+                  </AnimatedButton>
+                </LinearGradient>
+              </Animated.View>
               
-              <Button 
-                mode="outlined" 
-                onPress={() => {/* Implementar check-in */}}
-                style={styles.quickActionButton}
-                icon="check"
-              >
-                Ver Check-ins
-              </Button>
-            </View>
-            
-            <View style={styles.logoutContainer}>
-              <Button 
-                mode="outlined" 
-                onPress={handleLogout}
-                style={styles.logoutButton}
-                icon="logout"
-                buttonColor="#FFEBEE"
-                textColor="#F44336"
-              >
-                Sair
-              </Button>
+              <Animated.View style={[styles.actionCard, { opacity: animations.fadeAnim }]}>
+                <LinearGradient
+                  colors={['#2196F3', '#1976D2']}
+                  style={styles.actionGradient}
+                >
+                  <MaterialCommunityIcons name="qrcode-scan" size={28} color="white" />
+                  <Text style={styles.actionTitle}>Check-in</Text>
+                  <Text style={styles.actionSubtitle}>Presença digital</Text>
+                  <AnimatedButton
+                    mode="contained"
+                    onPress={() => navigation.navigate('CheckIn')}
+                    style={styles.modernActionButton}
+                    buttonColor="rgba(255,255,255,0.2)"
+                    textColor="white"
+                    compact
+                  >
+                    Abrir
+                  </AnimatedButton>
+                </LinearGradient>
+              </Animated.View>
+              
+              <Animated.View style={[styles.actionCard, { opacity: animations.fadeAnim }]}>
+                <LinearGradient
+                  colors={['#9C27B0', '#7B1FA2']}
+                  style={styles.actionGradient}
+                >
+                  <MaterialCommunityIcons name="chart-line" size={28} color="white" />
+                  <Text style={styles.actionTitle}>Relatórios</Text>
+                  <Text style={styles.actionSubtitle}>Análise de dados</Text>
+                  <AnimatedButton
+                    mode="contained"
+                    onPress={() => navigation.navigate('Relatorios')}
+                    style={styles.modernActionButton}
+                    buttonColor="rgba(255,255,255,0.2)"
+                    textColor="white"
+                    compact
+                  >
+                    Ver
+                  </AnimatedButton>
+                </LinearGradient>
+              </Animated.View>
             </View>
           </Card.Content>
-        </Card>
+        </AnimatedCard>
 
         {/* Graduações Recentes */}
-        <Card style={styles.card}>
+        <AnimatedCard delay={400} style={styles.card}>
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="trophy-outline" size={24} color="#FFD700" />
-              <Title style={styles.cardTitle}>Graduações Recentes</Title>
+              <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                Graduações Recentes
+              </Title>
             </View>
             
             {dashboardData.recentGraduations.length > 0 ? (
               dashboardData.recentGraduations.map((graduation, index) => (
-                <List.Item
+                <Animated.View
                   key={index}
-                  title={`${graduation.studentName} - ${graduation.graduation}`}
-                  description={`${graduation.modality} • ${graduation.date.toLocaleDateString('pt-BR')}`}
-                  left={() => <List.Icon icon="trophy" color="#FFD700" />}
-                />
+                  style={{
+                    opacity: animations.fadeAnim,
+                    transform: [{
+                      translateX: animations.slideAnim.interpolate({
+                        inputRange: [-50, 0],
+                        outputRange: [-30, 0],
+                      })
+                    }]
+                  }}
+                >
+                  <List.Item
+                    title={`${graduation.studentName} - ${graduation.graduation}`}
+                    description={`${graduation.modality} • ${graduation.date.toLocaleDateString('pt-BR')}`}
+                    titleStyle={{ fontSize: ResponsiveUtils.fontSize.medium }}
+                    descriptionStyle={{ fontSize: ResponsiveUtils.fontSize.small }}
+                    left={() => <List.Icon icon="trophy" color="#FFD700" />}
+                  />
+                </Animated.View>
               ))
             ) : (
-              <Paragraph style={styles.emptyText}>
+              <Paragraph style={[styles.emptyText, { fontSize: ResponsiveUtils.fontSize.small }]}>
                 Nenhuma graduação recente
               </Paragraph>
             )}
             
-            <Button 
+            <AnimatedButton 
               mode="text" 
               onPress={() => {/* Implementar histórico completo */}}
               style={styles.viewAllButton}
             >
               Ver Todas as Graduações
-            </Button>
+            </AnimatedButton>
           </Card.Content>
-        </Card>
+        </AnimatedCard>
 
         {/* Próximas Aulas */}
-        <Card style={styles.card}>
+        <AnimatedCard delay={500} style={styles.card}>
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="calendar-outline" size={24} color="#FF9800" />
-              <Title style={styles.cardTitle}>Próximas Aulas</Title>
+              <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                Próximas Aulas
+              </Title>
             </View>
             
             {dashboardData.upcomingClasses.length > 0 ? (
               dashboardData.upcomingClasses.map((classItem, index) => (
-                <View key={index} style={styles.upcomingClass}>
-                  <Text style={styles.upcomingClassName}>{classItem.name}</Text>
-                  <Text style={styles.upcomingClassInfo}>
+                <Animated.View 
+                  key={index} 
+                  style={[
+                    styles.upcomingClass,
+                    {
+                      opacity: animations.fadeAnim,
+                      transform: [{
+                        translateY: animations.slideAnim.interpolate({
+                          inputRange: [-50, 0],
+                          outputRange: [-15, 0],
+                        })
+                      }]
+                    }
+                  ]}
+                >
+                  <Text style={[styles.upcomingClassName, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                    {classItem.name}
+                  </Text>
+                  <Text style={[styles.upcomingClassInfo, { fontSize: ResponsiveUtils.fontSize.small }]}>
                     {classItem.modality} • {classItem.schedule?.[0] ? 
                       `${getDayName(classItem.schedule[0].dayOfWeek)} ${formatTime(classItem.schedule[0].hour)}` 
                       : 'Horário não definido'}
@@ -327,24 +471,24 @@ const InstructorDashboard = ({ navigation }) => {
                   {index < dashboardData.upcomingClasses.length - 1 && (
                     <Divider style={styles.divider} />
                   )}
-                </View>
+                </Animated.View>
               ))
             ) : (
-              <Paragraph style={styles.emptyText}>
+              <Paragraph style={[styles.emptyText, { fontSize: ResponsiveUtils.fontSize.small }]}>
                 Nenhuma aula próxima
               </Paragraph>
             )}
             
-            <Button 
+            <AnimatedButton 
               mode="outlined" 
               onPress={() => navigation.navigate('Turmas')}
               style={styles.viewAllButton}
             >
               Ver Todas as Turmas
-            </Button>
+            </AnimatedButton>
           </Card.Content>
-        </Card>
-      </ScrollView>
+        </AnimatedCard>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 };
@@ -352,144 +496,339 @@ const InstructorDashboard = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f9fa',
   },
   scrollView: {
     flex: 1,
   },
-  headerCard: {
-    margin: 16,
-    marginBottom: 8,
-    elevation: 2,
+  // Header moderno
+  headerContainer: {
+    margin: ResponsiveUtils.spacing.md,
+    marginBottom: ResponsiveUtils.spacing.lg,
+    borderRadius: ResponsiveUtils.borderRadius.large,
+    overflow: 'hidden',
+    ...ResponsiveUtils.elevation,
+  },
+  headerGradient: {
+    padding: ResponsiveUtils.spacing.lg,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   avatar: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   headerText: {
-    marginLeft: 16,
+    marginLeft: ResponsiveUtils.spacing.md,
     flex: 1,
   },
   welcomeText: {
-    fontSize: 20,
+    fontSize: ResponsiveUtils.fontSize.large,
+    fontWeight: 'bold',
+    color: 'white',
     marginBottom: 4,
   },
   roleText: {
-    color: '#666',
+    fontSize: ResponsiveUtils.fontSize.medium,
+    color: 'rgba(255,255,255,0.9)',
+    marginBottom: 8,
   },
-  card: {
-    margin: 16,
-    marginTop: 8,
-    elevation: 2,
-  },
-  cardHeader: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
   },
-  cardTitle: {
-    marginLeft: 8,
-    fontSize: 18,
+  statusText: {
+    color: 'white',
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: '500',
   },
-  statsGrid: {
+  
+  // Cards de estatísticas modernos
+  statsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: ResponsiveUtils.spacing.md,
+    marginBottom: ResponsiveUtils.spacing.md,
+  },
+  statCard: {
+    width: '48%',
+    marginBottom: ResponsiveUtils.spacing.md,
+    borderRadius: ResponsiveUtils.borderRadius.medium,
+    overflow: 'hidden',
+    ...ResponsiveUtils.elevation,
+  },
+  statGradient: {
+    padding: ResponsiveUtils.spacing.md,
+    alignItems: 'center',
+    minHeight: 120,
+    justifyContent: 'center',
+  },
+  statNumber: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 8,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  
+  // Cards modernos
+  modernCard: {
+    margin: ResponsiveUtils.spacing.md,
+    marginBottom: ResponsiveUtils.spacing.md,
+    borderRadius: ResponsiveUtils.borderRadius.large,
+    ...ResponsiveUtils.elevation,
+  },
+  modernCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: ResponsiveUtils.spacing.md,
+  },
+  headerIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: ResponsiveUtils.spacing.md,
+  },
+  modernCardTitle: {
+    fontSize: ResponsiveUtils.fontSize.large,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 2,
+  },
+  modernCardSubtitle: {
+    fontSize: ResponsiveUtils.fontSize.small,
+    color: '#666',
+  },
+  
+  // Ações rápidas modernizadas
+  modernQuickActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  statItem: {
+  actionCard: {
     width: '48%',
+    marginBottom: ResponsiveUtils.spacing.sm,
+    borderRadius: ResponsiveUtils.borderRadius.medium,
+    overflow: 'hidden',
+  },
+  actionGradient: {
+    padding: ResponsiveUtils.spacing.md,
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 8,
-    elevation: 1,
-    backgroundColor: '#fff',
+    minHeight: 140,
+    justifyContent: 'space-between',
+  },
+  actionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 8,
+  },
+  actionSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
     marginBottom: 8,
   },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+  modernActionButton: {
+    borderRadius: 20,
   },
-  statLabel: {
+  
+  // Timeline
+  timelineContainer: {
+    marginTop: ResponsiveUtils.spacing.md,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    marginBottom: ResponsiveUtils.spacing.md,
+  },
+  timelineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#4CAF50',
+    marginTop: 6,
+    marginRight: ResponsiveUtils.spacing.md,
+  },
+  timelineContent: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    borderRadius: ResponsiveUtils.borderRadius.medium,
+    padding: ResponsiveUtils.spacing.md,
+  },
+  timelineHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  timelineTitle: {
+    fontSize: ResponsiveUtils.fontSize.medium,
+    fontWeight: 'bold',
+    color: '#333',
+    flex: 1,
+  },
+  modernChip: {
+    backgroundColor: '#e3f2fd',
+  },
+  chipText: {
     fontSize: 12,
+    color: '#1976d2',
+  },
+  timelineDetails: {
+    marginBottom: ResponsiveUtils.spacing.sm,
+  },
+  timelineInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  timelineText: {
+    fontSize: 14,
     color: '#666',
-    marginTop: 4,
+    marginLeft: 6,
+  },
+  timelineButton: {
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  timelineLine: {
+    position: 'absolute',
+    left: 5,
+    top: 18,
+    bottom: -ResponsiveUtils.spacing.md,
+    width: 2,
+    backgroundColor: '#e0e0e0',
+  },
+  
+  // Estados vazios
+  emptyState: {
+    alignItems: 'center',
+    padding: ResponsiveUtils.spacing.xl,
+  },
+  emptyStateText: {
+    fontSize: ResponsiveUtils.fontSize.medium,
+    fontWeight: 'bold',
+    color: '#666',
+    marginTop: ResponsiveUtils.spacing.sm,
+  },
+  emptyStateSubtext: {
+    fontSize: ResponsiveUtils.fontSize.small,
+    color: '#999',
     textAlign: 'center',
+    marginTop: 4,
+  },
+  
+  // Estilos legados mantidos para compatibilidade
+  card: {
+    margin: ResponsiveUtils.spacing.md,
+    marginBottom: ResponsiveUtils.spacing.sm,
+    borderRadius: ResponsiveUtils.borderRadius.medium,
+    ...ResponsiveUtils.elevation,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: ResponsiveUtils.spacing.md,
+  },
+  cardTitle: {
+    marginLeft: ResponsiveUtils.spacing.sm,
+    fontWeight: 'bold',
+    marginBottom: ResponsiveUtils.spacing.xs,
   },
   classItem: {
-    marginBottom: 16,
+    marginBottom: ResponsiveUtils.spacing.md,
+    padding: ResponsiveUtils.spacing.sm,
+    backgroundColor: '#f9f9f9',
+    borderRadius: ResponsiveUtils.borderRadius.small,
   },
   classHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: ResponsiveUtils.spacing.sm,
   },
   className: {
-    fontSize: 16,
     fontWeight: 'bold',
     flex: 1,
   },
   modalityChip: {
-    marginLeft: 8,
+    marginLeft: ResponsiveUtils.spacing.sm,
   },
   classDetails: {
-    marginBottom: 8,
+    marginBottom: ResponsiveUtils.spacing.sm,
   },
   classTime: {
     color: '#666',
-    marginBottom: 4,
+    marginBottom: ResponsiveUtils.spacing.xs,
   },
   classCapacity: {
     color: '#666',
-    fontSize: 12,
   },
   classButton: {
-    marginTop: 8,
+    marginTop: ResponsiveUtils.spacing.sm,
   },
   quickActions: {
-    flexDirection: 'row',
+    flexDirection: ResponsiveUtils.isTablet() ? 'row' : 'column',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: ResponsiveUtils.spacing.sm,
   },
   quickActionButton: {
-    flex: 1,
-    marginHorizontal: 4,
+    flex: ResponsiveUtils.isTablet() ? 1 : undefined,
+    marginHorizontal: ResponsiveUtils.isTablet() ? ResponsiveUtils.spacing.xs : 0,
+    marginBottom: ResponsiveUtils.isTablet() ? 0 : ResponsiveUtils.spacing.sm,
   },
   logoutContainer: {
-    marginTop: 16,
+    marginTop: ResponsiveUtils.spacing.lg,
     alignItems: 'center',
   },
   logoutButton: {
-    width: '60%',
+    width: ResponsiveUtils.isTablet() ? '40%' : '60%',
     borderColor: '#F44336',
   },
   upcomingClass: {
-    marginBottom: 8,
+    marginBottom: ResponsiveUtils.spacing.sm,
+    padding: ResponsiveUtils.spacing.sm,
+    backgroundColor: '#fff3e0',
+    borderRadius: ResponsiveUtils.borderRadius.small,
   },
   upcomingClassName: {
-    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: ResponsiveUtils.spacing.xs,
   },
   upcomingClassInfo: {
     color: '#666',
-    marginBottom: 8,
+    marginBottom: ResponsiveUtils.spacing.sm,
   },
   emptyText: {
     textAlign: 'center',
     color: '#666',
     fontStyle: 'italic',
-    marginVertical: 16,
+    marginVertical: ResponsiveUtils.spacing.md,
   },
   divider: {
-    marginVertical: 8,
+    marginVertical: ResponsiveUtils.spacing.sm,
   },
   viewAllButton: {
-    marginTop: 8,
+    marginTop: ResponsiveUtils.spacing.sm,
   },
 });
 

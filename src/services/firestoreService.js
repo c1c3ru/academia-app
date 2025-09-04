@@ -70,17 +70,20 @@ export const firestoreService = {
   // Buscar documentos com filtro
   getWhere: async (collectionName, field, operator, value) => {
     try {
+      // Evitar índices compostos quando não necessário: sem orderBy adicional
       const q = query(
         collection(db, collectionName),
-        where(field, operator, value),
-        orderBy('createdAt', 'desc')
+        where(field, operator, value)
       );
       const querySnapshot = await getDocs(q);
       
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      // Ordenar em memória por createdAt desc para manter comportamento anterior
+      const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return docs.sort((a, b) => {
+        const aTime = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime();
+        const bTime = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
     } catch (error) {
       console.error(`Erro ao buscar documentos filtrados em ${collectionName}:`, error);
       throw error;
@@ -143,7 +146,9 @@ export const firestoreService = {
 // Serviços específicos para cada entidade
 export const studentService = {
   getStudentsByClass: async (classId) => {
-    return await firestoreService.getWhere('students', 'classIds', 'array-contains', classId);
+    // Ajuste: alunos estão na coleção 'users' com userType 'student'
+    const usersInClass = await firestoreService.getWhere('users', 'classIds', 'array-contains', classId);
+    return usersInClass.filter(u => u.userType === 'student');
   },
 
   getStudentsByInstructor: async (instructorId) => {

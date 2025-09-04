@@ -1,36 +1,57 @@
+
 {
   "expo": {
-    "name": "academia-app",
+    "name": "Academia App",
     "slug": "academia-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#2196F3"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.c1c3ru.academiaapp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#2196F3"
       },
-      "edgeToEdgeEnabled": true,
-      "package": "com.c1c3ru.academiaapp"
+      "package": "com.c1c3ru.academiaapp",
+      "versionCode": 1,
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "minSdkVersion": 21,
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.VIBRATE"
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "extra": {
       "eas": {
         "projectId": "f3d7c8a4-700c-461b-b740-82bee97edf17"
       }
     },
-    "owner": "c1c3ru"
+    "owner": "c1c3ru",
+    "updates": {
+      "url": "https://u.expo.dev/f3d7c8a4-700c-461b-b740-82bee97edf17"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }

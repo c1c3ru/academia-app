@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, Alert, ScrollView, Animated, Dimensions } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, ScrollView, Animated, Alert, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { 
   TextInput, 
   Button, 
@@ -49,17 +49,17 @@ const RegisterScreen = ({ navigation }) => {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 800,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 800,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.timing(scaleAnim, {
         toValue: 1,
         duration: 800,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
     ]).start();
   }, []);
@@ -116,12 +116,12 @@ const RegisterScreen = ({ navigation }) => {
         Animated.timing(scaleAnim, {
           toValue: 1.05,
           duration: 200,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(scaleAnim, {
           toValue: 1,
           duration: 200,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ]).start();
     } catch (error) {
@@ -140,10 +140,10 @@ const RegisterScreen = ({ navigation }) => {
       
       // Animação de erro (shake)
       Animated.sequence([
-        Animated.timing(slideAnim, { toValue: -10, duration: 100, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: -5, duration: 100, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
+        Animated.timing(slideAnim, { toValue: -10, duration: 100, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(slideAnim, { toValue: 10, duration: 100, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(slideAnim, { toValue: -5, duration: 100, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(slideAnim, { toValue: 0, duration: 100, useNativeDriver: Platform.OS !== 'web' }),
       ]).start();
     } finally {
       setLoading(false);

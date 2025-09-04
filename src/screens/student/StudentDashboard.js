@@ -1,298 +1,185 @@
+
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { 
   Card, 
   Title, 
   Paragraph, 
-  Button, 
-  Avatar,
-  Chip,
+  Chip, 
   Divider,
-  Text
+  List,
+  Avatar,
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
-import { firestoreService, classService, paymentService, announcementService } from '../../services/firestoreService';
+import AnimatedCard from '../../components/AnimatedCard';
+import AnimatedButton from '../../components/AnimatedButton';
 
-const StudentDashboard = ({ navigation }) => {
-  const { user, userProfile, logout } = useAuth();
-  const [dashboardData, setDashboardData] = useState({
-    nextClasses: [],
-    paymentStatus: null,
-    recentAnnouncements: [],
-    checkInAvailable: false
-  });
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+const StudentDashboard = () => {
+  const { userProfile } = useAuth();
+  const [nextClasses, setNextClasses] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
 
   useEffect(() => {
-    loadDashboardData();
+    // Simular dados para demonstração
+    setNextClasses([
+      {
+        id: 1,
+        name: 'Karate Básico',
+        time: '18:00',
+        date: 'Hoje',
+        instructor: 'Prof. João',
+      },
+      {
+        id: 2,
+        name: 'Jiu-Jitsu',
+        time: '19:30',
+        date: 'Amanhã',
+        instructor: 'Prof. Maria',
+      },
+    ]);
+
+    setAnnouncements([
+      {
+        id: 1,
+        title: 'Nova modalidade disponível',
+        message: 'Agora oferecemos aulas de Muay Thai!',
+        date: 'Hoje',
+      },
+      {
+        id: 2,
+        title: 'Feriado na próxima semana',
+        message: 'Não haverá aulas na terça-feira.',
+        date: 'Ontem',
+      },
+    ]);
   }, []);
-
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
-      
-      // Buscar próximas aulas
-      const userClasses = await Promise.all(
-        (userProfile?.classIds || []).map(classId => 
-          firestoreService.getById('classes', classId)
-        )
-      );
-      
-      // Buscar status de pagamento
-      const payments = await paymentService.getPaymentsByStudent(user.uid);
-      const latestPayment = payments[0];
-      
-      // Buscar avisos recentes
-      const announcements = await announcementService.getActiveAnnouncements();
-      
-      // Verificar se há check-in disponível
-      const now = new Date();
-      const checkInAvailable = userClasses.some(classItem => {
-        if (!classItem?.schedule) return false;
-        
-        // Lógica simplificada - verificar se há aula nas próximas 2 horas
-        const today = now.getDay();
-        const currentHour = now.getHours();
-        
-        return classItem.schedule.some(schedule => 
-          schedule.dayOfWeek === today && 
-          Math.abs(schedule.hour - currentHour) <= 2
-        );
-      });
-
-      setDashboardData({
-        nextClasses: userClasses.filter(Boolean).slice(0, 3),
-        paymentStatus: latestPayment,
-        recentAnnouncements: announcements.slice(0, 3),
-        checkInAvailable
-      });
-    } catch (error) {
-      console.error('Erro ao carregar dashboard:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadDashboardData();
-  };
-
-  const handleCheckIn = () => {
-    // Implementar lógica de check-in
-    console.log('Check-in realizado');
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-    }
-  };
-
-  const getPaymentStatusColor = (status) => {
-    switch (status?.status) {
-      case 'paid': return '#4CAF50';
-      case 'pending': return '#FF9800';
-      case 'overdue': return '#F44336';
-      default: return '#9E9E9E';
-    }
-  };
-
-  const getPaymentStatusText = (status) => {
-    switch (status?.status) {
-      case 'paid': return 'Em dia';
-      case 'pending': return 'Pendente';
-      case 'overdue': return 'Atrasado';
-      default: return 'Não informado';
-    }
-  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {/* Header com informações do usuário */}
-        <Card style={styles.headerCard}>
-          <Card.Content style={styles.headerContent}>
-            <Avatar.Text 
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        
+        {/* Header de Boas-vindas */}
+        <AnimatedCard style={styles.welcomeCard} animationType="fadeIn" delay={0}>
+          <Card.Content style={styles.welcomeContent}>
+            <Avatar.Icon 
               size={60} 
-              label={userProfile?.name?.charAt(0) || 'U'} 
+              icon="account" 
               style={styles.avatar}
             />
-            <View style={styles.headerText}>
-              <Title style={styles.welcomeText}>
-                Olá, {userProfile?.name?.split(' ')[0] || 'Usuário'}!
+            <View style={styles.welcomeText}>
+              <Title style={styles.welcomeTitle}>
+                Olá, {userProfile?.name || 'Aluno'}!
               </Title>
-              <Paragraph style={styles.graduationText}>
-                {userProfile?.currentGraduation || 'Iniciante'}
+              <Paragraph style={styles.welcomeSubtitle}>
+                Bem-vindo de volta à academia
               </Paragraph>
             </View>
           </Card.Content>
-        </Card>
+        </AnimatedCard>
 
-        {/* Status de Pagamento */}
-        <Card style={styles.card}>
+        {/* Status da Graduação */}
+        <AnimatedCard style={styles.card} animationType="slideInRight" delay={100}>
           <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="card-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Status do Pagamento</Title>
-            </View>
-            <View style={styles.paymentStatus}>
+            <Title style={styles.cardTitle}>Status da Graduação</Title>
+            <View style={styles.graduationStatus}>
               <Chip 
+                icon="trophy" 
                 mode="outlined"
-                style={[
-                  styles.statusChip, 
-                  { borderColor: getPaymentStatusColor(dashboardData.paymentStatus) }
-                ]}
-                textStyle={{ color: getPaymentStatusColor(dashboardData.paymentStatus) }}
+                style={styles.graduationChip}
               >
-                {getPaymentStatusText(dashboardData.paymentStatus)}
+                Faixa Branca
               </Chip>
-              <Button 
-                mode="outlined" 
-                onPress={() => navigation.navigate('Pagamentos')}
-                style={styles.paymentButton}
-              >
-                Ver Detalhes
-              </Button>
+              <Paragraph style={styles.graduationText}>
+                Próxima avaliação em 2 meses
+              </Paragraph>
             </View>
           </Card.Content>
-        </Card>
-
-        {/* Check-in Rápido */}
-        {dashboardData.checkInAvailable && (
-          <Card style={styles.card}>
-            <Card.Content>
-              <View style={styles.cardHeader}>
-                <Ionicons name="checkmark-circle-outline" size={24} color="#4CAF50" />
-                <Title style={styles.cardTitle}>Check-in Disponível</Title>
-              </View>
-              <Paragraph style={styles.checkInText}>
-                Você tem uma aula começando em breve!
-              </Paragraph>
-              <Button 
-                mode="contained" 
-                onPress={handleCheckIn}
-                style={styles.checkInButton}
-                icon="check"
-              >
-                Fazer Check-in
-              </Button>
-            </Card.Content>
-          </Card>
-        )}
+        </AnimatedCard>
 
         {/* Próximas Aulas */}
-        <Card style={styles.card}>
+        <AnimatedCard style={styles.card} animationType="fadeIn" delay={200}>
           <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="calendar-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Próximas Aulas</Title>
-            </View>
-            {dashboardData.nextClasses.length > 0 ? (
-              dashboardData.nextClasses.map((classItem, index) => (
-                <View key={index} style={styles.classItem}>
-                  <Text style={styles.className}>{classItem.name}</Text>
-                  <Text style={styles.classTime}>
-                    {classItem.instructor} • {classItem.modality}
-                  </Text>
-                  {index < dashboardData.nextClasses.length - 1 && (
-                    <Divider style={styles.divider} />
-                  )}
-                </View>
+            <Title style={styles.cardTitle}>Próximas Aulas</Title>
+            {nextClasses.length > 0 ? (
+              nextClasses.map((classItem, index) => (
+                <List.Item
+                  key={classItem.id}
+                  title={classItem.name}
+                  description={`${classItem.date} às ${classItem.time} - ${classItem.instructor}`}
+                  left={props => <List.Icon {...props} icon="calendar" />}
+                  style={styles.listItem}
+                />
               ))
             ) : (
-              <Paragraph>Nenhuma aula agendada</Paragraph>
+              <Paragraph style={styles.emptyText}>
+                Nenhuma aula agendada
+              </Paragraph>
             )}
-            <Button 
-              mode="outlined" 
-              onPress={() => navigation.navigate('Calendário')}
+            
+            <AnimatedButton 
+              mode="text" 
+              onPress={() => Alert.alert('Info', 'Funcionalidade em desenvolvimento')}
               style={styles.viewAllButton}
             >
               Ver Calendário Completo
-            </Button>
+            </AnimatedButton>
           </Card.Content>
-        </Card>
+        </AnimatedCard>
 
-        {/* Avisos Recentes */}
-        <Card style={styles.card}>
+        {/* Avisos e Comunicados */}
+        <AnimatedCard style={styles.card} animationType="scaleIn" delay={300}>
           <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="notifications-outline" size={24} color="#FF9800" />
-              <Title style={styles.cardTitle}>Avisos Recentes</Title>
-            </View>
-            {dashboardData.recentAnnouncements.length > 0 ? (
-              dashboardData.recentAnnouncements.map((announcement, index) => (
-                <View key={index} style={styles.announcementItem}>
-                  <Text style={styles.announcementTitle}>{announcement.title}</Text>
-                  <Text style={styles.announcementContent} numberOfLines={2}>
-                    {announcement.content}
-                  </Text>
-                  {index < dashboardData.recentAnnouncements.length - 1 && (
-                    <Divider style={styles.divider} />
-                  )}
+            <Title style={styles.cardTitle}>Avisos</Title>
+            {announcements.length > 0 ? (
+              announcements.map((announcement, index) => (
+                <View key={announcement.id} style={styles.announcementItem}>
+                  <Paragraph style={styles.announcementTitle}>
+                    {announcement.title}
+                  </Paragraph>
+                  <Paragraph style={styles.announcementMessage}>
+                    {announcement.message}
+                  </Paragraph>
+                  <Paragraph style={styles.announcementDate}>
+                    {announcement.date}
+                  </Paragraph>
+                  {index < announcements.length - 1 && <Divider style={styles.announcementDivider} />}
                 </View>
               ))
             ) : (
-              <Paragraph>Nenhum aviso recente</Paragraph>
+              <Paragraph style={styles.emptyText}>
+                Nenhum aviso no momento
+              </Paragraph>
             )}
-            <Button 
-              mode="outlined" 
-              onPress={() => navigation.navigate('Avisos')}
-              style={styles.viewAllButton}
-            >
-              Ver Todos os Avisos
-            </Button>
           </Card.Content>
-        </Card>
+        </AnimatedCard>
 
-        {/* Acesso Rápido */}
-        <Card style={styles.card}>
+        {/* Ações Rápidas */}
+        <AnimatedCard style={styles.card} animationType="bounceIn" delay={400}>
           <Card.Content>
-            <Title style={styles.cardTitle}>Acesso Rápido</Title>
+            <Title style={styles.cardTitle}>Ações Rápidas</Title>
             <View style={styles.quickActions}>
-              <Button 
-                mode="outlined" 
-                onPress={() => navigation.navigate('Evolução')}
+              <AnimatedButton
+                mode="outlined"
+                icon="calendar-check"
+                onPress={() => Alert.alert('Info', 'Check-in em desenvolvimento')}
                 style={styles.quickActionButton}
-                icon="trending-up"
               >
-                Minha Evolução
-              </Button>
-              <Button 
-                mode="outlined" 
-                onPress={() => navigation.navigate('Pagamentos')}
-                style={styles.quickActionButton}
+                Check-in
+              </AnimatedButton>
+              
+              <AnimatedButton
+                mode="outlined"
                 icon="credit-card"
+                onPress={() => Alert.alert('Info', 'Pagamentos em desenvolvimento')}
+                style={styles.quickActionButton}
               >
                 Pagamentos
-              </Button>
-            </View>
-            
-            <View style={styles.logoutContainer}>
-              <Button 
-                mode="outlined" 
-                onPress={handleLogout}
-                style={styles.logoutButton}
-                icon="logout"
-                buttonColor="#FFEBEE"
-                textColor="#F44336"
-              >
-                Sair
-              </Button>
+              </AnimatedButton>
             </View>
           </Card.Content>
-        </Card>
+        </AnimatedCard>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -303,110 +190,91 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  scrollView: {
-    flex: 1,
+  scrollContent: {
+    padding: 8,
   },
-  headerCard: {
-    margin: 16,
+  welcomeCard: {
     marginBottom: 8,
-    elevation: 2,
+    backgroundColor: '#2196F3',
   },
-  headerContent: {
+  welcomeContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   avatar: {
-    backgroundColor: '#2196F3',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
-  headerText: {
+  welcomeText: {
     marginLeft: 16,
     flex: 1,
   },
-  welcomeText: {
+  welcomeTitle: {
+    color: 'white',
     fontSize: 20,
-    marginBottom: 4,
+    fontWeight: 'bold',
   },
-  graduationText: {
-    color: '#666',
+  welcomeSubtitle: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
   },
   card: {
-    margin: 16,
-    marginTop: 8,
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   cardTitle: {
-    marginLeft: 8,
     fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+    color: '#2196F3',
   },
-  paymentStatus: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  graduationStatus: {
     alignItems: 'center',
   },
-  statusChip: {
-    borderWidth: 1,
+  graduationChip: {
+    marginBottom: 8,
   },
-  paymentButton: {
-    marginLeft: 8,
-  },
-  checkInText: {
-    marginBottom: 12,
+  graduationText: {
+    textAlign: 'center',
     color: '#666',
   },
-  checkInButton: {
-    backgroundColor: '#4CAF50',
+  listItem: {
+    paddingHorizontal: 0,
   },
-  classItem: {
-    marginBottom: 8,
-  },
-  className: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  classTime: {
-    color: '#666',
-    marginBottom: 8,
-  },
-  announcementItem: {
-    marginBottom: 8,
-  },
-  announcementTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  announcementContent: {
-    color: '#666',
-    marginBottom: 8,
-  },
-  divider: {
-    marginVertical: 8,
+  emptyText: {
+    textAlign: 'center',
+    color: '#999',
+    fontStyle: 'italic',
+    marginVertical: 16,
   },
   viewAllButton: {
     marginTop: 8,
   },
+  announcementItem: {
+    marginBottom: 12,
+  },
+  announcementTitle: {
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  announcementMessage: {
+    color: '#666',
+    marginBottom: 4,
+  },
+  announcementDate: {
+    color: '#999',
+    fontSize: 12,
+  },
+  announcementDivider: {
+    marginTop: 12,
+  },
   quickActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     marginTop: 8,
   },
   quickActionButton: {
     flex: 1,
     marginHorizontal: 4,
-  },
-  logoutContainer: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  logoutButton: {
-    width: '60%',
-    borderColor: '#F44336',
   },
 });
 

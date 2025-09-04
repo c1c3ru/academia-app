@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Dimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Animated, Dimensions, Platform } from 'react-native';
 import { 
   Card, 
   Title, 
@@ -16,9 +17,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, paymentService, announcementService } from '../../services/firestoreService';
+import AnimatedCard from '../../components/AnimatedCard';
+import AnimatedButton from '../../components/AnimatedButton';
+import { useAnimation, ResponsiveUtils } from '../../utils/animations';
 
 const AdminDashboard = ({ navigation }) => {
   const { user, userProfile, logout } = useAuth();
+  const { animations, startEntryAnimation } = useAnimation();
+  const scrollY = new Animated.Value(0);
+  
   const [dashboardData, setDashboardData] = useState({
     totalStudents: 0,
     activeStudents: 0,
@@ -34,6 +41,7 @@ const AdminDashboard = ({ navigation }) => {
 
   useEffect(() => {
     loadDashboardData();
+    startEntryAnimation();
   }, []);
 
   const loadDashboardData = async () => {
@@ -149,116 +157,213 @@ const AdminDashboard = ({ navigation }) => {
     return colors[type] || '#666';
   };
 
+  const headerTransform = {
+    transform: [
+      {
+        translateY: scrollY.interpolate({
+          inputRange: [0, 100],
+          outputRange: [0, -20],
+          extrapolate: 'clamp',
+        }),
+      },
+    ],
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <Animated.ScrollView 
         style={styles.scrollView}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: Platform.OS !== 'web' }
+        )}
+        scrollEventThrottle={16}
       >
         {/* Header de Boas-vindas */}
-        <Card style={styles.headerCard}>
-          <Card.Content style={styles.headerContent}>
-            <Avatar.Text 
-              size={60} 
-              label={userProfile?.name?.charAt(0) || 'A'} 
-              style={styles.avatar}
-            />
-            <View style={styles.headerText}>
-              <Title style={styles.welcomeText}>
-                Olá, {userProfile?.name?.split(' ')[0] || 'Admin'}!
-              </Title>
-              <Paragraph style={styles.roleText}>
-                Administrador da Academia
-              </Paragraph>
-            </View>
-          </Card.Content>
-        </Card>
+        <Animated.View style={[headerTransform]}>
+          <AnimatedCard delay={0} style={styles.headerCard}>
+            <Card.Content style={styles.headerContent}>
+              <Animated.View
+                style={{
+                  transform: [{ scale: animations.scaleAnim }],
+                }}
+              >
+                <Avatar.Text 
+                  size={ResponsiveUtils.isTablet() ? 80 : 60} 
+                  label={userProfile?.name?.charAt(0) || 'A'} 
+                  style={styles.avatar}
+                />
+              </Animated.View>
+              <View style={styles.headerText}>
+                <Title style={[styles.welcomeText, { fontSize: ResponsiveUtils.fontSize.large }]}>
+                  Olá, {userProfile?.name?.split(' ')[0] || 'Admin'}!
+                </Title>
+                <Paragraph style={[styles.roleText, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                  Administrador da Academia
+                </Paragraph>
+              </View>
+            </Card.Content>
+          </AnimatedCard>
+        </Animated.View>
 
         {/* Estatísticas Principais */}
-        <Card style={styles.card}>
+        <AnimatedCard delay={100} style={styles.card}>
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="analytics-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Visão Geral</Title>
+              <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                Visão Geral
+              </Title>
             </View>
             
             <View style={styles.statsGrid}>
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.totalStudents}</Text>
-                <Text style={styles.statLabel}>Total de Alunos</Text>
-              </Surface>
+              <Animated.View
+                style={{
+                  opacity: animations.fadeAnim,
+                  transform: [{ scale: animations.scaleAnim }],
+                }}
+              >
+                <Surface style={styles.statItem}>
+                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
+                    {dashboardData.totalStudents}
+                  </Text>
+                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                    Total de Alunos
+                  </Text>
+                </Surface>
+              </Animated.View>
               
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.activeStudents}</Text>
-                <Text style={styles.statLabel}>Alunos Ativos</Text>
-              </Surface>
+              <Animated.View
+                style={{
+                  opacity: animations.fadeAnim,
+                  transform: [{ scale: animations.scaleAnim }],
+                }}
+              >
+                <Surface style={styles.statItem}>
+                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
+                    {dashboardData.activeStudents}
+                  </Text>
+                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                    Alunos Ativos
+                  </Text>
+                </Surface>
+              </Animated.View>
               
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.totalClasses}</Text>
-                <Text style={styles.statLabel}>Turmas</Text>
-              </Surface>
+              <Animated.View
+                style={{
+                  opacity: animations.fadeAnim,
+                  transform: [{ scale: animations.scaleAnim }],
+                }}
+              >
+                <Surface style={styles.statItem}>
+                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
+                    {dashboardData.totalClasses}
+                  </Text>
+                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                    Turmas
+                  </Text>
+                </Surface>
+              </Animated.View>
               
-              <Surface style={styles.statItem}>
-                <Text style={styles.statNumber}>{dashboardData.quickStats.instructors}</Text>
-                <Text style={styles.statLabel}>Professores</Text>
-              </Surface>
+              <Animated.View
+                style={{
+                  opacity: animations.fadeAnim,
+                  transform: [{ scale: animations.scaleAnim }],
+                }}
+              >
+                <Surface style={styles.statItem}>
+                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
+                    {dashboardData.quickStats.instructors}
+                  </Text>
+                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                    Professores
+                  </Text>
+                </Surface>
+              </Animated.View>
             </View>
           </Card.Content>
-        </Card>
+        </AnimatedCard>
 
         {/* Financeiro */}
-        <Card style={styles.card}>
+        <AnimatedCard delay={200} style={styles.card}>
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="cash-outline" size={24} color="#4CAF50" />
-              <Title style={styles.cardTitle}>Financeiro do Mês</Title>
+              <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                Financeiro do Mês
+              </Title>
             </View>
             
             <View style={styles.financialInfo}>
-              <View style={styles.revenueItem}>
-                <Text style={styles.revenueLabel}>Receita do Mês</Text>
-                <Text style={styles.revenueValue}>
+              <Animated.View 
+                style={[
+                  styles.revenueItem,
+                  {
+                    opacity: animations.fadeAnim,
+                    transform: [{ translateY: animations.slideAnim }],
+                  }
+                ]}
+              >
+                <Text style={[styles.revenueLabel, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                  Receita do Mês
+                </Text>
+                <Text style={[styles.revenueValue, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
                   {formatCurrency(dashboardData.monthlyRevenue)}
                 </Text>
-              </View>
+              </Animated.View>
               
               <Divider style={styles.divider} />
               
               <View style={styles.paymentsRow}>
                 <View style={styles.paymentItem}>
-                  <Text style={styles.paymentNumber}>{dashboardData.pendingPayments}</Text>
-                  <Text style={styles.paymentLabel}>Pendentes</Text>
+                  <Text style={[styles.paymentNumber, { fontSize: ResponsiveUtils.fontSize.large }]}>
+                    {dashboardData.pendingPayments}
+                  </Text>
+                  <Text style={[styles.paymentLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                    Pendentes
+                  </Text>
                 </View>
                 
                 <View style={styles.paymentItem}>
-                  <Text style={[styles.paymentNumber, { color: '#F44336' }]}>
+                  <Text style={[
+                    styles.paymentNumber, 
+                    { 
+                      color: '#F44336',
+                      fontSize: ResponsiveUtils.fontSize.large 
+                    }
+                  ]}>
                     {dashboardData.overduePayments}
                   </Text>
-                  <Text style={styles.paymentLabel}>Atrasados</Text>
+                  <Text style={[styles.paymentLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
+                    Atrasados
+                  </Text>
                 </View>
               </View>
             </View>
             
-            <Button 
+            <AnimatedButton 
               mode="outlined" 
-              onPress={() => navigation.navigate('Relatórios')}
+              onPress={() => navigation.navigate('Gestão')}
               style={styles.viewReportsButton}
               icon="chart-line"
             >
-              Ver Relatórios Completos
-            </Button>
+              Acessar Gestão e Relatórios
+            </AnimatedButton>
           </Card.Content>
-        </Card>
+        </AnimatedCard>
 
         {/* Ações Rápidas */}
-        <Card style={styles.card}>
+        <AnimatedCard delay={300} style={styles.card}>
           <Card.Content>
-            <Title style={styles.cardTitle}>Ações Rápidas</Title>
+            <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+              Ações Rápidas
+            </Title>
             
             <View style={styles.quickActionsGrid}>
-              <Button 
+              <AnimatedButton 
                 mode="contained" 
                 onPress={() => navigation.navigate('Alunos')}
                 style={[styles.quickActionButton, { backgroundColor: '#2196F3' }]}
@@ -266,9 +371,9 @@ const AdminDashboard = ({ navigation }) => {
                 contentStyle={styles.quickActionContent}
               >
                 Gerenciar Alunos
-              </Button>
+              </AnimatedButton>
               
-              <Button 
+              <AnimatedButton 
                 mode="contained" 
                 onPress={() => navigation.navigate('Turmas')}
                 style={[styles.quickActionButton, { backgroundColor: '#4CAF50' }]}
@@ -276,9 +381,9 @@ const AdminDashboard = ({ navigation }) => {
                 contentStyle={styles.quickActionContent}
               >
                 Gerenciar Turmas
-              </Button>
+              </AnimatedButton>
               
-              <Button 
+              <AnimatedButton 
                 mode="contained" 
                 onPress={() => navigation.navigate('Gestão')}
                 style={[styles.quickActionButton, { backgroundColor: '#FF9800' }]}
@@ -286,9 +391,9 @@ const AdminDashboard = ({ navigation }) => {
                 contentStyle={styles.quickActionContent}
               >
                 Configurações
-              </Button>
+              </AnimatedButton>
               
-              <Button 
+              <AnimatedButton 
                 mode="contained" 
                 onPress={() => navigation.navigate('Modalidades')}
                 style={[styles.quickActionButton, { backgroundColor: '#9C27B0' }]}
@@ -296,80 +401,85 @@ const AdminDashboard = ({ navigation }) => {
                 contentStyle={styles.quickActionContent}
               >
                 Modalidades
-              </Button>
-            </View>
-            
-            <View style={styles.logoutContainer}>
-              <Button 
-                mode="outlined" 
-                onPress={handleLogout}
-                style={styles.logoutButton}
-                icon="logout"
-                buttonColor="#FFEBEE"
-                textColor="#F44336"
-              >
-                Sair
-              </Button>
+              </AnimatedButton>
             </View>
           </Card.Content>
-        </Card>
+        </AnimatedCard>
 
         {/* Atividades Recentes */}
-        <Card style={styles.card}>
+        <AnimatedCard delay={400} style={styles.card}>
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="time-outline" size={24} color="#666" />
-              <Title style={styles.cardTitle}>Atividades Recentes</Title>
+              <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                Atividades Recentes
+              </Title>
             </View>
             
             {dashboardData.recentActivities.map((activity, index) => (
-              <List.Item
+              <Animated.View
                 key={index}
-                title={activity.message}
-                description={activity.time}
-                left={() => (
-                  <List.Icon 
-                    icon={getActivityIcon(activity.type)} 
-                    color={getActivityColor(activity.type)}
-                  />
-                )}
-              />
+                style={{
+                  opacity: animations.fadeAnim,
+                  transform: [{
+                    translateX: animations.slideAnim.interpolate({
+                      inputRange: [-50, 0],
+                      outputRange: [-30, 0],
+                    })
+                  }]
+                }}
+              >
+                <List.Item
+                  title={activity.message}
+                  description={activity.time}
+                  titleStyle={{ fontSize: ResponsiveUtils.fontSize.medium }}
+                  descriptionStyle={{ fontSize: ResponsiveUtils.fontSize.small }}
+                  left={() => (
+                    <List.Icon 
+                      icon={getActivityIcon(activity.type)} 
+                      color={getActivityColor(activity.type)}
+                    />
+                  )}
+                />
+              </Animated.View>
             ))}
             
-            <Button 
+            <AnimatedButton 
               mode="text" 
               onPress={() => {/* Implementar histórico completo */}}
               style={styles.viewAllButton}
             >
               Ver Todas as Atividades
-            </Button>
+            </AnimatedButton>
           </Card.Content>
-        </Card>
+        </AnimatedCard>
 
         {/* Alertas e Notificações */}
         {(dashboardData.overduePayments > 0 || dashboardData.pendingPayments > 5) && (
-          <Card style={[styles.card, styles.alertCard]}>
+          <AnimatedCard delay={500} style={[styles.card, styles.alertCard]}>
             <Card.Content>
               <View style={styles.cardHeader}>
                 <Ionicons name="warning-outline" size={24} color="#FF9800" />
-                <Title style={styles.cardTitle}>Alertas</Title>
+                <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
+                  Alertas
+                </Title>
               </View>
               
               {dashboardData.overduePayments > 0 && (
-                <Paragraph style={styles.alertText}>
+                <Paragraph style={[styles.alertText, { fontSize: ResponsiveUtils.fontSize.small }]}>
                   • {dashboardData.overduePayments} pagamento(s) em atraso
                 </Paragraph>
               )}
               
               {dashboardData.pendingPayments > 5 && (
-                <Paragraph style={styles.alertText}>
+                <Paragraph style={[styles.alertText, { fontSize: ResponsiveUtils.fontSize.small }]}>
                   • Muitos pagamentos pendentes ({dashboardData.pendingPayments})
                 </Paragraph>
               )}
             </Card.Content>
-          </Card>
+          </AnimatedCard>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 };
@@ -383,32 +493,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerCard: {
-    margin: 16,
-    marginBottom: 8,
-    elevation: 2,
+    margin: ResponsiveUtils.spacing.md,
+    marginBottom: ResponsiveUtils.spacing.sm,
+    ...ResponsiveUtils.elevation,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: ResponsiveUtils.spacing.md,
   },
   avatar: {
     backgroundColor: '#FF9800',
   },
   headerText: {
-    marginLeft: 16,
+    marginLeft: ResponsiveUtils.spacing.md,
     flex: 1,
   },
   welcomeText: {
-    fontSize: 20,
-    marginBottom: 4,
+    fontWeight: 'bold',
+    marginBottom: ResponsiveUtils.spacing.xs,
   },
   roleText: {
     color: '#666',
   },
   card: {
-    margin: 16,
-    marginTop: 8,
-    elevation: 2,
+    margin: ResponsiveUtils.spacing.md,
+    marginTop: ResponsiveUtils.spacing.sm,
+    ...ResponsiveUtils.elevation,
   },
   alertCard: {
     backgroundColor: '#FFF3E0',
@@ -416,11 +527,11 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: ResponsiveUtils.spacing.md,
   },
   cardTitle: {
-    marginLeft: 8,
-    fontSize: 18,
+    marginLeft: ResponsiveUtils.spacing.sm,
+    fontWeight: 'bold',
   },
   statsGrid: {
     flexDirection: 'row',
@@ -428,91 +539,89 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statItem: {
-    width: '48%',
+    width: ResponsiveUtils.isTablet() ? '23%' : '48%',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 8,
-    elevation: 1,
+    padding: ResponsiveUtils.spacing.md,
+    borderRadius: ResponsiveUtils.borderRadius.medium,
+    ...ResponsiveUtils.elevation,
     backgroundColor: '#fff',
-    marginBottom: 8,
+    marginBottom: ResponsiveUtils.spacing.sm,
   },
   statNumber: {
-    fontSize: 28,
     fontWeight: 'bold',
     color: '#2196F3',
   },
   statLabel: {
-    fontSize: 12,
     color: '#666',
-    marginTop: 4,
+    marginTop: ResponsiveUtils.spacing.xs,
     textAlign: 'center',
   },
   financialInfo: {
-    marginBottom: 16,
+    marginBottom: ResponsiveUtils.spacing.md,
   },
   revenueItem: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: ResponsiveUtils.spacing.md,
+    padding: ResponsiveUtils.spacing.md,
+    backgroundColor: '#E8F5E8',
+    borderRadius: ResponsiveUtils.borderRadius.medium,
   },
   revenueLabel: {
-    fontSize: 16,
     color: '#666',
   },
   revenueValue: {
-    fontSize: 24,
     fontWeight: 'bold',
     color: '#4CAF50',
+    marginTop: ResponsiveUtils.spacing.xs,
   },
   paymentsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 16,
+    marginTop: ResponsiveUtils.spacing.md,
   },
   paymentItem: {
     alignItems: 'center',
+    padding: ResponsiveUtils.spacing.sm,
+    backgroundColor: '#f9f9f9',
+    borderRadius: ResponsiveUtils.borderRadius.small,
+    flex: 1,
+    marginHorizontal: ResponsiveUtils.spacing.xs,
   },
   paymentNumber: {
-    fontSize: 20,
     fontWeight: 'bold',
     color: '#FF9800',
   },
   paymentLabel: {
-    fontSize: 12,
     color: '#666',
+    marginTop: ResponsiveUtils.spacing.xs,
   },
   divider: {
-    marginVertical: 8,
+    marginVertical: ResponsiveUtils.spacing.sm,
   },
   viewReportsButton: {
-    marginTop: 8,
+    marginTop: ResponsiveUtils.spacing.sm,
   },
   quickActionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: ResponsiveUtils.spacing.sm,
   },
   quickActionButton: {
-    width: '48%',
-    marginBottom: 8,
+    width: ResponsiveUtils.isTablet() ? '48%' : '48%',
+    marginBottom: ResponsiveUtils.spacing.sm,
   },
   quickActionContent: {
-    height: 40,
+    height: ResponsiveUtils.isTablet() ? 50 : 40,
+    paddingHorizontal: ResponsiveUtils.spacing.sm,
   },
-  logoutContainer: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  logoutButton: {
-    width: '60%',
-    borderColor: '#F44336',
-  },
+  
   viewAllButton: {
-    marginTop: 8,
+    marginTop: ResponsiveUtils.spacing.sm,
   },
   alertText: {
     color: '#FF9800',
-    marginBottom: 4,
+    marginBottom: ResponsiveUtils.spacing.xs,
   },
 });
 
