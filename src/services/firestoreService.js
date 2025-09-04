@@ -31,6 +31,28 @@ export const firestoreService = {
     }
   },
 
+  // Buscar documentos com array-contains-any
+  getWhereArrayContainsAny: async (collectionName, field, values) => {
+    try {
+      if (!Array.isArray(values) || values.length === 0) return [];
+      const q = query(
+        collection(db, collectionName),
+        where(field, 'array-contains-any', values)
+      );
+      const querySnapshot = await getDocs(q);
+      const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Ordenar em memória por createdAt desc
+      return docs.sort((a, b) => {
+        const aTime = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime();
+        const bTime = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
+    } catch (error) {
+      console.error(`Erro ao buscar documentos (array-contains-any) em ${collectionName}:`, error);
+      throw error;
+    }
+  },
+
   // Buscar documento por ID
   getById: async (collectionName, id) => {
     try {
@@ -152,7 +174,13 @@ export const studentService = {
   },
 
   getStudentsByInstructor: async (instructorId) => {
-    return await firestoreService.getWhere('students', 'instructorId', '==', instructorId);
+    // Buscar turmas do instrutor
+    const classes = await firestoreService.getWhere('classes', 'instructorId', '==', instructorId);
+    const classIds = (classes || []).map(c => c.id).filter(Boolean);
+    if (classIds.length === 0) return [];
+    // Buscar usuários (alunos) que estejam em quaisquer dessas turmas
+    const usersInClasses = await firestoreService.getWhereArrayContainsAny('users', 'classIds', classIds.slice(0, 10));
+    return usersInClasses.filter(u => u.userType === 'student');
   },
 
   addGraduation: async (studentId, graduation) => {

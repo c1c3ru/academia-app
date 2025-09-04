@@ -33,12 +33,148 @@ import AdminDashboard from '../screens/admin/AdminDashboard';
 import AdminStudents from '../screens/admin/AdminStudents';
 import AdminClasses from '../screens/admin/AdminClasses';
 import AdminModalities from '../screens/admin/AdminModalities';
+import AddClassScreen from '../screens/admin/AddClassScreen';
+import EditClassScreen from '../screens/admin/EditClassScreen';
+import AddStudentScreen from '../screens/admin/AddStudentScreen';
+import EditStudentScreen from '../screens/admin/EditStudentScreen';
+import ReportsScreen from '../screens/admin/ReportsScreen';
 
 // Telas Compartilhadas
 import ProfileScreen from '../screens/shared/ProfileScreen';
 import LoadingScreen from '../screens/shared/LoadingScreen';
+import ClassDetailsScreen from '../screens/shared/ClassDetailsScreen';
+import StudentDetailsScreen from '../screens/shared/StudentDetailsScreen';
 
 const Stack = createStackNavigator();
+
+// Stack Navigator para Admin (para telas modais/detalhes)
+const AdminStack = createStackNavigator();
+
+const AdminStackNavigator = () => (
+  <AdminStack.Navigator screenOptions={{ headerShown: false }}>
+    <AdminStack.Screen name="AdminTabs" component={AdminTabNavigator} />
+    <AdminStack.Screen 
+      name="AddClass" 
+      component={AddClassScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Nova Turma"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#FF9800"
+          />
+        ),
+      }}
+    />
+    <AdminStack.Screen 
+      name="EditClass" 
+      component={EditClassScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Editar Turma"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#FF9800"
+          />
+        ),
+      }}
+    />
+    <AdminStack.Screen 
+      name="ClassDetails" 
+      component={ClassDetailsScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Detalhes da Turma"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#FF9800"
+          />
+        ),
+      }}
+    />
+    <AdminStack.Screen 
+      name="AddStudent" 
+      component={AddStudentScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Novo Aluno"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#FF9800"
+          />
+        ),
+      }}
+    />
+    <AdminStack.Screen 
+      name="EditStudent" 
+      component={EditStudentScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Editar Aluno"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#FF9800"
+          />
+        ),
+      }}
+    />
+    <AdminStack.Screen 
+      name="StudentDetails" 
+      component={StudentDetailsScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Detalhes do Aluno"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#FF9800"
+          />
+        ),
+      }}
+    />
+    <AdminStack.Screen 
+      name="StudentPayments" 
+      component={StudentPayments}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Pagamentos do Aluno"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#FF9800"
+          />
+        ),
+      }}
+    />
+    <AdminStack.Screen 
+      name="Reports" 
+      component={ReportsScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Relatórios"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#FF9800"
+          />
+        ),
+      }}
+    />
+  </AdminStack.Navigator>
+);
 const Tab = createBottomTabNavigator();
 
 // Navegação para Alunos
@@ -272,7 +408,7 @@ const MainNavigator = ({ userType }) => {
       TabNavigator = InstructorStackNavigator;
       break;
     case 'admin':
-      TabNavigator = AdminTabNavigator;
+      TabNavigator = AdminStackNavigator;
       break;
     default:
       TabNavigator = StudentTabNavigator;

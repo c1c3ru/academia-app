@@ -250,7 +250,7 @@ const AdminModalities = ({ navigation }) => {
                   <List.Item
                     title={modality.name}
                     description={modality.description || 'Sem descrição'}
-                    left={() => <List.Icon icon="fitness" color="#4CAF50" />}
+                    left={() => <List.Icon icon="dumbbell" color="#4CAF50" />}
                     right={() => (
                       <Button 
                         mode="text" 

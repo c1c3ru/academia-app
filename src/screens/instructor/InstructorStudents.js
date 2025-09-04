@@ -13,7 +13,8 @@ import {
   FAB,
   Searchbar,
   Menu,
-  IconButton
+  IconButton,
+  TextInput
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,22 +28,40 @@ const InstructorStudents = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
+  // Advanced filters
+  const [genderMenuVisible, setGenderMenuVisible] = useState(false);
+  const [modalityMenuVisible, setModalityMenuVisible] = useState(false);
+  const [selectedGender, setSelectedGender] = useState(''); // 'male' | 'female' | ''
+  const [selectedModalityId, setSelectedModalityId] = useState('');
+  const [ageMin, setAgeMin] = useState('');
+  const [ageMax, setAgeMax] = useState('');
+  const [enrollmentStart, setEnrollmentStart] = useState(''); // YYYY-MM-DD
+  const [enrollmentEnd, setEnrollmentEnd] = useState(''); // YYYY-MM-DD
+  const [classes, setClasses] = useState([]);
+  const [modalities, setModalities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadStudents();
+    loadInitialData();
   }, []);
 
   useEffect(() => {
     filterStudents();
-  }, [searchQuery, selectedFilter, students]);
+  }, [searchQuery, selectedFilter, students, selectedGender, selectedModalityId, ageMin, ageMax, enrollmentStart, enrollmentEnd]);
 
-  const loadStudents = async () => {
+  const loadInitialData = async () => {
     try {
       setLoading(true);
+      // Load students
       const instructorStudents = await studentService.getStudentsByInstructor(user.uid);
       setStudents(instructorStudents);
+      // Load classes for this instructor
+      const instructorClasses = await firestoreService.getWhere('classes', 'instructorId', '==', user.uid);
+      setClasses(instructorClasses || []);
+      // Load modalities (for filter options)
+      const allModalities = await firestoreService.getAll('modalities');
+      setModalities(allModalities || []);
     } catch (error) {
       console.error('Erro ao carregar alunos:', error);
       Alert.alert('Erro', 'Não foi possível carregar os alunos');
@@ -51,6 +70,47 @@ const InstructorStudents = ({ navigation }) => {
       setRefreshing(false);
     }
   };
+
+  const toDate = (val) => {
+    if (!val) return null;
+    // Firestore Timestamp
+    if (val.seconds) return new Date(val.seconds * 1000);
+    // ISO string or Date
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const calcAge = (birthDate) => {
+    const d = toDate(birthDate);
+    if (!d) return null;
+    const today = new Date();
+    let age = today.getFullYear() - d.getFullYear();
+    const m = today.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+    return age;
+  };
+
+  const classIdToModalityId = () => {
+    const map = {};
+    (classes || []).forEach(c => { if (c.id && c.modalityId) map[c.id] = c.modalityId; });
+    return map;
+  };
+
+  const studentHasModality = (student, modalityId) => {
+    if (!modalityId) return true;
+    const idMap = classIdToModalityId();
+    const classIds = student.classIds || [];
+    for (const cid of classIds) {
+      if (idMap[cid] === modalityId) return true;
+    }
+    // Fallback: check graduations modality if available (may store name or id)
+    if (student.graduations && student.graduations.length > 0) {
+      return student.graduations.some(g => g.modalityId === modalityId || g.modality === getModalityNameById(modalityId));
+    }
+    return false;
+  };
+
+  const getModalityNameById = (id) => (modalities.find(m => m.id === id)?.name || '');
 
   const filterStudents = () => {
     let filtered = students;
@@ -79,12 +139,48 @@ const InstructorStudents = ({ navigation }) => {
         break;
     }
 
+    // Filtro por gênero
+    if (selectedGender) {
+      filtered = filtered.filter(s => (s.gender || '').toLowerCase() === selectedGender);
+    }
+
+    // Filtro por faixa etária
+    if (ageMin || ageMax) {
+      const min = ageMin ? parseInt(ageMin, 10) : null;
+      const max = ageMax ? parseInt(ageMax, 10) : null;
+      filtered = filtered.filter(s => {
+        const age = calcAge(s.birthDate);
+        if (age === null) return false;
+        if (min !== null && age < min) return false;
+        if (max !== null && age > max) return false;
+        return true;
+      });
+    }
+
+    // Filtro por período de matrícula (createdAt)
+    if (enrollmentStart || enrollmentEnd) {
+      const start = enrollmentStart ? new Date(`${enrollmentStart}T00:00:00`) : null;
+      const end = enrollmentEnd ? new Date(`${enrollmentEnd}T23:59:59`) : null;
+      filtered = filtered.filter(s => {
+        const created = toDate(s.createdAt);
+        if (!created) return false;
+        if (start && created < start) return false;
+        if (end && created > end) return false;
+        return true;
+      });
+    }
+
+    // Filtro por modalidade
+    if (selectedModalityId) {
+      filtered = filtered.filter(s => studentHasModality(s, selectedModalityId));
+    }
+
     setFilteredStudents(filtered);
   };
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadStudents();
+    loadInitialData();
   };
 
   const handleStudentPress = (student) => {
@@ -123,6 +219,13 @@ const InstructorStudents = ({ navigation }) => {
     }
   };
 
+  const genderLabel = (g) => {
+    if (!g) return 'Todos os sexos';
+    if (g === 'male') return 'Masculino';
+    if (g === 'female') return 'Feminino';
+    return 'Outro';
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -153,6 +256,79 @@ const InstructorStudents = ({ navigation }) => {
             <Menu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title="Inativos" />
             <Menu.Item onPress={() => { setSelectedFilter('payment_pending'); setFilterVisible(false); }} title="Pagamento Pendente" />
           </Menu>
+
+          <Menu
+            visible={genderMenuVisible}
+            onDismiss={() => setGenderMenuVisible(false)}
+            anchor={
+              <Button 
+                mode="outlined" 
+                onPress={() => setGenderMenuVisible(true)}
+                icon="account"
+                style={styles.filterButton}
+              >
+                {genderLabel(selectedGender)}
+              </Button>
+            }
+          >
+            <Menu.Item onPress={() => { setSelectedGender(''); setGenderMenuVisible(false); }} title="Todos os sexos" />
+            <Menu.Item onPress={() => { setSelectedGender('male'); setGenderMenuVisible(false); }} title="Masculino" />
+            <Menu.Item onPress={() => { setSelectedGender('female'); setGenderMenuVisible(false); }} title="Feminino" />
+          </Menu>
+
+          <Menu
+            visible={modalityMenuVisible}
+            onDismiss={() => setModalityMenuVisible(false)}
+            anchor={
+              <Button 
+                mode="outlined" 
+                onPress={() => setModalityMenuVisible(true)}
+                icon="dumbbell"
+                style={styles.filterButton}
+              >
+                {selectedModalityId ? (modalities.find(m => m.id === selectedModalityId)?.name || 'Modalidade') : 'Todas modalidades'}
+              </Button>
+            }
+          >
+            <Menu.Item onPress={() => { setSelectedModalityId(''); setModalityMenuVisible(false); }} title="Todas modalidades" />
+            {modalities.map(m => (
+              <Menu.Item key={m.id} onPress={() => { setSelectedModalityId(m.id); setModalityMenuVisible(false); }} title={m.name} />
+            ))}
+          </Menu>
+        </View>
+
+        {/* Linha de filtros por idade e datas */}
+        <View style={styles.advancedFiltersRow}>
+          <TextInput
+            label="Idade mín."
+            value={ageMin}
+            onChangeText={setAgeMin}
+            mode="outlined"
+            keyboardType="numeric"
+            style={styles.advancedFilterInput}
+          />
+          <TextInput
+            label="Idade máx."
+            value={ageMax}
+            onChangeText={setAgeMax}
+            mode="outlined"
+            keyboardType="numeric"
+            style={styles.advancedFilterInput}
+          />
+          <TextInput
+            label="Desde (AAAA-MM-DD)"
+            value={enrollmentStart}
+            onChangeText={setEnrollmentStart}
+            mode="outlined"
+            style={styles.advancedFilterLong}
+          />
+          <TextInput
+            label="Até (AAAA-MM-DD)"
+            value={enrollmentEnd}
+            onChangeText={setEnrollmentEnd}
+            mode="outlined"
+            style={styles.advancedFilterLong}
+          />
         </View>
       </View>
 
@@ -350,6 +526,24 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     borderColor: '#4CAF50',
+  },
+  advancedFiltersRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  advancedFilterInput: {
+    flexGrow: 1,
+    minWidth: 110,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  advancedFilterLong: {
+    flexGrow: 2,
+    minWidth: 160,
+    marginRight: 8,
+    marginBottom: 8,
   },
   scrollView: {
     flex: 1,

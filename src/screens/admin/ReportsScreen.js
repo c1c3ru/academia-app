@@ -12,7 +12,7 @@ import {
   Button
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService } from '../../services/firestoreService';
 
@@ -301,7 +301,7 @@ const ReportsScreen = ({ navigation }) => {
                 mode="contained"
                 onPress={() => navigation.navigate('AddStudent')}
                 style={[styles.actionButton, { backgroundColor: '#2196F3' }]}
-                icon="person-add"
+                icon={<MaterialCommunityIcons name="account-plus" size={18} color="#fff" />}
               >
                 Novo Aluno
               </Button>
@@ -310,7 +310,7 @@ const ReportsScreen = ({ navigation }) => {
                 mode="contained"
                 onPress={() => navigation.navigate('AddClass')}
                 style={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
-                icon="school"
+                icon={<MaterialCommunityIcons name="school-outline" size={18} color="#fff" />}
               >
                 Nova Turma
               </Button>

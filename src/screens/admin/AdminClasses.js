@@ -354,7 +354,7 @@ const AdminClasses = ({ navigation }) => {
 
                   <Button 
                     mode="contained" 
-                    onPress={() => navigation.navigate('ClassStudents', { classId: classItem.id })}
+                    onPress={() => navigation.navigate('ClassDetails', { classId: classItem.id, classData: classItem })}
                     style={styles.actionButton}
                     icon="account"
                   >

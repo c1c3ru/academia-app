@@ -14,7 +14,8 @@ import {
   List
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, paymentService, announcementService } from '../../services/firestoreService';
 import AnimatedCard from '../../components/AnimatedCard';
@@ -136,14 +137,15 @@ const AdminDashboard = ({ navigation }) => {
   };
 
   const getActivityIcon = (type) => {
+    // Mapear para nomes válidos do MaterialCommunityIcons (usado por List.Icon)
     const icons = {
-      'new_student': 'person-add',
-      'payment': 'card',
+      'new_student': 'account-plus',
+      'payment': 'credit-card',
       'graduation': 'trophy',
-      'class': 'school',
-      'announcement': 'megaphone'
+      'class': 'school-outline',
+      'announcement': 'bullhorn',
     };
-    return icons[type] || 'information-circle';
+    return icons[type] || 'information-outline';
   };
 
   const getActivityColor = (type) => {
@@ -182,110 +184,81 @@ const AdminDashboard = ({ navigation }) => {
         )}
         scrollEventThrottle={16}
       >
-        {/* Header de Boas-vindas */}
+        {/* Header moderno com gradiente (similar ao do Instrutor) */}
         <Animated.View style={[headerTransform]}>
-          <AnimatedCard delay={0} style={styles.headerCard}>
-            <Card.Content style={styles.headerContent}>
-              <Animated.View
-                style={{
-                  transform: [{ scale: animations.scaleAnim }],
-                }}
-              >
-                <Avatar.Text 
-                  size={ResponsiveUtils.isTablet() ? 80 : 60} 
-                  label={userProfile?.name?.charAt(0) || 'A'} 
-                  style={styles.avatar}
-                />
-              </Animated.View>
-              <View style={styles.headerText}>
-                <Title style={[styles.welcomeText, { fontSize: ResponsiveUtils.fontSize.large }]}>
-                  Olá, {userProfile?.name?.split(' ')[0] || 'Admin'}!
-                </Title>
-                <Paragraph style={[styles.roleText, { fontSize: ResponsiveUtils.fontSize.medium }]}>
-                  Administrador da Academia
-                </Paragraph>
+          <View style={styles.headerContainer}>
+            <LinearGradient
+              colors={['#FF9800', '#FB8C00', '#F57C00']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.headerGradient}
+            >
+              <View style={styles.headerContentModern}>
+                <Animated.View style={{ transform: [{ scale: animations.scaleAnim }] }}>
+                  <Avatar.Text 
+                    size={ResponsiveUtils.isTablet() ? 85 : 65}
+                    label={userProfile?.name?.charAt(0) || 'A'}
+                    style={styles.avatarModern}
+                  />
+                </Animated.View>
+                <View style={styles.headerTextModern}>
+                  <Text style={styles.welcomeTextModern}>
+                    Olá, {userProfile?.name?.split(' ')[0] || 'Admin'}! 👋
+                  </Text>
+                  <Text style={styles.roleTextModern}>
+                    Administrador da Academia
+                  </Text>
+                  <View style={styles.statusBadge}>
+                    <MaterialCommunityIcons name="circle" size={8} color="#4CAF50" />
+                    <Text style={styles.statusText}>Online</Text>
+                  </View>
+                </View>
+                <Animated.View style={{ opacity: animations.fadeAnim }}>
+                  <MaterialCommunityIcons 
+                    name="shield-crown" 
+                    size={24} 
+                    color="rgba(255,255,255,0.85)" 
+                  />
+                </Animated.View>
               </View>
-            </Card.Content>
-          </AnimatedCard>
+            </LinearGradient>
+          </View>
         </Animated.View>
 
-        {/* Estatísticas Principais */}
-        <AnimatedCard delay={100} style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Ionicons name="analytics-outline" size={24} color="#2196F3" />
-              <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
-                Visão Geral
-              </Title>
-            </View>
-            
-            <View style={styles.statsGrid}>
-              <Animated.View
-                style={{
-                  opacity: animations.fadeAnim,
-                  transform: [{ scale: animations.scaleAnim }],
-                }}
-              >
-                <Surface style={styles.statItem}>
-                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
-                    {dashboardData.totalStudents}
-                  </Text>
-                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
-                    Total de Alunos
-                  </Text>
-                </Surface>
-              </Animated.View>
-              
-              <Animated.View
-                style={{
-                  opacity: animations.fadeAnim,
-                  transform: [{ scale: animations.scaleAnim }],
-                }}
-              >
-                <Surface style={styles.statItem}>
-                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
-                    {dashboardData.activeStudents}
-                  </Text>
-                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
-                    Alunos Ativos
-                  </Text>
-                </Surface>
-              </Animated.View>
-              
-              <Animated.View
-                style={{
-                  opacity: animations.fadeAnim,
-                  transform: [{ scale: animations.scaleAnim }],
-                }}
-              >
-                <Surface style={styles.statItem}>
-                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
-                    {dashboardData.totalClasses}
-                  </Text>
-                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
-                    Turmas
-                  </Text>
-                </Surface>
-              </Animated.View>
-              
-              <Animated.View
-                style={{
-                  opacity: animations.fadeAnim,
-                  transform: [{ scale: animations.scaleAnim }],
-                }}
-              >
-                <Surface style={styles.statItem}>
-                  <Text style={[styles.statNumber, { fontSize: ResponsiveUtils.fontSize.extraLarge }]}>
-                    {dashboardData.quickStats.instructors}
-                  </Text>
-                  <Text style={[styles.statLabel, { fontSize: ResponsiveUtils.fontSize.small }]}>
-                    Professores
-                  </Text>
-                </Surface>
-              </Animated.View>
-            </View>
-          </Card.Content>
-        </AnimatedCard>
+        {/* Estatísticas principais em cards com gradiente (estilo Instrutor) */}
+        <View style={styles.statsContainer}>
+          <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
+            <LinearGradient colors={['#2196F3', '#1976D2']} style={styles.statGradient}>
+              <MaterialCommunityIcons name="account-group" size={32} color="white" />
+              <Text style={styles.statNumberModern}>{dashboardData.totalStudents}</Text>
+              <Text style={styles.statLabelModern}>Total de Alunos</Text>
+            </LinearGradient>
+          </Animated.View>
+
+          <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
+            <LinearGradient colors={['#4CAF50', '#45A049']} style={styles.statGradient}>
+              <MaterialCommunityIcons name="account-check" size={32} color="white" />
+              <Text style={styles.statNumberModern}>{dashboardData.activeStudents}</Text>
+              <Text style={styles.statLabelModern}>Alunos Ativos</Text>
+            </LinearGradient>
+          </Animated.View>
+
+          <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
+            <LinearGradient colors={['#FF9800', '#F57C00']} style={styles.statGradient}>
+              <MaterialCommunityIcons name="school-outline" size={32} color="white" />
+              <Text style={styles.statNumberModern}>{dashboardData.totalClasses}</Text>
+              <Text style={styles.statLabelModern}>Turmas</Text>
+            </LinearGradient>
+          </Animated.View>
+
+          <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
+            <LinearGradient colors={['#9C27B0', '#7B1FA2']} style={styles.statGradient}>
+              <MaterialCommunityIcons name="cash-multiple" size={32} color="white" />
+              <Text style={styles.statNumberModern}>{dashboardData.pendingPayments}</Text>
+              <Text style={styles.statLabelModern}>Pendências</Text>
+            </LinearGradient>
+          </Animated.View>
+        </View>
 
         {/* Financeiro */}
         <AnimatedCard delay={200} style={styles.card}>
@@ -387,7 +360,7 @@ const AdminDashboard = ({ navigation }) => {
                 mode="contained" 
                 onPress={() => navigation.navigate('Gestão')}
                 style={[styles.quickActionButton, { backgroundColor: '#FF9800' }]}
-                icon="settings"
+                icon="cog"
                 contentStyle={styles.quickActionContent}
               >
                 Configurações
@@ -395,9 +368,9 @@ const AdminDashboard = ({ navigation }) => {
               
               <AnimatedButton 
                 mode="contained" 
-                onPress={() => navigation.navigate('Modalidades')}
+                onPress={() => navigation.navigate('Gestão')}
                 style={[styles.quickActionButton, { backgroundColor: '#9C27B0' }]}
-                icon="fitness"
+                icon="dumbbell"
                 contentStyle={styles.quickActionContent}
               >
                 Modalidades
@@ -492,6 +465,56 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  // Header moderno
+  headerContainer: {
+    margin: ResponsiveUtils.spacing.md,
+    marginBottom: ResponsiveUtils.spacing.lg,
+    borderRadius: ResponsiveUtils.borderRadius.large,
+    overflow: 'hidden',
+    ...ResponsiveUtils.elevation,
+  },
+  headerGradient: {
+    padding: ResponsiveUtils.spacing.lg,
+  },
+  headerContentModern: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarModern: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  headerTextModern: {
+    marginLeft: ResponsiveUtils.spacing.md,
+    flex: 1,
+  },
+  welcomeTextModern: {
+    fontSize: ResponsiveUtils.fontSize.large,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 4,
+  },
+  roleTextModern: {
+    fontSize: ResponsiveUtils.fontSize.medium,
+    color: 'rgba(255,255,255,0.9)',
+    marginBottom: 8,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  statusText: {
+    color: 'white',
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: '500',
+  },
   headerCard: {
     margin: ResponsiveUtils.spacing.md,
     marginBottom: ResponsiveUtils.spacing.sm,
@@ -515,6 +538,39 @@ const styles = StyleSheet.create({
   },
   roleText: {
     color: '#666',
+  },
+  // Estatísticas modernas (cards com gradiente)
+  statsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: ResponsiveUtils.spacing.md,
+    marginBottom: ResponsiveUtils.spacing.md,
+  },
+  statCard: {
+    width: '48%',
+    marginBottom: ResponsiveUtils.spacing.md,
+    borderRadius: ResponsiveUtils.borderRadius.medium,
+    overflow: 'hidden',
+    ...ResponsiveUtils.elevation,
+  },
+  statGradient: {
+    padding: ResponsiveUtils.spacing.md,
+    alignItems: 'center',
+    minHeight: 120,
+    justifyContent: 'center',
+  },
+  statNumberModern: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 8,
+  },
+  statLabelModern: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    textAlign: 'center',
+    marginTop: 4,
   },
   card: {
     margin: ResponsiveUtils.spacing.md,
