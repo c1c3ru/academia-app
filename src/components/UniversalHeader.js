@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { Appbar, Avatar, Menu, Divider } from 'react-native-paper';
+import { View, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
+import { Appbar, Avatar, Menu, Divider, Modal, Portal, Button, Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { ResponsiveUtils } from '../utils/animations';
@@ -15,6 +15,7 @@ const UniversalHeader = ({
 }) => {
   const { user, userProfile, logout } = useAuth();
   const [menuVisible, setMenuVisible] = React.useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = React.useState(false);
 
   const openMenu = () => {
     console.log('🔐 Avatar clicado - abrindo menu');
@@ -37,32 +38,55 @@ const UniversalHeader = ({
       return;
     }
     
-    Alert.alert(
-      'Confirmar Saída',
-      'Tem certeza que deseja sair da sua conta?',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-          onPress: () => console.log('🔐 Logout cancelado pelo usuário')
-        },
-        {
-          text: 'Sair',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log('🔐 Iniciando processo de logout...');
-              closeMenu(); // Fechar menu antes do logout
-              await logout();
-              console.log('🔐 Logout executado com sucesso');
-            } catch (error) {
-              console.error('🔐 Erro no logout:', error);
-              Alert.alert('Erro', 'Não foi possível fazer logout. Tente novamente.');
-            }
+    // No web, usar modal personalizado; no mobile, usar Alert nativo
+    if (Platform.OS === 'web') {
+      setLogoutModalVisible(true);
+    } else {
+      Alert.alert(
+        'Confirmar Saída',
+        'Tem certeza que deseja sair da sua conta?',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+            onPress: () => console.log('🔐 Logout cancelado pelo usuário')
           },
-        },
-      ]
-    );
+          {
+            text: 'Sair',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                console.log('🔐 Iniciando processo de logout...');
+                closeMenu(); // Fechar menu antes do logout
+                await logout();
+                console.log('🔐 Logout executado com sucesso');
+              } catch (error) {
+                console.error('🔐 Erro no logout:', error);
+                Alert.alert('Erro', 'Não foi possível fazer logout. Tente novamente.');
+              }
+            },
+          },
+        ]
+      );
+    }
+  };
+
+  const confirmLogout = async () => {
+    try {
+      console.log('🔐 Iniciando processo de logout...');
+      setLogoutModalVisible(false);
+      closeMenu(); // Fechar menu antes do logout
+      await logout();
+      console.log('🔐 Logout executado com sucesso');
+    } catch (error) {
+      console.error('🔐 Erro no logout:', error);
+      Alert.alert('Erro', 'Não foi possível fazer logout. Tente novamente.');
+    }
+  };
+
+  const cancelLogout = () => {
+    console.log('🔐 Logout cancelado pelo usuário');
+    setLogoutModalVisible(false);
   };
 
   const handleProfile = () => {
@@ -99,101 +123,136 @@ const UniversalHeader = ({
   console.log('🔐 UniversalHeader renderizando - showMenu:', showMenu, 'menuVisible:', menuVisible);
 
   return (
-    <Appbar.Header style={[styles.header, { backgroundColor: getUserTypeColor() }]}>
-      {showBack && (
-        <Appbar.BackAction 
-          onPress={() => navigation?.goBack()} 
-          color="white"
+    <>
+      <Appbar.Header style={[styles.header, { backgroundColor: getUserTypeColor() }]}>
+        {showBack && (
+          <Appbar.BackAction 
+            onPress={() => navigation?.goBack()} 
+            color="white"
+          />
+        )}
+        
+        <Appbar.Content 
+          title="🥋 Academia App"
+          subtitle={subtitle}
+          titleStyle={styles.appName}
+          subtitleStyle={styles.subtitle}
         />
-      )}
-      
-      <Appbar.Content 
-        title="🥋 Academia App"
-        subtitle={subtitle}
-        titleStyle={styles.appName}
-        subtitleStyle={styles.subtitle}
-      />
 
-      {showMenu && (
-        <Menu
-          visible={menuVisible}
-          onDismiss={closeMenu}
-          anchor={
-            <TouchableOpacity 
-              style={styles.menuAnchor}
-              onPress={openMenu}
-              activeOpacity={0.7}
-            >
-              <Avatar.Text 
-                size={ResponsiveUtils?.isTablet?.() ? 40 : 36}
-                label={userProfile?.name?.charAt(0) || 'U'}
-                style={[styles.avatar, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
-                labelStyle={styles.avatarLabel}
-              />
-            </TouchableOpacity>
-          }
-          contentStyle={styles.menuContent}
-        >
-            <View style={styles.menuHeader}>
-              <Avatar.Text 
-                size={48}
-                label={userProfile?.name?.charAt(0) || 'U'}
-                style={[styles.menuAvatar, { backgroundColor: getUserTypeColor() }]}
-                labelStyle={styles.menuAvatarLabel}
-              />
-              <View style={styles.menuUserInfo}>
-                <Menu.Item
-                  title={userProfile?.name || 'Usuário'}
-                  titleStyle={styles.menuUserName}
-                  disabled
+        {showMenu && (
+          <Menu
+            visible={menuVisible}
+            onDismiss={closeMenu}
+            anchor={
+              <TouchableOpacity 
+                style={styles.menuAnchor}
+                onPress={openMenu}
+                activeOpacity={0.7}
+              >
+                <Avatar.Text 
+                  size={ResponsiveUtils?.isTablet?.() ? 40 : 36}
+                  label={userProfile?.name?.charAt(0) || 'U'}
+                  style={[styles.avatar, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+                  labelStyle={styles.avatarLabel}
                 />
-                <Menu.Item
-                  title={getUserTypeLabel()}
-                  titleStyle={styles.menuUserType}
-                  disabled
+              </TouchableOpacity>
+            }
+            contentStyle={styles.menuContent}
+          >
+              <View style={styles.menuHeader}>
+                <Avatar.Text 
+                  size={48}
+                  label={userProfile?.name?.charAt(0) || 'U'}
+                  style={[styles.menuAvatar, { backgroundColor: getUserTypeColor() }]}
+                  labelStyle={styles.menuAvatarLabel}
                 />
+                <View style={styles.menuUserInfo}>
+                  <Menu.Item
+                    title={userProfile?.name || 'Usuário'}
+                    titleStyle={styles.menuUserName}
+                    disabled
+                  />
+                  <Menu.Item
+                    title={getUserTypeLabel()}
+                    titleStyle={styles.menuUserType}
+                    disabled
+                  />
+                </View>
               </View>
+              
+              <Divider style={styles.menuDivider} />
+              
+              <Menu.Item
+                onPress={handleProfile}
+                title="Meu Perfil"
+                leadingIcon={() => (
+                  <MaterialCommunityIcons name="account" size={20} color="#666" />
+                )}
+                titleStyle={styles.menuItemTitle}
+              />
+              
+              <Menu.Item
+                onPress={() => {
+                  closeMenu();
+                  // Implementar configurações se necessário
+                }}
+                title="Configurações"
+                leadingIcon={() => (
+                  <MaterialCommunityIcons name="cog" size={20} color="#666" />
+                )}
+                titleStyle={styles.menuItemTitle}
+              />
+              
+              <Divider style={styles.menuDivider} />
+              
+              <Menu.Item
+                onPress={() => {
+                  closeMenu();
+                  handleLogout();
+                }}
+                title="Sair"
+                leadingIcon={() => (
+                  <MaterialCommunityIcons name="logout" size={20} color="#F44336" />
+                )}
+                titleStyle={[styles.menuItemTitle, { color: '#F44336' }]}
+              />
+            </Menu>
+        )}
+      </Appbar.Header>
+      
+      {/* Modal de confirmação de logout para web */}
+      <Portal>
+        <Modal
+          visible={logoutModalVisible}
+          onDismiss={cancelLogout}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Confirmar Saída</Text>
+            <Text style={styles.modalMessage}>
+              Tem certeza que deseja sair da sua conta?
+            </Text>
+            <View style={styles.modalButtons}>
+              <Button
+                mode="outlined"
+                onPress={cancelLogout}
+                style={styles.modalButton}
+              >
+                Cancelar
+              </Button>
+              <Button
+                mode="contained"
+                onPress={confirmLogout}
+                style={[styles.modalButton, styles.logoutButton]}
+                buttonColor="#F44336"
+              >
+                Sair
+              </Button>
             </View>
-            
-            <Divider style={styles.menuDivider} />
-            
-            <Menu.Item
-              onPress={handleProfile}
-              title="Meu Perfil"
-              leadingIcon={() => (
-                <MaterialCommunityIcons name="account" size={20} color="#666" />
-              )}
-              titleStyle={styles.menuItemTitle}
-            />
-            
-            <Menu.Item
-              onPress={() => {
-                closeMenu();
-                // Implementar configurações se necessário
-              }}
-              title="Configurações"
-              leadingIcon={() => (
-                <MaterialCommunityIcons name="cog" size={20} color="#666" />
-              )}
-              titleStyle={styles.menuItemTitle}
-            />
-            
-            <Divider style={styles.menuDivider} />
-            
-            <Menu.Item
-              onPress={() => {
-                closeMenu();
-                handleLogout();
-              }}
-              title="Sair"
-              leadingIcon={() => (
-                <MaterialCommunityIcons name="logout" size={20} color="#F44336" />
-              )}
-              titleStyle={[styles.menuItemTitle, { color: '#F44336' }]}
-            />
-          </Menu>
-      )}
-    </Appbar.Header>
+          </View>
+        </Modal>
+      </Portal>
+    </>
   );
 };
 
@@ -272,6 +331,47 @@ const styles = StyleSheet.create({
   menuItemTitle: {
     fontSize: ResponsiveUtils?.fontSize?.medium || 16,
     color: '#333',
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    margin: 20,
+    borderRadius: 8,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalContent: {
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    color: '#333',
+  },
+  modalMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+    color: '#666',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    marginHorizontal: 8,
+  },
+  logoutButton: {
+    backgroundColor: '#F44336',
   },
 });
 
