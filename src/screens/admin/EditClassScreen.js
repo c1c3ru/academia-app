@@ -6,12 +6,7 @@ import {
   Alert, 
   Platform
 } from 'react-native';
-import { 
-  Card, 
-  Text, 
-  Button, 
-  Input
-} from 'react-native-elements';
+import { Card, Text, Button, TextInput, HelperText, Chip, RadioButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import { Picker } from '@react-native-picker/picker'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthContext';
@@ -290,7 +285,7 @@ const EditClassScreen = ({ navigation, route }) => {
       >
         <Card style={styles.card}>
           <Card.Content>
-            <Title style={styles.title}>Editar Turma</Title>
+            <Text style={styles.title}>Editar Turma</Text>
 
             {/* Nome da Turma */}
             <TextInput
@@ -348,21 +343,21 @@ const EditClassScreen = ({ navigation, route }) => {
             {/* Instrutor */}
             <View style={styles.pickerContainer}>
               <Text style={styles.label}>Instrutor</Text>
-              <View style={styles.picker}>
-                <Picker
-                  selectedValue={formData.instructorId}
-                  onValueChange={handleInstructorChange}
-                  style={styles.pickerStyle}
-                >
-                  <Picker.Item label="Selecione um instrutor" value="" />
-                  {instructors.map((instructor) => (
-                    <Picker.Item
-                      key={instructor.id}
-                      label={instructor.name}
-                      value={instructor.id}
-                    />
-                  ))}
-                </Picker>
+              <View style={styles.chipContainer}>
+                {instructors.length === 0 && (
+                  <Text style={{ color: '#666' }}>Nenhum instrutor encontrado</Text>
+                )}
+                {instructors.map((instructor) => (
+                  <Chip
+                    key={instructor.id}
+                    selected={formData.instructorId === instructor.id}
+                    onPress={() => handleInstructorChange(instructor.id)}
+                    style={styles.chip}
+                    mode={formData.instructorId === instructor.id ? 'flat' : 'outlined'}
+                  >
+                    {instructor.name}
+                  </Chip>
+                ))}
               </View>
               {errors.instructorId && <HelperText type="error">{errors.instructorId}</HelperText>}
             </View>
