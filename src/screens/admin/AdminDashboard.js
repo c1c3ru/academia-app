@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthContext';
+import { ADMIN_COLORS, ADMIN_ICONS } from '../../theme/adminTheme';
 import { firestoreService, paymentService, announcementService } from '../../services/firestoreService';
 import AnimatedCard from '../../components/AnimatedCard';
 import AnimatedButton from '../../components/AnimatedButton';
@@ -40,10 +41,24 @@ const AdminDashboard = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Skeleton pulse for loading state
+  const [skeletonPulse] = useState(new Animated.Value(0.6));
+
   useEffect(() => {
     loadDashboardData();
     startEntryAnimation();
   }, []);
+
+  useEffect(() => {
+    if (loading) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(skeletonPulse, { toValue: 1, duration: 800, useNativeDriver: true }),
+          Animated.timing(skeletonPulse, { toValue: 0.6, duration: 800, useNativeDriver: true }),
+        ])
+      ).start();
+    }
+  }, [loading]);
 
   const loadDashboardData = async () => {
     try {
@@ -136,17 +151,7 @@ const AdminDashboard = ({ navigation }) => {
     }).format(value || 0);
   };
 
-  const getActivityIcon = (type) => {
-    // Mapear para nomes válidos do MaterialCommunityIcons (usado por List.Icon)
-    const icons = {
-      'new_student': 'account-plus',
-      'payment': 'credit-card',
-      'graduation': 'trophy',
-      'class': 'school-outline',
-      'announcement': 'bullhorn',
-    };
-    return icons[type] || 'information-outline';
-  };
+  const getActivityIcon = (type) => ADMIN_ICONS.activities[type] || ADMIN_ICONS.activities.fallback;
 
   const getActivityColor = (type) => {
     const colors = {
@@ -171,6 +176,38 @@ const AdminDashboard = ({ navigation }) => {
     ],
   };
 
+  // Render skeletons while loading
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 24 }}>
+          <Animated.View style={[styles.skeletonBlock, styles.skeletonHeader, { opacity: skeletonPulse }]} />
+
+          <View style={[styles.statsContainer, { paddingHorizontal: ResponsiveUtils.spacing.md }]}>
+            <Animated.View style={[styles.skeletonBlock, styles.skeletonStat, { opacity: skeletonPulse }]} />
+            <Animated.View style={[styles.skeletonBlock, styles.skeletonStat, { opacity: skeletonPulse }]} />
+            <Animated.View style={[styles.skeletonBlock, styles.skeletonStat, { opacity: skeletonPulse }]} />
+            <Animated.View style={[styles.skeletonBlock, styles.skeletonStat, { opacity: skeletonPulse }]} />
+          </View>
+
+          <View style={{ marginHorizontal: ResponsiveUtils.spacing.md, marginBottom: ResponsiveUtils.spacing.md }}>
+            <Animated.View style={[styles.skeletonBlock, { height: 160, borderRadius: ResponsiveUtils.borderRadius.medium, opacity: skeletonPulse }]} />
+          </View>
+
+          <View style={{ marginHorizontal: ResponsiveUtils.spacing.md }}>
+            <Animated.View style={[styles.skeletonBlock, { height: 28, width: '50%', marginBottom: ResponsiveUtils.spacing.sm, opacity: skeletonPulse }]} />
+            <View style={styles.modernQuickActions}>
+              <Animated.View style={[styles.skeletonBlock, styles.skeletonAction, { opacity: skeletonPulse }]} />
+              <Animated.View style={[styles.skeletonBlock, styles.skeletonAction, { opacity: skeletonPulse }]} />
+              <Animated.View style={[styles.skeletonBlock, styles.skeletonAction, { opacity: skeletonPulse }]} />
+              <Animated.View style={[styles.skeletonBlock, styles.skeletonAction, { opacity: skeletonPulse }]} />
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <Animated.ScrollView 
@@ -188,7 +225,7 @@ const AdminDashboard = ({ navigation }) => {
         <Animated.View style={[headerTransform]}>
           <View style={styles.headerContainer}>
             <LinearGradient
-              colors={['#FF9800', '#FB8C00', '#F57C00']}
+              colors={ADMIN_COLORS.headerGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.headerGradient}
@@ -228,7 +265,7 @@ const AdminDashboard = ({ navigation }) => {
         {/* Estatísticas principais em cards com gradiente (estilo Instrutor) */}
         <View style={styles.statsContainer}>
           <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
-            <LinearGradient colors={['#2196F3', '#1976D2']} style={styles.statGradient}>
+            <LinearGradient colors={ADMIN_COLORS.blue} style={styles.statGradient}>
               <MaterialCommunityIcons name="account-group" size={32} color="white" />
               <Text style={styles.statNumberModern}>{dashboardData.totalStudents}</Text>
               <Text style={styles.statLabelModern}>Total de Alunos</Text>
@@ -236,7 +273,7 @@ const AdminDashboard = ({ navigation }) => {
           </Animated.View>
 
           <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
-            <LinearGradient colors={['#4CAF50', '#45A049']} style={styles.statGradient}>
+            <LinearGradient colors={ADMIN_COLORS.green} style={styles.statGradient}>
               <MaterialCommunityIcons name="account-check" size={32} color="white" />
               <Text style={styles.statNumberModern}>{dashboardData.activeStudents}</Text>
               <Text style={styles.statLabelModern}>Alunos Ativos</Text>
@@ -244,7 +281,7 @@ const AdminDashboard = ({ navigation }) => {
           </Animated.View>
 
           <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
-            <LinearGradient colors={['#FF9800', '#F57C00']} style={styles.statGradient}>
+            <LinearGradient colors={ADMIN_COLORS.orange} style={styles.statGradient}>
               <MaterialCommunityIcons name="school-outline" size={32} color="white" />
               <Text style={styles.statNumberModern}>{dashboardData.totalClasses}</Text>
               <Text style={styles.statLabelModern}>Turmas</Text>
@@ -252,7 +289,7 @@ const AdminDashboard = ({ navigation }) => {
           </Animated.View>
 
           <Animated.View style={[styles.statCard, { opacity: animations.fadeAnim }]}>
-            <LinearGradient colors={['#9C27B0', '#7B1FA2']} style={styles.statGradient}>
+            <LinearGradient colors={ADMIN_COLORS.purple} style={styles.statGradient}>
               <MaterialCommunityIcons name="cash-multiple" size={32} color="white" />
               <Text style={styles.statNumberModern}>{dashboardData.pendingPayments}</Text>
               <Text style={styles.statLabelModern}>Pendências</Text>
@@ -328,53 +365,44 @@ const AdminDashboard = ({ navigation }) => {
           </Card.Content>
         </AnimatedCard>
 
-        {/* Ações Rápidas */}
-        <AnimatedCard delay={300} style={styles.card}>
+        {/* Ações Rápidas modernas com gradiente (responsivo 2/3 por linha) */}
+        <AnimatedCard delay={300} style={styles.modernCard}>
           <Card.Content>
-            <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
-              Ações Rápidas
-            </Title>
-            
-            <View style={styles.quickActionsGrid}>
-              <AnimatedButton 
-                mode="contained" 
-                onPress={() => navigation.navigate('Alunos')}
-                style={[styles.quickActionButton, { backgroundColor: '#2196F3' }]}
-                icon="account"
-                contentStyle={styles.quickActionContent}
-              >
-                Gerenciar Alunos
-              </AnimatedButton>
-              
-              <AnimatedButton 
-                mode="contained" 
-                onPress={() => navigation.navigate('Turmas')}
-                style={[styles.quickActionButton, { backgroundColor: '#4CAF50' }]}
-                icon="school"
-                contentStyle={styles.quickActionContent}
-              >
-                Gerenciar Turmas
-              </AnimatedButton>
-              
-              <AnimatedButton 
-                mode="contained" 
-                onPress={() => navigation.navigate('Gestão')}
-                style={[styles.quickActionButton, { backgroundColor: '#FF9800' }]}
-                icon="cog"
-                contentStyle={styles.quickActionContent}
-              >
-                Configurações
-              </AnimatedButton>
-              
-              <AnimatedButton 
-                mode="contained" 
-                onPress={() => navigation.navigate('Gestão')}
-                style={[styles.quickActionButton, { backgroundColor: '#9C27B0' }]}
-                icon="dumbbell"
-                contentStyle={styles.quickActionContent}
-              >
-                Modalidades
-              </AnimatedButton>
+            <View style={styles.modernCardHeader}>
+              <View style={styles.headerIconContainer}>
+                <MaterialCommunityIcons name="lightning-bolt" size={24} color={ADMIN_COLORS.accentWarning} />
+              </View>
+              <View>
+                <Title style={styles.modernCardTitle}>Ações Rápidas</Title>
+                <Text style={styles.modernCardSubtitle}>Acesso direto às principais funcionalidades</Text>
+              </View>
+            </View>
+
+            <View style={styles.modernQuickActions}>
+              {[
+                { key: 'students', title: 'Alunos', subtitle: 'Gerenciar alunos', icon: ADMIN_ICONS.quickActions.students, colors: ADMIN_COLORS.blue, onPress: () => navigation.navigate('Alunos') },
+                { key: 'classes', title: 'Turmas', subtitle: 'Gerenciar turmas', icon: ADMIN_ICONS.quickActions.classes, colors: ADMIN_COLORS.green, onPress: () => navigation.navigate('Turmas') },
+                { key: 'settings', title: 'Configurações', subtitle: 'Preferências e gestão', icon: ADMIN_ICONS.quickActions.settings, colors: ADMIN_COLORS.orange, onPress: () => navigation.navigate('Gestão') },
+                { key: 'modalities', title: 'Modalidades', subtitle: 'Configurar modalidades', icon: ADMIN_ICONS.quickActions.modalities, colors: ADMIN_COLORS.purple, onPress: () => navigation.navigate('Gestão') },
+              ].map((action, idx) => (
+                <Animated.View key={action.key} style={[styles.actionCard, { opacity: animations.fadeAnim, width: ResponsiveUtils.isTablet() ? '31%' : '48%' }]}>
+                  <LinearGradient colors={action.colors} style={styles.actionGradient}>
+                    <MaterialCommunityIcons name={action.icon} size={28} color="white" />
+                    <Text style={styles.actionTitle}>{action.title}</Text>
+                    <Text style={styles.actionSubtitle}>{action.subtitle}</Text>
+                    <AnimatedButton
+                      mode="contained"
+                      onPress={action.onPress}
+                      style={styles.modernActionButton}
+                      buttonColor="rgba(255,255,255,0.2)"
+                      textColor="white"
+                      compact
+                    >
+                      Abrir
+                    </AnimatedButton>
+                  </LinearGradient>
+                </Animated.View>
+              ))}
             </View>
           </Card.Content>
         </AnimatedCard>
@@ -464,6 +492,36 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  modernCard: {
+    margin: ResponsiveUtils.spacing.md,
+    marginBottom: ResponsiveUtils.spacing.md,
+    borderRadius: ResponsiveUtils.borderRadius.large,
+    ...ResponsiveUtils.elevation,
+  },
+  modernCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: ResponsiveUtils.spacing.md,
+  },
+  headerIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: ResponsiveUtils.spacing.md,
+  },
+  modernCardTitle: {
+    fontSize: ResponsiveUtils.fontSize.large,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 2,
+  },
+  modernCardSubtitle: {
+    fontSize: ResponsiveUtils.fontSize.small,
+    color: '#666',
   },
   // Header moderno
   headerContainer: {
@@ -657,19 +715,37 @@ const styles = StyleSheet.create({
   viewReportsButton: {
     marginTop: ResponsiveUtils.spacing.sm,
   },
-  quickActionsGrid: {
+  // Quick actions modernas
+  modernQuickActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: ResponsiveUtils.spacing.sm,
   },
-  quickActionButton: {
-    width: ResponsiveUtils.isTablet() ? '48%' : '48%',
+  actionCard: {
     marginBottom: ResponsiveUtils.spacing.sm,
+    borderRadius: ResponsiveUtils.borderRadius.medium,
+    overflow: 'hidden',
   },
-  quickActionContent: {
-    height: ResponsiveUtils.isTablet() ? 50 : 40,
-    paddingHorizontal: ResponsiveUtils.spacing.sm,
+  actionGradient: {
+    padding: ResponsiveUtils.spacing.md,
+    alignItems: 'center',
+    minHeight: 140,
+    justifyContent: 'space-between',
+  },
+  actionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 8,
+  },
+  actionSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modernActionButton: {
+    borderRadius: 20,
   },
   
   viewAllButton: {
@@ -678,6 +754,25 @@ const styles = StyleSheet.create({
   alertText: {
     color: '#FF9800',
     marginBottom: ResponsiveUtils.spacing.xs,
+  },
+  // Skeletons
+  skeletonBlock: {
+    backgroundColor: '#e0e0e0',
+    borderRadius: 8,
+  },
+  skeletonHeader: {
+    height: 90,
+    margin: ResponsiveUtils.spacing.md,
+  },
+  skeletonStat: {
+    height: 120,
+    width: '48%',
+    marginBottom: ResponsiveUtils.spacing.md,
+  },
+  skeletonAction: {
+    height: 140,
+    width: '48%',
+    marginBottom: ResponsiveUtils.spacing.sm,
   },
 });
 
