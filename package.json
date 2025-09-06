@@ -11,8 +11,7 @@
     "build:android:apk": "node scripts/build-android.js production-apk",
     "build:test": "node scripts/test-build.js",
     "build:preview": "node scripts/build-android.js preview",
-    "prebuild": "expo prebuild --clean",
-    "doctor": "expo doctor"
+    "prebuild": "expo prebuild --clean"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
@@ -47,7 +46,8 @@
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
     "react-native-vector-icons": "^10.3.0",
-    "react-native-web": "^0.20.0"
+    "react-native-web": "^0.20.0",
+    "react-native-svg": "15.11.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
