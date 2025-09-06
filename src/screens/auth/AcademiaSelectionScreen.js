@@ -128,11 +128,8 @@ export default function AcademiaSelectionScreen({ navigation }) {
       await updateAcademiaAssociation(academiaId);
       showSnackbar('Você foi associado à academia com sucesso! Redirecionando para o dashboard...', 'success');
       setTimeout(() => {
-        // Resetar a navegação para ir direto para o dashboard
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'MainTabs' }],
-        });
+        // Navegar para a tela principal - o AppNavigator irá detectar a mudança automaticamente
+        navigation.replace('Main');
       }, 2000);
     } catch (error) {
       console.error('Erro ao associar à academia:', error);
@@ -490,10 +487,11 @@ export default function AcademiaSelectionScreen({ navigation }) {
             mode="contained" 
             onPress={searchAcademiaByCode}
             loading={searchLoading}
-            disabled={searchLoading}
+            disabled={searchLoading || !searchCode.trim()}
             style={styles.searchButton}
+            icon={searchLoading ? undefined : "magnify"}
           >
-            Buscar Academia
+            {searchLoading ? 'Buscando...' : 'Buscar Academia'}
           </Button>
         </Card.Content>
       </Card>
