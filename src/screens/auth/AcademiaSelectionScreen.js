@@ -24,7 +24,7 @@ import PhonePicker from '../../components/PhonePicker';
 import ModalityPicker from '../../components/ModalityPicker';
 
 export default function AcademiaSelectionScreen({ navigation }) {
-  const { user, userProfile, updateAcademiaAssociation } = useAuth();
+  const { user, userProfile, updateAcademiaAssociation, logout } = useAuth();
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [academias, setAcademias] = useState([]);
