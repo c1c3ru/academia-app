@@ -5,10 +5,17 @@ import QRCode from 'react-native-qrcode-svg';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function QRCodeGenerator({ size = 200, showActions = true, academiaId, academiaNome }) {
-  const authContext = useAuth();
+  // Verificar se está dentro do AuthProvider antes de usar o hook
+  let authContext = null;
+  try {
+    authContext = useAuth();
+  } catch (error) {
+    console.log('QRCodeGenerator usado fora do AuthProvider, usando apenas props');
+  }
+  
   const [qrValue, setQrValue] = useState('');
 
-  // Usar dados passados como props ou do contexto
+  // Usar dados passados como props ou do contexto (se disponível)
   const academia = authContext?.academia;
   const finalAcademiaId = academiaId || academia?.id;
   const finalAcademiaNome = academiaNome || academia?.nome;
@@ -47,7 +54,7 @@ export default function QRCodeGenerator({ size = 200, showActions = true, academ
     }
   };
 
-  if (!academia || !qrValue) {
+  if (!finalAcademiaId || !qrValue) {
     return (
       <Card style={styles.container}>
         <Card.Content style={styles.content}>
@@ -65,7 +72,7 @@ export default function QRCodeGenerator({ size = 200, showActions = true, academ
         </Text>
         
         <Text variant="bodySmall" style={styles.subtitle}>
-          {academia.nome}
+          {finalAcademiaNome}
         </Text>
 
         <View style={styles.qrContainer}>

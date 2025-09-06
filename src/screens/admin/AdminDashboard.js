@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Animated, Dimensions, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Animated, Dimensions, Platform, TouchableOpacity } from 'react-native';
 import { 
   Card, 
   Title, 
@@ -11,7 +11,9 @@ import {
   Divider,
   Text,
   Surface,
-  List
+  List,
+  Modal,
+  Portal
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -22,9 +24,10 @@ import { firestoreService, paymentService, announcementService } from '../../ser
 import AnimatedCard from '../../components/AnimatedCard';
 import AnimatedButton from '../../components/AnimatedButton';
 import { useAnimation, ResponsiveUtils } from '../../utils/animations';
+import QRCodeGenerator from '../../components/QRCodeGenerator';
 
 const AdminDashboard = ({ navigation }) => {
-  const { user, userProfile, logout } = useAuth();
+  const { user, userProfile, logout, academia } = useAuth();
   const { animations, startEntryAnimation } = useAnimation();
   const scrollY = new Animated.Value(0);
   
@@ -40,6 +43,7 @@ const AdminDashboard = ({ navigation }) => {
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   // Skeleton pulse for loading state
   const [skeletonPulse] = useState(new Animated.Value(0.6));
@@ -210,6 +214,28 @@ const AdminDashboard = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Modal do QR Code */}
+      <Portal>
+        <Modal 
+          visible={showQRModal} 
+          onDismiss={() => setShowQRModal(false)}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <QRCodeGenerator 
+            academiaId={academia?.id}
+            academiaNome={academia?.nome}
+            size={200}
+            showActions={true}
+          />
+          <Button 
+            mode="outlined" 
+            onPress={() => setShowQRModal(false)}
+            style={styles.closeModalButton}
+          >
+            Fechar
+          </Button>
+        </Modal>
+      </Portal>
       <Animated.ScrollView 
         style={styles.scrollView}
         refreshControl={
@@ -249,13 +275,27 @@ const AdminDashboard = ({ navigation }) => {
                     <MaterialCommunityIcons name="circle" size={8} color="#4CAF50" />
                     <Text style={styles.statusText}>Online</Text>
                   </View>
+                  {/* Código da Academia */}
+                  {academia?.codigo && (
+                    <TouchableOpacity 
+                      style={styles.academiaCodeContainer}
+                      onPress={() => setShowQRModal(true)}
+                    >
+                      <MaterialCommunityIcons name="qrcode" size={16} color="rgba(255,255,255,0.9)" />
+                      <Text style={styles.academiaCodeText}>
+                        Código: {academia.codigo}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
                 <Animated.View style={{ opacity: animations.fadeAnim }}>
-                  <MaterialCommunityIcons 
-                    name="shield-crown" 
-                    size={24} 
-                    color="rgba(255,255,255,0.85)" 
-                  />
+                  <TouchableOpacity onPress={() => setShowQRModal(true)}>
+                    <MaterialCommunityIcons 
+                      name="qrcode-scan" 
+                      size={24} 
+                      color="rgba(255,255,255,0.85)" 
+                    />
+                  </TouchableOpacity>
                 </Animated.View>
               </View>
             </LinearGradient>
@@ -770,9 +810,37 @@ const styles = StyleSheet.create({
     marginBottom: ResponsiveUtils.spacing.md,
   },
   skeletonAction: {
-    height: 140,
+    height: 120,
     width: '48%',
-    marginBottom: ResponsiveUtils.spacing.sm,
+    borderRadius: ResponsiveUtils.borderRadius.medium,
+  },
+  
+  // Estilos do código da academia
+  academiaCodeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: 8,
+  },
+  academiaCodeText: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  
+  // Modal do QR Code
+  modalContainer: {
+    backgroundColor: 'white',
+    margin: 20,
+    borderRadius: 16,
+    padding: 20,
+  },
+  closeModalButton: {
+    marginTop: 16,
   },
 });
 
