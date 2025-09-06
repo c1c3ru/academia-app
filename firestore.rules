@@ -16,7 +16,7 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return isSignedIn() && getUserData().tipo == 'admin';
+      return isSignedIn() && (getUserData().tipo == 'admin' || getUserData().userType == 'admin');
     }
     
     function isInstructor() {
@@ -34,10 +34,12 @@ service cloud.firestore {
     
     // Coleção de academias
     match /academias/{academiaId} {
-      // Apenas membros da academia podem ler dados básicos
-      allow read: if isSignedIn() && isMemberOf(academiaId);
-      // Apenas admins podem modificar dados da academia
-      allow write: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
+      // Leitura: membros da academia ou qualquer usuário autenticado para busca por código
+      allow read: if isSignedIn() && (isMemberOf(academiaId) || true);
+      // Criação: qualquer usuário autenticado pode criar nova academia (temporário para debug)
+      allow create: if isSignedIn();
+      // Atualização/Exclusão: apenas admins membros da academia
+      allow update, delete: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
       
       // Subcoleção de alunos
       match /alunos/{alunoId} {
@@ -74,6 +76,24 @@ service cloud.firestore {
         allow read: if isSignedIn() && isMemberOf(academiaId);
         allow write: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
       }
+    }
+    
+    // Coleção de modalidades globais - leitura pública para criação de academias
+    match /modalities/{modalityId} {
+      allow read: if true; // Permite leitura pública para seleção durante criação de academia
+      allow write: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
+    }
+    
+    // Coleção de planos globais - leitura pública
+    match /plans/{planId} {
+      allow read: if true; // Permite leitura pública
+      allow write: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
+    }
+    
+    // Coleção de avisos globais - leitura pública
+    match /announcements/{announcementId} {
+      allow read: if true; // Permite leitura pública
+      allow write: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
     }
     
     // Coleção legacy 'users' - manter compatibilidade temporária

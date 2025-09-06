@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Alert } from 'react-native';
+import { View, ScrollView, Alert, Linking } from 'react-native';
 import { 
   Text, 
   Card, 
@@ -9,11 +9,19 @@ import {
   Divider,
   ActivityIndicator,
   Chip,
-  FAB
+  FAB,
+  Modal,
+  Portal,
+  Snackbar
 } from 'react-native-paper';
 import { collection, query, where, getDocs, doc, getDoc, addDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { InviteService } from '../../services/inviteService';
+import QRCodeScanner from '../../components/QRCodeScanner';
+import CountryStatePicker from '../../components/CountryStatePicker';
+import PhonePicker from '../../components/PhonePicker';
+import ModalityPicker from '../../components/ModalityPicker';
 
 export default function AcademiaSelectionScreen({ navigation }) {
   const { user, userProfile, updateAcademiaAssociation } = useAuth();
@@ -24,11 +32,52 @@ export default function AcademiaSelectionScreen({ navigation }) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newAcademiaData, setNewAcademiaData] = useState({
     nome: '',
-    endereco: '',
-    telefone: '',
     email: '',
-    plano: 'free'
+    plano: 'free',
+    // Endereço completo
+    endereco: {
+      cep: '',
+      rua: '',
+      numero: '',
+      complemento: '',
+      bairro: '',
+      cidade: '',
+      estado: '',
+      estadoNome: '',
+      pais: 'BR',
+      paisNome: 'Brasil'
+    },
+    // Telefone com código internacional
+    telefone: {
+      codigoPais: 'BR',
+      numero: ''
+    },
+    // Modalidades oferecidas
+    modalidades: []
   });
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [inviteLink, setInviteLink] = useState('');
+  const [showInviteLinkModal, setShowInviteLinkModal] = useState(false);
+  
+  // Estados para feedback visual
+  const [snackbar, setSnackbar] = useState({
+    visible: false,
+    message: '',
+    type: 'success' // 'success', 'error', 'info'
+  });
+
+  // Funções para controlar o Snackbar
+  const showSnackbar = (message, type = 'success') => {
+    setSnackbar({
+      visible: true,
+      message,
+      type
+    });
+  };
+
+  const hideSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, visible: false }));
+  };
 
   useEffect(() => {
     // Se o usuário já tem academia associada, redirecionar
@@ -39,7 +88,7 @@ export default function AcademiaSelectionScreen({ navigation }) {
 
   const searchAcademiaByCode = async () => {
     if (!searchCode.trim()) {
-      Alert.alert('Erro', 'Digite o código da academia');
+      showSnackbar('Digite o código da academia', 'error');
       return;
     }
 
@@ -53,75 +102,233 @@ export default function AcademiaSelectionScreen({ navigation }) {
           id: academiaDoc.id,
           ...academiaData
         }]);
+        showSnackbar('Academia encontrada com sucesso!', 'success');
       } else {
-        Alert.alert('Academia não encontrada', 'Verifique o código e tente novamente');
+        showSnackbar('Academia não encontrada. Verifique o código e tente novamente', 'error');
         setAcademias([]);
       }
     } catch (error) {
       console.error('Erro ao buscar academia:', error);
-      Alert.alert('Erro', 'Erro ao buscar academia');
+      showSnackbar('Erro ao buscar academia. Tente novamente', 'error');
     } finally {
       setSearchLoading(false);
     }
   };
 
-  const joinAcademia = async (academiaId) => {
+  const joinAcademia = async (academiaId, tipo = 'aluno') => {
     setLoading(true);
     try {
       await updateAcademiaAssociation(academiaId);
-      Alert.alert(
-        'Sucesso!', 
-        'Você foi associado à academia com sucesso!',
-        [{ text: 'OK', onPress: () => navigation.replace('Main') }]
-      );
+      showSnackbar('Você foi associado à academia com sucesso! Redirecionando para o dashboard...', 'success');
+      setTimeout(() => {
+        // Resetar a navegação para ir direto para o dashboard
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainTabs' }],
+        });
+      }, 2000);
     } catch (error) {
       console.error('Erro ao associar à academia:', error);
-      Alert.alert('Erro', 'Erro ao associar à academia');
+      showSnackbar('Erro ao associar à academia. Tente novamente', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const createNewAcademia = async () => {
-    // Verificar se o usuário tem permissão para criar academia
-    if (userProfile?.tipo !== 'admin') {
-      Alert.alert(
-        'Permissão Negada', 
-        'Apenas usuários com perfil de administrador podem criar uma nova academia.'
-      );
-      return;
-    }
+  const handleQRCodeScan = async (data) => {
+    try {
+      const urlInfo = InviteService.parseInviteUrl(data);
+      
+      if (!urlInfo) {
+        Alert.alert('Erro', 'QR Code inválido');
+        return;
+      }
 
-    if (!newAcademiaData.nome.trim()) {
-      Alert.alert('Erro', 'Nome da academia é obrigatório');
-      return;
+      if (urlInfo.type === 'join') {
+        // Link direto de associação
+        await joinAcademia(urlInfo.academiaId);
+      } else if (urlInfo.type === 'invite') {
+        // Link de convite
+        await processInviteLink(urlInfo.token);
+      }
+    } catch (error) {
+      console.error('Erro ao processar QR Code:', error);
+      Alert.alert('Erro', 'Erro ao processar QR Code');
+    } finally {
+      setShowQRScanner(false);
     }
+  };
 
+  const processInviteLink = async (token) => {
     setLoading(true);
     try {
-      // Criar nova academia
-      const academiaRef = await addDoc(collection(db, 'academias'), {
-        ...newAcademiaData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        ownerId: user.uid,
-        status: 'ativa'
-      });
+      const invite = await InviteService.getInviteByToken(token);
+      
+      if (!invite) {
+        Alert.alert('Erro', 'Convite inválido ou expirado');
+        return;
+      }
 
-      // Associar usuário à academia
-      await updateAcademiaAssociation(academiaRef.id);
-
-      Alert.alert(
-        'Academia Criada!', 
-        'Sua academia foi criada com sucesso!',
-        [{ text: 'OK', onPress: () => navigation.replace('Main') }]
-      );
+      const result = await InviteService.acceptInvite(invite.id, user.uid);
+      await joinAcademia(result.academiaId, result.tipo);
     } catch (error) {
-      console.error('Erro ao criar academia:', error);
-      Alert.alert('Erro', 'Erro ao criar academia');
+      console.error('Erro ao processar convite:', error);
+      Alert.alert('Erro', 'Erro ao processar convite');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleInviteLinkSubmit = async () => {
+    if (!inviteLink.trim()) {
+      Alert.alert('Erro', 'Digite o link do convite');
+      return;
+    }
+
+    try {
+      const urlInfo = InviteService.parseInviteUrl(inviteLink.trim());
+      
+      if (!urlInfo) {
+        Alert.alert('Erro', 'Link inválido');
+        return;
+      }
+
+      if (urlInfo.type === 'join') {
+        await joinAcademia(urlInfo.academiaId);
+      } else if (urlInfo.type === 'invite') {
+        await processInviteLink(urlInfo.token);
+      }
+    } catch (error) {
+      console.error('Erro ao processar link:', error);
+      Alert.alert('Erro', 'Erro ao processar link do convite');
+    } finally {
+      setShowInviteLinkModal(false);
+      setInviteLink('');
+    }
+  };
+
+  const createNewAcademia = async () => {
+    // Debug: verificar dados do usuário
+    console.log('🔍 Debug - userProfile:', userProfile);
+    console.log('🔍 Debug - userProfile.tipo:', userProfile?.tipo);
+    console.log('🔍 Debug - userProfile.userType:', userProfile?.userType);
+    
+    // Verificar se o usuário tem permissão para criar academia
+    // Aceitar tanto 'admin' quanto 'userType' === 'admin'
+    const isAdmin = userProfile?.tipo === 'admin' || userProfile?.userType === 'admin';
+    
+    if (!isAdmin) {
+      Alert.alert(
+        'Permissão Negada', 
+        `Apenas usuários com perfil de administrador podem criar uma nova academia.\n\nSeu perfil atual: ${userProfile?.tipo || userProfile?.userType || 'não definido'}`
+      );
+      return;
+    }
+
+    const createAcademia = async () => {
+      // Validações obrigatórias
+      if (!newAcademiaData.nome.trim()) {
+        showSnackbar('Nome da academia é obrigatório', 'error');
+        return;
+      }
+
+      if (!newAcademiaData.email.trim()) {
+        showSnackbar('Email é obrigatório', 'error');
+        return;
+      }
+
+      if (!newAcademiaData.endereco.cidade.trim()) {
+        showSnackbar('Cidade é obrigatória', 'error');
+        return;
+      }
+
+      if (!newAcademiaData.endereco.rua.trim()) {
+        showSnackbar('Rua/Avenida é obrigatória', 'error');
+        return;
+      }
+
+      if (!newAcademiaData.telefone.numero.trim()) {
+        showSnackbar('Telefone é obrigatório', 'error');
+        return;
+      }
+
+      // Validação de email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newAcademiaData.email.trim())) {
+        showSnackbar('Email inválido', 'error');
+        return;
+      }
+
+      setLoading(true);
+      try {
+        // Gerar código único para a academia
+        const codigoGerado = Math.random().toString(36).substr(2, 8).toUpperCase();
+        
+        // Criar nova academia no Firestore com estrutura completa
+        const academiaRef = await addDoc(collection(db, 'academias'), {
+          nome: newAcademiaData.nome.trim(),
+          email: newAcademiaData.email.trim(),
+          endereco: {
+            cep: newAcademiaData.endereco.cep.trim(),
+            rua: newAcademiaData.endereco.rua.trim(),
+            numero: newAcademiaData.endereco.numero.trim(),
+            complemento: newAcademiaData.endereco.complemento.trim(),
+            bairro: newAcademiaData.endereco.bairro.trim(),
+            cidade: newAcademiaData.endereco.cidade.trim(),
+            estado: newAcademiaData.endereco.estado,
+            estadoNome: newAcademiaData.endereco.estadoNome,
+            pais: newAcademiaData.endereco.pais,
+            paisNome: newAcademiaData.endereco.paisNome
+          },
+          telefone: {
+            codigoPais: newAcademiaData.telefone.codigoPais,
+            numero: newAcademiaData.telefone.numero.trim()
+          },
+          modalidades: newAcademiaData.modalidades,
+          plano: newAcademiaData.plano,
+          adminId: user.uid,
+          criadoEm: new Date(),
+          ativo: true,
+          codigo: codigoGerado
+        });
+        
+        // Associar usuário à academia criada
+        await updateAcademiaAssociation(academiaRef.id);
+        
+        // Mostrar o código da academia criada
+        Alert.alert(
+          'Academia Criada com Sucesso! 🎉',
+          `Sua academia foi criada!\n\n📋 CÓDIGO DA ACADEMIA: ${codigoGerado}\n\n⚠️ IMPORTANTE: Anote este código! Os usuários precisarão dele para se associar à sua academia.\n\nVocê será redirecionado para o dashboard em alguns segundos.`,
+          [
+            {
+              text: 'Copiar Código',
+              onPress: () => {
+                // Para React Native, seria necessário usar Clipboard
+                // Por enquanto, apenas mostra o código
+                showSnackbar(`Código copiado: ${codigoGerado}`, 'success');
+              }
+            },
+            {
+              text: 'OK',
+              onPress: () => {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'MainTabs' }],
+                });
+              }
+            }
+          ],
+          { cancelable: false }
+        );
+      } catch (error) {
+        console.error('Erro ao criar academia:', error);
+        showSnackbar('Não foi possível criar a academia. Tente novamente', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    createAcademia();
   };
 
   const renderAcademiaCard = (academia) => (
@@ -131,11 +338,17 @@ export default function AcademiaSelectionScreen({ navigation }) {
           {academia.nome}
         </Text>
         <Text variant="bodyMedium" style={styles.academiaAddress}>
-          📍 {academia.endereco}
+          📍 {typeof academia.endereco === 'object' 
+            ? `${academia.endereco.rua}${academia.endereco.numero ? ', ' + academia.endereco.numero : ''}, ${academia.endereco.cidade} - ${academia.endereco.estadoNome || academia.endereco.estado}, ${academia.endereco.paisNome || academia.endereco.pais}`
+            : academia.endereco || 'Endereço não informado'
+          }
         </Text>
         {academia.telefone && (
           <Text variant="bodySmall" style={styles.academiaContact}>
-            📞 {academia.telefone}
+            📞 {typeof academia.telefone === 'object' 
+              ? `${academia.telefone.codigoPais === 'BR' ? '+55' : academia.telefone.codigoPais} ${academia.telefone.numero}`
+              : academia.telefone
+            }
           </Text>
         )}
         {academia.email && (
@@ -186,19 +399,84 @@ export default function AcademiaSelectionScreen({ navigation }) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text variant="headlineMedium" style={styles.title}>
-          Selecionar Academia
-        </Text>
-        <Text variant="bodyMedium" style={styles.subtitle}>
-          Para continuar, você precisa se associar a uma academia
-        </Text>
+        <View style={styles.headerContent}>
+          <Button
+            mode="text"
+            onPress={() => {
+              // Sempre fazer logout ao clicar em voltar
+              Alert.alert(
+                'Sair',
+                'Deseja sair e voltar para o login?',
+                [
+                  { text: 'Cancelar', style: 'cancel' },
+                  { 
+                    text: 'Sair', 
+                    onPress: async () => {
+                      try {
+                        await logout();
+                      } catch (error) {
+                        console.error('Erro ao fazer logout:', error);
+                        showSnackbar('Erro ao sair. Tente novamente.', 'error');
+                      }
+                    }
+                  }
+                ]
+              );
+            }}
+            icon="arrow-left"
+            textColor="white"
+            style={styles.backButton}
+          >
+            Voltar
+          </Button>
+          <View style={styles.headerTextContainer}>
+            <Text variant="headlineMedium" style={styles.title}>
+              Selecionar Academia
+            </Text>
+            <Text variant="bodyMedium" style={styles.subtitle}>
+              Para continuar, você precisa se associar a uma academia
+            </Text>
+          </View>
+        </View>
       </View>
+
+      {/* Opções de Associação */}
+      <Card style={styles.optionsCard}>
+        <Card.Content>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Como você quer se associar?
+          </Text>
+          <Text variant="bodySmall" style={styles.sectionDescription}>
+            Escolha uma das opções abaixo
+          </Text>
+          
+          <View style={styles.optionButtons}>
+            <Button 
+              mode="contained" 
+              onPress={() => setShowQRScanner(true)}
+              icon="qrcode-scan"
+              style={styles.optionButton}
+            >
+              Escanear QR Code
+            </Button>
+            
+            <Button 
+              mode="outlined" 
+              onPress={() => setShowInviteLinkModal(true)}
+              icon="link"
+              style={styles.optionButton}
+            >
+              Link de Convite
+            </Button>
+          </View>
+        </Card.Content>
+      </Card>
 
       {/* Buscar Academia por Código */}
       <Card style={styles.searchCard}>
         <Card.Content>
           <Text variant="titleMedium" style={styles.sectionTitle}>
-            Buscar Academia
+            Buscar por Código
           </Text>
           <Text variant="bodySmall" style={styles.sectionDescription}>
             Digite o código fornecido pela academia
@@ -238,7 +516,7 @@ export default function AcademiaSelectionScreen({ navigation }) {
       <Divider style={styles.divider} />
 
       {/* Criar Nova Academia - Apenas para Admins */}
-      {userProfile?.tipo === 'admin' && (
+      {(userProfile?.tipo === 'admin' || userProfile?.userType === 'admin') && (
         <Card style={styles.createCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -267,30 +545,129 @@ export default function AcademiaSelectionScreen({ navigation }) {
               />
               
               <TextInput
-                label="Endereço"
-                value={newAcademiaData.endereco}
-                onChangeText={(text) => setNewAcademiaData(prev => ({ ...prev, endereco: text }))}
-                mode="outlined"
-                style={styles.input}
-                multiline
-              />
-              
-              <TextInput
-                label="Telefone"
-                value={newAcademiaData.telefone}
-                onChangeText={(text) => setNewAcademiaData(prev => ({ ...prev, telefone: text }))}
-                mode="outlined"
-                style={styles.input}
-                keyboardType="phone-pad"
-              />
-              
-              <TextInput
-                label="Email"
+                label="Email *"
                 value={newAcademiaData.email}
                 onChangeText={(text) => setNewAcademiaData(prev => ({ ...prev, email: text }))}
                 mode="outlined"
                 style={styles.input}
                 keyboardType="email-address"
+              />
+
+              {/* Seleção de País e Estado */}
+              <CountryStatePicker
+                selectedCountry={newAcademiaData.endereco.pais}
+                selectedState={newAcademiaData.endereco.estado}
+                onCountryChange={(code, name) => 
+                  setNewAcademiaData(prev => ({
+                    ...prev,
+                    endereco: { ...prev.endereco, pais: code, paisNome: name, estado: '', estadoNome: '' }
+                  }))
+                }
+                onStateChange={(code, name) => 
+                  setNewAcademiaData(prev => ({
+                    ...prev,
+                    endereco: { ...prev.endereco, estado: code, estadoNome: name }
+                  }))
+                }
+              />
+
+              {/* Campos de Endereço */}
+              <View style={styles.addressRow}>
+                <TextInput
+                  label="CEP/Código Postal"
+                  value={newAcademiaData.endereco.cep}
+                  onChangeText={(text) => setNewAcademiaData(prev => ({
+                    ...prev,
+                    endereco: { ...prev.endereco, cep: text }
+                  }))}
+                  mode="outlined"
+                  style={[styles.input, styles.halfInput]}
+                  keyboardType="numeric"
+                />
+                
+                <TextInput
+                  label="Cidade *"
+                  value={newAcademiaData.endereco.cidade}
+                  onChangeText={(text) => setNewAcademiaData(prev => ({
+                    ...prev,
+                    endereco: { ...prev.endereco, cidade: text }
+                  }))}
+                  mode="outlined"
+                  style={[styles.input, styles.halfInput]}
+                />
+              </View>
+
+              <TextInput
+                label="Rua/Avenida *"
+                value={newAcademiaData.endereco.rua}
+                onChangeText={(text) => setNewAcademiaData(prev => ({
+                  ...prev,
+                  endereco: { ...prev.endereco, rua: text }
+                }))}
+                mode="outlined"
+                style={styles.input}
+              />
+
+              <View style={styles.addressRow}>
+                <TextInput
+                  label="Número"
+                  value={newAcademiaData.endereco.numero}
+                  onChangeText={(text) => setNewAcademiaData(prev => ({
+                    ...prev,
+                    endereco: { ...prev.endereco, numero: text }
+                  }))}
+                  mode="outlined"
+                  style={[styles.input, styles.quarterInput]}
+                  keyboardType="numeric"
+                />
+                
+                <TextInput
+                  label="Complemento"
+                  value={newAcademiaData.endereco.complemento}
+                  onChangeText={(text) => setNewAcademiaData(prev => ({
+                    ...prev,
+                    endereco: { ...prev.endereco, complemento: text }
+                  }))}
+                  mode="outlined"
+                  style={[styles.input, styles.threeQuarterInput]}
+                />
+              </View>
+
+              <TextInput
+                label="Bairro"
+                value={newAcademiaData.endereco.bairro}
+                onChangeText={(text) => setNewAcademiaData(prev => ({
+                  ...prev,
+                  endereco: { ...prev.endereco, bairro: text }
+                }))}
+                mode="outlined"
+                style={styles.input}
+              />
+
+              {/* Campo de Telefone */}
+              <PhonePicker
+                selectedCountry={newAcademiaData.telefone.codigoPais}
+                phoneNumber={newAcademiaData.telefone.numero}
+                onPhoneChange={(countryCode, number) => 
+                  setNewAcademiaData(prev => ({
+                    ...prev,
+                    telefone: { codigoPais: countryCode, numero: number }
+                  }))
+                }
+                label="Telefone *"
+                placeholder="Digite o número"
+              />
+
+              {/* Campo de Modalidades */}
+              <ModalityPicker
+                selectedModalities={newAcademiaData.modalidades}
+                onModalitiesChange={(modalidades) => 
+                  setNewAcademiaData(prev => ({
+                    ...prev,
+                    modalidades: modalidades
+                  }))
+                }
+                label="Modalidades Oferecidas"
               />
 
               <View style={styles.buttonRow}>
@@ -316,7 +693,7 @@ export default function AcademiaSelectionScreen({ navigation }) {
       )}
 
       {/* Mensagem para usuários não-admin */}
-      {userProfile?.tipo !== 'admin' && (
+      {!(userProfile?.tipo === 'admin' || userProfile?.userType === 'admin') && (
         <Card style={styles.createCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -331,6 +708,86 @@ export default function AcademiaSelectionScreen({ navigation }) {
           </Card.Content>
         </Card>
       )}
+
+      {/* Modal QR Scanner */}
+      <Portal>
+        <Modal 
+          visible={showQRScanner} 
+          onDismiss={() => setShowQRScanner(false)}
+          contentContainerStyle={styles.qrModal}
+        >
+          <QRCodeScanner 
+            onScan={handleQRCodeScan}
+            onCancel={() => setShowQRScanner(false)}
+          />
+        </Modal>
+      </Portal>
+
+      {/* Modal Link de Convite */}
+      <Portal>
+        <Modal 
+          visible={showInviteLinkModal} 
+          onDismiss={() => setShowInviteLinkModal(false)}
+          contentContainerStyle={styles.modal}
+        >
+          <Text variant="titleLarge" style={styles.modalTitle}>
+            Link de Convite
+          </Text>
+          
+          <Text variant="bodyMedium" style={styles.modalDescription}>
+            Cole aqui o link de convite que você recebeu
+          </Text>
+          
+          <TextInput
+            label="Link do Convite"
+            value={inviteLink}
+            onChangeText={setInviteLink}
+            mode="outlined"
+            style={styles.input}
+            placeholder="https://academia-app.com/invite/..."
+            multiline
+          />
+          
+          <View style={styles.modalActions}>
+            <Button 
+              mode="outlined" 
+              onPress={() => {
+                setShowInviteLinkModal(false);
+                setInviteLink('');
+              }}
+              style={styles.modalButton}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              mode="contained" 
+              onPress={handleInviteLinkSubmit}
+              style={styles.modalButton}
+            >
+              Confirmar
+            </Button>
+          </View>
+        </Modal>
+      </Portal>
+
+      {/* Snackbar para feedback visual */}
+      <Snackbar
+        visible={snackbar.visible}
+        onDismiss={hideSnackbar}
+        duration={4000}
+        style={[
+          styles.snackbar,
+          snackbar.type === 'success' && styles.snackbarSuccess,
+          snackbar.type === 'error' && styles.snackbarError,
+          snackbar.type === 'info' && styles.snackbarInfo
+        ]}
+        action={{
+          label: 'Fechar',
+          onPress: hideSnackbar,
+        }}
+      >
+        {snackbar.message}
+      </Snackbar>
     </ScrollView>
   );
 }
@@ -353,6 +810,18 @@ const styles = {
     padding: 24,
     backgroundColor: '#6200ee',
   },
+  headerContent: {
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    left: -16,
+    top: -8,
+    zIndex: 1,
+  },
+  headerTextContainer: {
+    alignItems: 'center',
+  },
   title: {
     color: 'white',
     fontWeight: 'bold',
@@ -363,6 +832,10 @@ const styles = {
     textAlign: 'center',
     marginTop: 8,
     opacity: 0.9,
+  },
+  optionsCard: {
+    margin: 16,
+    marginBottom: 8,
   },
   searchCard: {
     margin: 16,
@@ -382,6 +855,23 @@ const styles = {
   },
   input: {
     marginBottom: 12,
+  },
+  addressRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  halfInput: {
+    flex: 1,
+    marginBottom: 0,
+  },
+  quarterInput: {
+    flex: 0.3,
+    marginBottom: 0,
+  },
+  threeQuarterInput: {
+    flex: 0.7,
+    marginBottom: 0,
   },
   searchButton: {
     marginTop: 8,
@@ -436,5 +926,55 @@ const styles = {
   },
   divider: {
     marginVertical: 16,
+  },
+  optionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  optionButton: {
+    flex: 1,
+  },
+  modal: {
+    backgroundColor: 'white',
+    padding: 24,
+    margin: 20,
+    borderRadius: 12,
+  },
+  qrModal: {
+    backgroundColor: 'white',
+    margin: 20,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  modalTitle: {
+    textAlign: 'center',
+    marginBottom: 16,
+    fontWeight: 'bold',
+  },
+  modalDescription: {
+    textAlign: 'center',
+    opacity: 0.7,
+    marginBottom: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+  },
+  modalButton: {
+    flex: 1,
+  },
+  snackbar: {
+    marginBottom: 16,
+  },
+  snackbarSuccess: {
+    backgroundColor: '#4caf50',
+  },
+  snackbarError: {
+    backgroundColor: '#f44336',
+  },
+  snackbarInfo: {
+    backgroundColor: '#2196f3',
   },
 };

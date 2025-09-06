@@ -39,6 +39,7 @@ import EditClassScreen from '../screens/admin/EditClassScreen';
 import AddStudentScreen from '../screens/admin/AddStudentScreen';
 import EditStudentScreen from '../screens/admin/EditStudentScreen';
 import ReportsScreen from '../screens/admin/ReportsScreen';
+import InviteManagement from '../screens/admin/InviteManagement';
 
 // Telas Compartilhadas
 import ProfileScreen from '../screens/shared/ProfileScreen';
@@ -351,6 +352,8 @@ const AdminTabNavigator = () => (
             iconName = focused ? 'school' : 'school-outline';
           } else if (route.name === 'Gestão') {
             iconName = focused ? 'settings' : 'settings-outline';
+          } else if (route.name === 'Convites') {
+            iconName = focused ? 'mail' : 'mail-outline';
           }
         return <Ionicons name={iconName} size={size} color={color} />;
       },
@@ -377,6 +380,11 @@ const AdminTabNavigator = () => (
       name="Gestão" 
       component={AdminModalities}
       options={{ title: 'Configurações' }}
+    />
+    <Tab.Screen 
+      name="Convites" 
+      component={InviteManagement}
+      options={{ title: 'Gerenciar Convites' }}
     />
   </Tab.Navigator>
 );
@@ -455,7 +463,9 @@ const AppNavigator = () => {
     hasUserProfile: !!userProfile,
     hasAcademia: !!academia,
     userEmail: user?.email,
-    userType: userProfile?.tipo,
+    tipo: userProfile?.tipo,
+    userType: userProfile?.userType,
+    finalUserType: userProfile?.userType || userProfile?.tipo || 'student',
     academiaId: userProfile?.academiaId
   });
 
@@ -498,11 +508,18 @@ const AppNavigator = () => {
     return <LoadingScreen />;
   }
 
+  // Determinar tipo de usuário (userType é o campo principal)
+  const userType = userProfile.userType || userProfile.tipo || 'student';
+  
   // Usuário completo com academia, mostrar app principal
-  console.log('🧭 AppNavigator: Renderizando MainNavigator para:', userProfile.tipo);
+  console.log('🧭 AppNavigator: Renderizando MainNavigator para:', userType, {
+    tipo: userProfile.tipo,
+    userType: userProfile.userType,
+    finalUserType: userType
+  });
   return (
     <NavigationContainer>
-      <MainNavigator userType={userProfile.tipo} />
+      <MainNavigator userType={userType} />
     </NavigationContainer>
   );
 };
