@@ -94,9 +94,16 @@ export default function AcademiaSelectionScreen({ navigation }) {
 
     setSearchLoading(true);
     try {
-      const academiaDoc = await getDoc(doc(db, 'academias', searchCode.trim()));
+      // Buscar por campo 'codigo' em vez de usar como ID do documento
+      const q = query(
+        collection(db, 'academias'),
+        where('codigo', '==', searchCode.trim().toUpperCase())
+      );
       
-      if (academiaDoc.exists()) {
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const academiaDoc = querySnapshot.docs[0];
         const academiaData = academiaDoc.data();
         setAcademias([{
           id: academiaDoc.id,
