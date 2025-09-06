@@ -23,6 +23,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const [academia, setAcademia] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,9 +36,10 @@ export const AuthProvider = ({ children }) => {
         // Buscar perfil do usuário no Firestore
         await fetchUserProfile(firebaseUser.uid);
       } else {
-        console.log('🔐 AuthStateChanged: Usuário deslogado, limpando states');
+        console.log('🔐 AuthContext: Usuário deslogado, limpando estados');
         setUser(null);
         setUserProfile(null);
+        setAcademia(null);
       }
       setLoading(false);
     });
@@ -47,12 +49,41 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserProfile = async (userId) => {
     try {
-      const userDoc = await getDoc(doc(db, 'users', userId));
+      // Primeiro tenta buscar na nova estrutura 'usuarios'
+      let userDoc = await getDoc(doc(db, 'usuarios', userId));
+      
+      // Se não encontrar, tenta na estrutura legacy 'users'
+      if (!userDoc.exists()) {
+        userDoc = await getDoc(doc(db, 'users', userId));
+      }
+      
       if (userDoc.exists()) {
-        setUserProfile(userDoc.data());
+        const userData = userDoc.data();
+        setUserProfile(userData);
+        
+        // Se o usuário tem academiaId, buscar dados da academia
+        if (userData.academiaId) {
+          await fetchAcademiaData(userData.academiaId);
+        } else {
+          setAcademia(null);
+        }
       }
     } catch (error) {
       console.error('Erro ao buscar perfil do usuário:', error);
+    }
+  };
+
+  const fetchAcademiaData = async (academiaId) => {
+    try {
+      const academiaDoc = await getDoc(doc(db, 'academias', academiaId));
+      if (academiaDoc.exists()) {
+        setAcademia({
+          id: academiaId,
+          ...academiaDoc.data()
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao buscar dados da academia:', error);
     }
   };
 
@@ -60,10 +91,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
       
-      // Criar perfil do usuário no Firestore
-      await setDoc(doc(db, 'users', firebaseUser.uid), {
+      // Criar perfil do usuário na nova estrutura 'usuarios'
+      await setDoc(doc(db, 'usuarios', firebaseUser.uid), {
         ...userData,
         email,
+        tipo: userData.tipo || 'aluno', // Padrão para aluno
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -126,15 +158,21 @@ export const AuthProvider = ({ children }) => {
       const credential = GoogleAuthProvider.credential(googleCredential);
       const { user: firebaseUser } = await signInWithCredential(auth, credential);
       
-      // Verificar se o usuário já existe no Firestore
-      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      // Verificar se o usuário já existe no Firestore (nova estrutura)
+      let userDoc = await getDoc(doc(db, 'usuarios', firebaseUser.uid));
+      
+      // Se não existir na nova estrutura, verificar na legacy
       if (!userDoc.exists()) {
-        // Criar perfil básico para usuário do Google
-        await setDoc(doc(db, 'users', firebaseUser.uid), {
+        userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      }
+      
+      if (!userDoc.exists()) {
+        // Criar perfil básico para usuário do Google na nova estrutura
+        await setDoc(doc(db, 'usuarios', firebaseUser.uid), {
           name: firebaseUser.displayName,
           email: firebaseUser.email,
           photoURL: firebaseUser.photoURL,
-          userType: 'student', // Padrão para novos usuários
+          tipo: 'aluno', // Padrão para novos usuários
           createdAt: new Date(),
           updatedAt: new Date()
         });
@@ -159,6 +197,7 @@ export const AuthProvider = ({ children }) => {
       console.log('🔐 AuthContext: Limpando estados locais...');
       setUser(null);
       setUserProfile(null);
+      setAcademia(null);
       
       console.log('🔐 AuthContext: Logout completo - estados limpos');
     } catch (error) {
@@ -175,7 +214,8 @@ export const AuthProvider = ({ children }) => {
   const updateUserProfile = async (updates) => {
     try {
       if (user) {
-        await setDoc(doc(db, 'users', user.uid), {
+        // Atualizar na nova estrutura 'usuarios'
+        await setDoc(doc(db, 'usuarios', user.uid), {
           ...userProfile,
           ...updates,
           updatedAt: new Date()
@@ -188,16 +228,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateAcademiaAssociation = async (academiaId) => {
+    try {
+      if (user) {
+        await updateUserProfile({ academiaId });
+        await fetchAcademiaData(academiaId);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const value = {
     user,
     userProfile,
+    academia,
     loading,
     signUp,
     signIn,
     signInWithGoogle,
     logout,
     updateUserProfile,
-    fetchUserProfile
+    updateAcademiaAssociation,
+    fetchUserProfile,
+    fetchAcademiaData
   };
 
   return (

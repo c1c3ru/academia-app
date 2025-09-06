@@ -13,6 +13,7 @@ import UniversalHeader from '../components/UniversalHeader';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import AcademiaSelectionScreen from '../screens/auth/AcademiaSelectionScreen';
 
 // Telas do Aluno
 import StudentDashboard from '../screens/student/StudentDashboard';
@@ -393,6 +394,7 @@ const AuthNavigator = () => {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="AcademiaSelection" component={AcademiaSelectionScreen} />
     </Stack.Navigator>
   );
 };
@@ -445,14 +447,16 @@ const MainNavigator = ({ userType }) => {
 
 // Navegador Principal da Aplicação
 const AppNavigator = () => {
-  const { user, userProfile, loading } = useAuth();
+  const { user, userProfile, academia, loading } = useAuth();
 
   console.log('🧭 AppNavigator: Estado atual:', {
     loading,
     hasUser: !!user,
     hasUserProfile: !!userProfile,
+    hasAcademia: !!academia,
     userEmail: user?.email,
-    userType: userProfile?.userType
+    userType: userProfile?.tipo,
+    academiaId: userProfile?.academiaId
   });
 
   if (loading) {
@@ -460,14 +464,8 @@ const AppNavigator = () => {
     return <LoadingScreen />;
   }
 
-  if (user && userProfile) {
-    console.log('🧭 AppNavigator: Renderizando MainNavigator para:', userProfile.userType);
-    return (
-      <NavigationContainer>
-        <MainNavigator userType={userProfile.userType} />
-      </NavigationContainer>
-    );
-  } else {
+  // Se usuário não está logado, mostrar telas de autenticação
+  if (!user) {
     console.log('🧭 AppNavigator: Renderizando AuthNavigator (usuário não logado)');
     return (
       <NavigationContainer>
@@ -475,6 +473,38 @@ const AppNavigator = () => {
       </NavigationContainer>
     );
   }
+
+  // Se usuário está logado mas não tem perfil, mostrar loading
+  if (!userProfile) {
+    console.log('🧭 AppNavigator: Carregando perfil do usuário...');
+    return <LoadingScreen />;
+  }
+
+  // Se usuário não tem academia associada, mostrar tela de seleção
+  if (!userProfile.academiaId) {
+    console.log('🧭 AppNavigator: Usuário sem academia, mostrando seleção');
+    return (
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="AcademiaSelection" component={AcademiaSelectionScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
+
+  // Se tem academia mas dados não carregaram ainda, mostrar loading
+  if (!academia) {
+    console.log('🧭 AppNavigator: Carregando dados da academia...');
+    return <LoadingScreen />;
+  }
+
+  // Usuário completo com academia, mostrar app principal
+  console.log('🧭 AppNavigator: Renderizando MainNavigator para:', userProfile.tipo);
+  return (
+    <NavigationContainer>
+      <MainNavigator userType={userProfile.tipo} />
+    </NavigationContainer>
+  );
 };
 
 export default AppNavigator;

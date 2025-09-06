@@ -2,9 +2,83 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Regras temporárias para criação inicial de dados
-    match /{document=**} {
-      allow read, write: if true;
+    // Funções auxiliares
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+    
+    function isMemberOf(academiaId) {
+      return isSignedIn() && getUserData().academiaId == academiaId;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && getUserData().tipo == 'admin';
+    }
+    
+    function isInstructor() {
+      return isSignedIn() && getUserData().tipo == 'instrutor';
+    }
+    
+    function isStudent() {
+      return isSignedIn() && getUserData().tipo == 'aluno';
+    }
+    
+    // Coleção de usuários - acesso restrito ao próprio usuário
+    match /usuarios/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Coleção de academias
+    match /academias/{academiaId} {
+      // Apenas membros da academia podem ler dados básicos
+      allow read: if isSignedIn() && isMemberOf(academiaId);
+      // Apenas admins podem modificar dados da academia
+      allow write: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
+      
+      // Subcoleção de alunos
+      match /alunos/{alunoId} {
+        allow read: if isSignedIn() && isMemberOf(academiaId);
+        allow write: if isSignedIn() && isMemberOf(academiaId) && (isAdmin() || isInstructor());
+      }
+      
+      // Subcoleção de instrutores
+      match /instrutores/{instrutorId} {
+        allow read: if isSignedIn() && isMemberOf(academiaId);
+        allow write: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
+      }
+      
+      // Subcoleção de turmas
+      match /turmas/{turmaId} {
+        allow read: if isSignedIn() && isMemberOf(academiaId);
+        allow write: if isSignedIn() && isMemberOf(academiaId) && (isAdmin() || isInstructor());
+      }
+      
+      // Subcoleção de pagamentos
+      match /pagamentos/{pagamentoId} {
+        allow read: if isSignedIn() && isMemberOf(academiaId) && (isAdmin() || isInstructor());
+        allow write: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
+      }
+      
+      // Subcoleção de check-ins
+      match /checkins/{checkinId} {
+        allow read: if isSignedIn() && isMemberOf(academiaId);
+        allow write: if isSignedIn() && isMemberOf(academiaId);
+      }
+      
+      // Subcoleção de planos
+      match /planos/{planoId} {
+        allow read: if isSignedIn() && isMemberOf(academiaId);
+        allow write: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
+      }
+    }
+    
+    // Coleção legacy 'users' - manter compatibilidade temporária
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
   }
 }
