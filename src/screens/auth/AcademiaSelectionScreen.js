@@ -402,26 +402,14 @@ export default function AcademiaSelectionScreen({ navigation }) {
         <View style={styles.headerContent}>
           <Button
             mode="text"
-            onPress={() => {
-              // Sempre fazer logout ao clicar em voltar
-              Alert.alert(
-                'Sair',
-                'Deseja sair e voltar para o login?',
-                [
-                  { text: 'Cancelar', style: 'cancel' },
-                  { 
-                    text: 'Sair', 
-                    onPress: async () => {
-                      try {
-                        await logout();
-                      } catch (error) {
-                        console.error('Erro ao fazer logout:', error);
-                        showSnackbar('Erro ao sair. Tente novamente.', 'error');
-                      }
-                    }
-                  }
-                ]
-              );
+            onPress={async () => {
+              try {
+                console.log('🚪 Fazendo logout direto...');
+                await logout();
+              } catch (error) {
+                console.error('Erro ao fazer logout:', error);
+                showSnackbar('Erro ao sair. Tente novamente.', 'error');
+              }
             }}
             icon="arrow-left"
             textColor="white"
