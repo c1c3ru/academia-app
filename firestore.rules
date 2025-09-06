@@ -115,5 +115,11 @@ service cloud.firestore {
       allow create: if isSignedIn() && isAdmin(); // Apenas admins podem criar convites
       allow update: if isSignedIn(); // Permitir atualização para aceitar convites
     }
+    
+    // Coleção legacy 'payments' - compatibilidade temporária
+    match /payments/{paymentId} {
+      allow read: if isSignedIn(); // Permitir leitura para usuários autenticados
+      allow write: if isSignedIn() && (isAdmin() || isInstructor());
+    }
   }
 }
