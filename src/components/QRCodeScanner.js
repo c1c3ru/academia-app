@@ -1,185 +1,105 @@
-import React, { useState, useEffect } from 'react';
-import { View, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Alert, TextInput } from 'react-native';
 import { Text, Button, Card } from 'react-native-paper';
-import { BarCodeScanner } from 'expo-barcode-scanner';
 
 export default function QRCodeScanner({ onScan, onCancel }) {
-  const [hasPermission, setHasPermission] = useState(null);
-  const [scanned, setScanned] = useState(false);
+  const [manualCode, setManualCode] = useState('');
 
-  useEffect(() => {
-    const getBarCodeScannerPermissions = async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
-    };
-
-    getBarCodeScannerPermissions();
-  }, []);
-
-  const handleBarCodeScanned = async ({ type, data }) => {
-    setScanned(true);
+  const handleManualSubmit = () => {
+    if (!manualCode.trim()) {
+      Alert.alert('Erro', 'Digite um código válido');
+      return;
+    }
     
     try {
-      // Chamar callback com os dados escaneados
-      onScan?.(data);
+      // Simular dados do QR Code - formato esperado: https://academia-app.com/join/{academiaId}
+      const qrData = manualCode.includes('academia-app.com') 
+        ? manualCode 
+        : `https://academia-app.com/join/${manualCode.trim()}`;
+      
+      onScan?.(qrData);
     } catch (error) {
-      console.error('Erro ao processar QR Code:', error);
-      Alert.alert(
-        'Erro',
-        'Não foi possível processar o QR Code',
-        [{ text: 'OK', onPress: () => setScanned(false) }]
-      );
+      console.error('Erro ao processar código:', error);
+      Alert.alert('Erro', 'Não foi possível processar o código');
     }
   };
 
-  if (hasPermission === null) {
-    return (
-      <Card style={styles.container}>
-        <Card.Content style={styles.content}>
-          <Text variant="bodyMedium">Solicitando permissão da câmera...</Text>
-        </Card.Content>
-      </Card>
-    );
-  }
-
-  if (hasPermission === false) {
-    return (
-      <Card style={styles.container}>
-        <Card.Content style={styles.content}>
-          <Text variant="titleMedium" style={styles.errorTitle}>
-            Permissão da Câmera Negada
-          </Text>
-          <Text variant="bodyMedium" style={styles.errorMessage}>
-            Para escanear QR Codes, é necessário permitir o acesso à câmera.
-          </Text>
+  return (
+    <Card style={styles.container}>
+      <Card.Content style={styles.content}>
+        <Text variant="titleMedium" style={styles.title}>
+          Scanner QR Code Temporariamente Indisponível
+        </Text>
+        
+        <Text variant="bodyMedium" style={styles.description}>
+          Digite manualmente o código da academia ou o link completo:
+        </Text>
+        
+        <TextInput
+          style={styles.input}
+          placeholder="Código da academia ou link completo"
+          value={manualCode}
+          onChangeText={setManualCode}
+          multiline
+        />
+        
+        <View style={styles.actions}>
           <Button 
             mode="outlined" 
             onPress={onCancel}
-            style={styles.cancelButton}
-          >
-            Voltar
-          </Button>
-        </Card.Content>
-      </Card>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text variant="titleMedium" style={styles.headerTitle}>
-          Escanear QR Code
-        </Text>
-        <Text variant="bodySmall" style={styles.headerSubtitle}>
-          Aponte a câmera para o QR Code da academia
-        </Text>
-      </View>
-
-      <View style={styles.scannerContainer}>
-        <BarCodeScanner
-          onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-          style={styles.scanner}
-        />
-        
-        <View style={styles.overlay}>
-          <View style={styles.scanFrame} />
-        </View>
-      </View>
-
-      <View style={styles.actions}>
-        {scanned && (
-          <Button 
-            mode="outlined" 
-            onPress={() => setScanned(false)}
             style={styles.actionButton}
           >
-            Escanear Novamente
+            Cancelar
           </Button>
-        )}
-        
-        <Button 
-          mode="contained" 
-          onPress={onCancel}
-          style={styles.actionButton}
-        >
-          Cancelar
-        </Button>
-      </View>
-    </View>
+          
+          <Button 
+            mode="contained" 
+            onPress={handleManualSubmit}
+            style={styles.actionButton}
+            disabled={!manualCode.trim()}
+          >
+            Confirmar
+          </Button>
+        </View>
+      </Card.Content>
+    </Card>
   );
 }
 
 const styles = {
   container: {
-    flex: 1,
-    backgroundColor: '#000',
+    margin: 20,
   },
   content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
+    alignItems: 'center',
   },
-  errorTitle: {
-    color: '#d32f2f',
+  title: {
     textAlign: 'center',
     marginBottom: 16,
+    color: '#d32f2f',
   },
-  errorMessage: {
+  description: {
     textAlign: 'center',
     marginBottom: 20,
-  },
-  cancelButton: {
-    marginTop: 16,
-  },
-  header: {
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    padding: 20,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    color: 'white',
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    color: 'white',
     opacity: 0.8,
-    textAlign: 'center',
   },
-  scannerContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-  scanner: {
-    flex: 1,
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scanFrame: {
-    width: 250,
-    height: 250,
-    borderWidth: 2,
-    borderColor: '#6200ee',
-    borderRadius: 12,
-    backgroundColor: 'transparent',
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+    minHeight: 50,
+    width: '100%',
+    textAlignVertical: 'top',
   },
   actions: {
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    padding: 20,
     flexDirection: 'row',
     gap: 12,
-    justifyContent: 'center',
+    width: '100%',
   },
   actionButton: {
     flex: 1,
-    maxWidth: 150,
   },
 };
