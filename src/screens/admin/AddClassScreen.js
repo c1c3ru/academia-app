@@ -17,6 +17,15 @@ const AddClassScreen = ({ navigation, route }) => {
   const [modalities, setModalities] = useState([]);
   const [snackbar, setSnackbar] = useState({ visible: false, message: '', type: 'info' });
   
+  // Age categories for classes
+  const ageCategories = [
+    { id: 'kids1', label: 'Kids 1 (4-6 anos)', value: 'kids1', minAge: 4, maxAge: 6 },
+    { id: 'kids2', label: 'Kids 2 (7-9 anos)', value: 'kids2', minAge: 7, maxAge: 9 },
+    { id: 'kids3', label: 'Kids 3 (10-13 anos)', value: 'kids3', minAge: 10, maxAge: 13 },
+    { id: 'juvenil', label: 'Juvenil (14-17 anos)', value: 'juvenil', minAge: 14, maxAge: 17 },
+    { id: 'adulto', label: 'Adulto (18+ anos)', value: 'adulto', minAge: 18, maxAge: null }
+  ];
+
   // Form data
   const [formData, setFormData] = useState({
     name: '',
@@ -27,7 +36,8 @@ const AddClassScreen = ({ navigation, route }) => {
     instructorName: '',
     schedule: '',
     price: '',
-    status: 'active'
+    status: 'active',
+    ageCategory: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -120,6 +130,10 @@ const AddClassScreen = ({ navigation, route }) => {
       newErrors.price = 'Preço deve ser um número válido';
     }
 
+    if (!formData.ageCategory) {
+      newErrors.ageCategory = 'Categoria de idade é obrigatória';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -145,6 +159,7 @@ const AddClassScreen = ({ navigation, route }) => {
         scheduleText: formData.schedule.trim(),
         price: parseFloat(formData.price),
         status: formData.status,
+        ageCategory: formData.ageCategory,
         createdBy: user.uid,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -227,6 +242,25 @@ const AddClassScreen = ({ navigation, route }) => {
                 ))}
               </View>
               {errors.modality && <HelperText type="error">{errors.modality}</HelperText>}
+            </View>
+
+            {/* Categoria por Idade */}
+            <View style={styles.pickerContainer}>
+              <Text style={styles.label}>Categoria por Idade</Text>
+              <View style={styles.chipContainer}>
+                {ageCategories.map((category) => (
+                  <Chip
+                    key={category.id}
+                    selected={formData.ageCategory === category.value}
+                    onPress={() => updateFormData('ageCategory', category.value)}
+                    style={styles.chip}
+                    mode={formData.ageCategory === category.value ? 'flat' : 'outlined'}
+                  >
+                    {category.label}
+                  </Chip>
+                ))}
+              </View>
+              {errors.ageCategory && <HelperText type="error">{errors.ageCategory}</HelperText>}
             </View>
 
             {/* Descrição */}
