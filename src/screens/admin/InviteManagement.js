@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { InviteService } from '../../services/inviteService';
 import QRCodeGenerator from '../../components/QRCodeGenerator';
+import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';
 
 export default function InviteManagement({ navigation }) {
   const { user, userProfile, academia } = useAuth();
@@ -71,13 +72,18 @@ export default function InviteManagement({ navigation }) {
       // Gerar link do convite
       const inviteLink = InviteService.generateInviteLink(inviteDoc?.inviteToken || 'token');
 
-      // Enviar email (simulado)
-      await InviteService.sendInviteEmail(
+      // Enviar email
+      const emailSent = await InviteService.sendInviteEmail(
         newInvite.email,
         academia.nome,
         inviteLink,
-        userProfile.name || 'Administrador'
+        userProfile.name || 'Administrador',
+        newInvite.tipo
       );
+      
+      if (!emailSent) {
+        Alert.alert('Aviso', 'Convite criado, mas houve problema no envio do email. O convite ainda é válido.');
+      }
 
       Alert.alert(
         'Convite Enviado!',
@@ -183,25 +189,29 @@ export default function InviteManagement({ navigation }) {
               Formas de Convite
             </Text>
             
-            <View style={styles.optionButtons}>
-              <Button 
+            <ActionButtonGroup style={styles.optionButtons}>
+              <ActionButton 
                 mode="contained" 
                 onPress={() => setShowInviteModal(true)}
                 icon="email"
                 style={styles.optionButton}
+                variant="primary"
+                size="medium"
               >
                 Convite por Email
-              </Button>
+              </ActionButton>
               
-              <Button 
+              <ActionButton 
                 mode="outlined" 
                 onPress={() => setShowQRModal(true)}
                 icon="qrcode"
                 style={styles.optionButton}
+                variant="secondary"
+                size="medium"
               >
                 QR Code
-              </Button>
-            </View>
+              </ActionButton>
+            </ActionButtonGroup>
           </Card.Content>
         </Card>
 
@@ -247,40 +257,47 @@ export default function InviteManagement({ navigation }) {
             Tipo de usuário:
           </Text>
           
-          <View style={styles.typeButtons}>
-            <Button 
+          <ActionButtonGroup style={styles.typeButtons}>
+            <ActionButton 
               mode={newInvite.tipo === 'aluno' ? 'contained' : 'outlined'}
               onPress={() => setNewInvite(prev => ({ ...prev, tipo: 'aluno' }))}
               style={styles.typeButton}
+              variant="primary"
+              size="small"
             >
               Aluno
-            </Button>
-            <Button 
+            </ActionButton>
+            <ActionButton 
               mode={newInvite.tipo === 'instrutor' ? 'contained' : 'outlined'}
               onPress={() => setNewInvite(prev => ({ ...prev, tipo: 'instrutor' }))}
               style={styles.typeButton}
+              variant="success"
+              size="small"
             >
               Instrutor
-            </Button>
-          </View>
+            </ActionButton>
+          </ActionButtonGroup>
           
-          <View style={styles.modalActions}>
-            <Button 
+          <ActionButtonGroup style={styles.modalActions}>
+            <ActionButton 
               mode="outlined" 
               onPress={() => setShowInviteModal(false)}
               style={styles.modalButton}
+              variant="secondary"
             >
               Cancelar
-            </Button>
-            <Button 
+            </ActionButton>
+            <ActionButton 
               mode="contained" 
               onPress={sendInvite}
               loading={loading}
+              disabled={loading}
               style={styles.modalButton}
+              variant="success"
             >
               Enviar Convite
-            </Button>
-          </View>
+            </ActionButton>
+          </ActionButtonGroup>
         </Modal>
       </Portal>
 

@@ -201,34 +201,26 @@ export class InviteService {
    * @param {string} inviterName - Nome de quem está convidando
    * @returns {Promise<boolean>} Sucesso do envio
    */
-  static async sendInviteEmail(email, academiaName, inviteLink, inviterName) {
+  static async sendInviteEmail(email, academiaName, inviteLink, inviterName, userType = 'aluno') {
     try {
-      // Aqui você integraria com um serviço de email como SendGrid, Mailgun, etc.
-      // Por enquanto, vamos simular o envio
+      // Importar EmailService dinamicamente para evitar problemas de importação circular
+      const { EmailService } = await import('./emailService');
       
-      const emailContent = {
-        to: email,
-        subject: `Convite para ${academiaName}`,
-        html: `
-          <h2>Você foi convidado para ${academiaName}!</h2>
-          <p>Olá!</p>
-          <p>${inviterName} convidou você para se juntar à academia <strong>${academiaName}</strong>.</p>
-          <p>Para aceitar o convite, clique no link abaixo:</p>
-          <a href="${inviteLink}" style="background-color: #6200ee; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-            Aceitar Convite
-          </a>
-          <p>Ou copie e cole este link no seu navegador:</p>
-          <p>${inviteLink}</p>
-          <p>Este convite expira em 7 dias.</p>
-          <hr>
-          <p><small>Academia App - Sistema de Gestão de Academias</small></p>
-        `
-      };
-
-      console.log('📧 Email de convite seria enviado:', emailContent);
+      const success = await EmailService.sendInviteEmail(
+        email,
+        academiaName,
+        inviterName,
+        inviteLink,
+        userType
+      );
       
-      // Simular sucesso
-      return true;
+      if (success) {
+        console.log('✅ Email de convite enviado com sucesso para:', email);
+        return true;
+      } else {
+        console.error('❌ Falha ao enviar email de convite para:', email);
+        return false;
+      }
     } catch (error) {
       console.error('Erro ao enviar email:', error);
       return false;
