@@ -94,7 +94,7 @@ const AdminModalities = ({ navigation }) => {
   const handleDeleteModality = (modality) => {
     Alert.alert(
       'Confirmar Exclusão',
-      `Tem certeza que deseja excluir a modalidade ${modality.name}?`,
+      `Tem certeza que deseja excluir a modalidade ${modality.name}?\n\nEsta ação não pode ser desfeita.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         { 
@@ -102,11 +102,16 @@ const AdminModalities = ({ navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
+              console.log('Tentando excluir modalidade:', modality.id, 'User:', user?.uid, 'UserType:', user?.userType || user?.tipo);
               await firestoreService.delete('modalities', modality.id);
-              loadData();
-              Alert.alert('Sucesso', 'Modalidade excluída com sucesso');
+              
+              // Atualizar lista local imediatamente
+              setModalities(prev => prev.filter(m => m.id !== modality.id));
+              
+              Alert.alert('Sucesso', 'Modalidade excluída com sucesso!');
             } catch (error) {
-              Alert.alert('Erro', 'Não foi possível excluir a modalidade');
+              console.error('Erro detalhado ao excluir modalidade:', error);
+              Alert.alert('Erro', `Não foi possível excluir a modalidade.\n\nMotivo: ${error.message || 'Erro desconhecido'}`);
             }
           }
         }
@@ -141,7 +146,7 @@ const AdminModalities = ({ navigation }) => {
   const handleDeletePlan = (plan) => {
     Alert.alert(
       'Confirmar Exclusão',
-      `Tem certeza que deseja excluir o plano ${plan.name}?`,
+      `Tem certeza que deseja excluir o plano ${plan.name}?\n\nEsta ação não pode ser desfeita.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         { 
@@ -149,11 +154,16 @@ const AdminModalities = ({ navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
+              console.log('Tentando excluir plano:', plan.id, 'User:', user?.uid, 'UserType:', user?.userType || user?.tipo);
               await firestoreService.delete('plans', plan.id);
-              loadData();
-              Alert.alert('Sucesso', 'Plano excluído com sucesso');
+              
+              // Atualizar lista local imediatamente
+              setPlans(prev => prev.filter(p => p.id !== plan.id));
+              
+              Alert.alert('Sucesso', 'Plano excluído com sucesso!');
             } catch (error) {
-              Alert.alert('Erro', 'Não foi possível excluir o plano');
+              console.error('Erro detalhado ao excluir plano:', error);
+              Alert.alert('Erro', `Não foi possível excluir o plano.\n\nMotivo: ${error.message || 'Erro desconhecido'}`);
             }
           }
         }
@@ -188,7 +198,7 @@ const AdminModalities = ({ navigation }) => {
   const handleDeleteAnnouncement = (announcement) => {
     Alert.alert(
       'Confirmar Exclusão',
-      `Tem certeza que deseja excluir o aviso "${announcement.title}"?`,
+      `Tem certeza que deseja excluir o aviso "${announcement.title}"?\n\nEsta ação não pode ser desfeita.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         { 
@@ -196,11 +206,16 @@ const AdminModalities = ({ navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
+              console.log('Tentando excluir anuncio:', announcement.id, 'User:', user?.uid, 'UserType:', user?.userType || user?.tipo);
               await firestoreService.delete('announcements', announcement.id);
-              loadData();
-              Alert.alert('Sucesso', 'Aviso excluído com sucesso');
+              
+              // Atualizar lista local imediatamente
+              setAnnouncements(prev => prev.filter(a => a.id !== announcement.id));
+              
+              Alert.alert('Sucesso', 'Aviso excluído com sucesso!');
             } catch (error) {
-              Alert.alert('Erro', 'Não foi possível excluir o aviso');
+              console.error('Erro detalhado ao excluir anuncio:', error);
+              Alert.alert('Erro', `Não foi possível excluir o aviso.\n\nMotivo: ${error.message || 'Erro desconhecido'}`);
             }
           }
         }
