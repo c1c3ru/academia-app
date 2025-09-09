@@ -7,6 +7,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "build:web": "expo export:web",
     "build:android": "node scripts/build-android.js production",
     "build:android:apk": "node scripts/build-android.js production-apk",
     "build:test": "node scripts/test-build.js",
