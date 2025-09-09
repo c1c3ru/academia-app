@@ -52,6 +52,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
+    "@expo/cli": "^0.24.21",
     "@react-native-community/cli": "^20.0.1",
     "typescript": "~5.8.3"
   },
