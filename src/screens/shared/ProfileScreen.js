@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Dimensions } from 'react-native';
 import { 
   Card, 
   Title, 
@@ -10,14 +10,20 @@ import {
   Divider,
   Text,
   Chip,
-  List
+  List,
+  Modal,
+  Portal,
+  Surface
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { firestoreService } from '../../services/firestoreService';
+
+const { width } = Dimensions.get('window');
 
 const ProfileScreen = ({ navigation }) => {
-  const { user, userProfile, updateUserProfile, logout } = useAuth();
+  const { user, userProfile, updateUserProfile, logout, academia } = useAuth();
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -25,6 +31,18 @@ const ProfileScreen = ({ navigation }) => {
     address: '',
     emergencyContact: '',
     medicalInfo: ''
+  });
+  
+  // Estados para as novas funcionalidades
+  const [trainingData, setTrainingData] = useState({});
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [showYearModal, setShowYearModal] = useState(false);
+  const [physicalEvaluations, setPhysicalEvaluations] = useState([]);
+  const [injuries, setInjuries] = useState([]);
+  const [checkInStats, setCheckInStats] = useState({
+    thisWeek: 0,
+    total: 14,
+    nextPayment: '03/10/2025'
   });
 
   useEffect(() => {
@@ -36,8 +54,63 @@ const ProfileScreen = ({ navigation }) => {
         emergencyContact: userProfile.emergencyContact || '',
         medicalInfo: userProfile.medicalInfo || ''
       });
+      
+      // Carregar dados específicos do aluno
+      if (userProfile.userType === 'student') {
+        loadStudentData();
+      }
     }
   }, [userProfile]);
+  
+  const loadStudentData = async () => {
+    if (!user || !academia) return;
+    
+    try {
+      // Carregar dados de treino
+      const trainingHistory = await firestoreService.getDocuments(
+        `academias/${academia.id}/checkins`,
+        [{ field: 'userId', operator: '==', value: user.uid }]
+      );
+      
+      // Processar dados por ano/mês
+      const processedData = processTrainingData(trainingHistory);
+      setTrainingData(processedData);
+      
+      // Carregar avaliações físicas
+      const evaluations = await firestoreService.getDocuments(
+        `academias/${academia.id}/physicalEvaluations`,
+        [{ field: 'userId', operator: '==', value: user.uid }]
+      );
+      setPhysicalEvaluations(evaluations);
+      
+      // Carregar lesões
+      const userInjuries = await firestoreService.getDocuments(
+        `academias/${academia.id}/injuries`,
+        [{ field: 'userId', operator: '==', value: user.uid }]
+      );
+      setInjuries(userInjuries);
+      
+    } catch (error) {
+      console.error('Erro ao carregar dados do aluno:', error);
+    }
+  };
+  
+  const processTrainingData = (trainingHistory) => {
+    const data = {};
+    
+    trainingHistory.forEach(training => {
+      const date = training.date.toDate ? training.date.toDate() : new Date(training.date);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const day = date.getDate();
+      
+      if (!data[year]) data[year] = {};
+      if (!data[year][month]) data[year][month] = {};
+      data[year][month][day] = true;
+    });
+    
+    return data;
+  };
 
   const handleSave = async () => {
     try {
@@ -221,37 +294,114 @@ const ProfileScreen = ({ navigation }) => {
 
         {/* Informações da Academia (apenas para alunos) */}
         {userProfile?.userType === 'student' && (
-          <Card style={styles.card}>
-            <Card.Content>
-              <View style={styles.cardHeader}>
-                <Ionicons name="school-outline" size={24} color="#4CAF50" />
-                <Title style={styles.cardTitle}>Informações da Academia</Title>
-              </View>
+          <>
+            <Card style={styles.card}>
+              <Card.Content>
+                <View style={styles.cardHeader}>
+                  <Ionicons name="school-outline" size={24} color="#4CAF50" />
+                  <Title style={styles.cardTitle}>Informações da Academia</Title>
+                </View>
 
-              <List.Item
-                title="Graduação Atual"
-                description={userProfile?.currentGraduation || 'Iniciante'}
-                left={() => <List.Icon icon="trophy" color="#FFD700" />}
-              />
-              <Divider />
-              
-              <List.Item
-                title="Plano Atual"
-                description={userProfile?.currentPlan || 'Não definido'}
-                left={() => <List.Icon icon="card" />}
-              />
-              <Divider />
-              
-              <List.Item
-                title="Data de Início"
-                description={userProfile?.startDate ? 
-                  new Date(userProfile.startDate).toLocaleDateString('pt-BR') : 
-                  'Não informado'
-                }
-                left={() => <List.Icon icon="calendar-start" />}
-              />
-            </Card.Content>
-          </Card>
+                <List.Item
+                  title="Graduação Atual"
+                  description={userProfile?.currentGraduation || 'Iniciante'}
+                  left={() => <List.Icon icon="trophy" color="#FFD700" />}
+                />
+                <Divider />
+                
+                <List.Item
+                  title="Plano Atual"
+                  description={userProfile?.currentPlan || 'Não definido'}
+                  left={() => <List.Icon icon="card" />}
+                />
+                <Divider />
+                
+                <List.Item
+                  title="Data de Início"
+                  description={userProfile?.startDate ? 
+                    new Date(userProfile.startDate).toLocaleDateString('pt-BR') : 
+                    'Não informado'
+                  }
+                  left={() => <List.Icon icon="calendar-start" />}
+                />
+              </Card.Content>
+            </Card>
+            
+            {/* Treinos esta semana */}
+            <Card style={styles.card}>
+              <Card.Content>
+                <View style={styles.cardHeader}>
+                  <Ionicons name="calendar-outline" size={24} color="#2196F3" />
+                  <Title style={styles.cardTitle}>Treinos esta semana</Title>
+                  <Button 
+                    mode="text" 
+                    onPress={() => setShowYearModal(true)}
+                    icon="plus"
+                  >
+                    + detalhes
+                  </Button>
+                </View>
+                
+                <View style={styles.weekDays}>
+                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, index) => (
+                    <View key={index} style={styles.dayCircle}>
+                      <Text style={styles.dayText}>{day}</Text>
+                    </View>
+                  ))}
+                </View>
+                
+                <Text style={styles.noTrainingText}>Nenhum treino esta semana</Text>
+              </Card.Content>
+            </Card>
+            
+            {/* Contratos */}
+            <Card style={styles.card}>
+              <Card.Content>
+                <List.Item
+                  title="Contratos"
+                  description={`Próximo vencimento: ${checkInStats.nextPayment}`}
+                  left={() => <List.Icon icon="file-document-outline" />}
+                  right={() => <List.Icon icon="chevron-right" />}
+                />
+              </Card.Content>
+            </Card>
+            
+            {/* Check-ins */}
+            <Card style={styles.card}>
+              <Card.Content>
+                <List.Item
+                  title="Check-ins"
+                  description={`Check-ins na semana: ${checkInStats.thisWeek}/${checkInStats.total}`}
+                  left={() => <List.Icon icon="check-circle-outline" />}
+                  right={() => <List.Icon icon="chevron-right" />}
+                />
+              </Card.Content>
+            </Card>
+            
+            {/* Avaliações físicas */}
+            <Card style={styles.card}>
+              <Card.Content>
+                <List.Item
+                  title="Avaliações físicas"
+                  description="Última avaliação: -"
+                  left={() => <List.Icon icon="clipboard-pulse-outline" />}
+                  right={() => <List.Icon icon="chevron-right" />}
+                />
+              </Card.Content>
+            </Card>
+            
+            {/* Minhas Lesões */}
+            <Card style={styles.card}>
+              <Card.Content>
+                <List.Item
+                  title="Minhas Lesões"
+                  description={injuries.length > 0 ? `${injuries.length} lesão(ões) registrada(s)` : 'Nenhuma lesão registrada'}
+                  left={() => <List.Icon icon="bandage" />}
+                  right={() => <List.Icon icon="chevron-right" />}
+                />
+              </Card.Content>
+            </Card>
+          </>
         )}
 
         {/* Configurações da Conta */}
@@ -305,8 +455,96 @@ const ProfileScreen = ({ navigation }) => {
           </Card.Content>
         </Card>
       </ScrollView>
+      
+      {/* Modal Treinos no Ano */}
+      <Portal>
+        <Modal
+          visible={showYearModal}
+          onDismiss={() => setShowYearModal(false)}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <Card style={styles.modalCard}>
+            <Card.Title
+              title="Treinos no ano"
+              left={() => <Ionicons name="calendar" size={24} color="#2196F3" />}
+              right={() => (
+                <Button onPress={() => setShowYearModal(false)} icon="close">
+                  Fechar
+                </Button>
+              )}
+            />
+            
+            <Card.Content>
+              <View style={styles.yearSelector}>
+                <Button 
+                  mode="outlined" 
+                  onPress={() => setSelectedYear(selectedYear - 1)}
+                >
+                  {selectedYear - 1}
+                </Button>
+                <Text style={styles.selectedYear}>{selectedYear}</Text>
+              </View>
+              
+              <ScrollView style={styles.monthsContainer}>
+                {renderMonthsGrid()}
+              </ScrollView>
+            </Card.Content>
+          </Card>
+        </Modal>
+      </Portal>
     </SafeAreaView>
   );
+  
+  function renderMonthsGrid() {
+    const months = [
+      'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN',
+      'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'
+    ];
+    
+    return (
+      <View style={styles.monthsGrid}>
+        {months.map((month, monthIndex) => {
+          const monthData = trainingData[selectedYear]?.[monthIndex] || {};
+          const trainingCount = Object.keys(monthData).length;
+          
+          return (
+            <View key={monthIndex} style={styles.monthCard}>
+              <View style={styles.monthHeader}>
+                <Text style={styles.monthName}>{month}</Text>
+                <Chip style={styles.monthChip} textStyle={styles.monthChipText}>
+                  {trainingCount}
+                </Chip>
+              </View>
+              
+              <View style={styles.monthDays}>
+                {renderMonthDays(monthIndex, monthData)}
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    );
+  }
+  
+  function renderMonthDays(monthIndex, monthData) {
+    const daysInMonth = new Date(selectedYear, monthIndex + 1, 0).getDate();
+    const days = [];
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const hasTraining = monthData[day];
+      days.push(
+        <View
+          key={day}
+          style={[
+            styles.dayDot,
+            hasTraining ? styles.trainingDay : styles.noTrainingDay
+          ]}
+        />
+      );
+    }
+    
+    return days;
+  }
 };
 
 const styles = StyleSheet.create({
@@ -371,6 +609,100 @@ const styles = StyleSheet.create({
   logoutButton: {
     borderColor: '#F44336',
     marginTop: 8,
+  },
+  weekDays: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: 16,
+  },
+  dayCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dayText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#666',
+  },
+  noTrainingText: {
+    textAlign: 'center',
+    color: '#666',
+    fontStyle: 'italic',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    margin: 20,
+  },
+  modalCard: {
+    maxHeight: '80%',
+  },
+  yearSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  selectedYear: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginHorizontal: 20,
+    color: '#2196F3',
+  },
+  monthsContainer: {
+    maxHeight: 400,
+  },
+  monthsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  monthCard: {
+    width: '48%',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  monthHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  monthName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  monthChip: {
+    backgroundColor: '#2196F3',
+    height: 24,
+  },
+  monthChipText: {
+    color: 'white',
+    fontSize: 12,
+  },
+  monthDays: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+  },
+  dayDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    margin: 1,
+  },
+  trainingDay: {
+    backgroundColor: '#4CAF50',
+  },
+  noTrainingDay: {
+    backgroundColor: '#e0e0e0',
   },
 });
 
