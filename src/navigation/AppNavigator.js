@@ -13,6 +13,7 @@ import UniversalHeader from '../components/UniversalHeader';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import UserTypeSelectionScreen from '../screens/auth/UserTypeSelectionScreen';
 import AcademiaSelectionScreen from '../screens/auth/AcademiaSelectionScreen';
 
 // Telas do Aluno
@@ -602,6 +603,18 @@ const AppNavigator = () => {
   if (!userProfile) {
     console.log('🧭 AppNavigator: Carregando perfil do usuário...');
     return <LoadingScreen />;
+  }
+
+  // Se usuário não completou o perfil (tipo não definido), mostrar seleção de tipo
+  if (!userProfile.profileCompleted || !userProfile.userType) {
+    console.log('🧭 AppNavigator: Usuário sem tipo definido, mostrando seleção de tipo');
+    return (
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="UserTypeSelection" component={UserTypeSelectionScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
   }
 
   // Se usuário não tem academia associada, mostrar tela de seleção

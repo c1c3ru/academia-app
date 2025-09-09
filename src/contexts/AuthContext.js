@@ -230,8 +230,9 @@ export const AuthProvider = ({ children }) => {
           name: firebaseUser.displayName,
           email: firebaseUser.email,
           photoURL: firebaseUser.photoURL,
-          tipo: 'aluno', // Padrão para novos usuários
-          userType: 'student', // Para compatibilidade
+          tipo: null, // Será definido na tela de seleção
+          userType: null, // Será definido na tela de seleção
+          profileCompleted: false, // Indica que precisa completar o perfil
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -267,8 +268,9 @@ export const AuthProvider = ({ children }) => {
           name: firebaseUser.displayName,
           email: firebaseUser.email,
           photoURL: firebaseUser.photoURL,
-          tipo: 'aluno',
-          userType: 'student',
+          tipo: null, // Será definido na tela de seleção
+          userType: null, // Será definido na tela de seleção
+          profileCompleted: false, // Indica que precisa completar o perfil
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -303,8 +305,9 @@ export const AuthProvider = ({ children }) => {
           name: firebaseUser.displayName,
           email: firebaseUser.email,
           photoURL: firebaseUser.photoURL,
-          tipo: 'aluno',
-          userType: 'student',
+          tipo: null, // Será definido na tela de seleção
+          userType: null, // Será definido na tela de seleção
+          profileCompleted: false, // Indica que precisa completar o perfil
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -339,8 +342,9 @@ export const AuthProvider = ({ children }) => {
           name: firebaseUser.displayName || 'Usuário Apple',
           email: firebaseUser.email,
           photoURL: firebaseUser.photoURL,
-          tipo: 'aluno',
-          userType: 'student',
+          tipo: null, // Será definido na tela de seleção
+          userType: null, // Será definido na tela de seleção
+          profileCompleted: false, // Indica que precisa completar o perfil
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date()
