@@ -48,6 +48,7 @@ import PhysicalEvaluationScreen from '../screens/shared/PhysicalEvaluationScreen
 import PhysicalEvaluationHistoryScreen from '../screens/shared/PhysicalEvaluationHistoryScreen';
 import InjuryScreen from '../screens/shared/InjuryScreen';
 import InjuryHistoryScreen from '../screens/shared/InjuryHistoryScreen';
+import PrivacyPolicyScreen from '../screens/shared/PrivacyPolicyScreen';
 import LoadingScreen from '../screens/shared/LoadingScreen';
 import ClassDetailsScreen from '../screens/shared/ClassDetailsScreen';
 import StudentDetailsScreen from '../screens/shared/StudentDetailsScreen';
@@ -534,6 +535,24 @@ const MainNavigator = ({ userType }) => {
             <UniversalHeader
               title="Minhas Lesões"
               subtitle="Histórico de lesões e recuperação"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor={
+                userType === 'admin' ? '#FF9800' :
+                userType === 'instructor' ? '#4CAF50' : '#2196F3'
+              }
+            />
+          ),
+        })}
+      />
+      <Stack.Screen
+        name="PrivacyPolicy"
+        component={PrivacyPolicyScreen}
+        options={({ navigation }) => ({
+          header: () => (
+            <UniversalHeader
+              title="Política de Privacidade"
+              subtitle="Proteção de dados e LGPD"
               navigation={navigation}
               showBack={true}
               backgroundColor={
