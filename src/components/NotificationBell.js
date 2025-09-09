@@ -86,7 +86,7 @@ const NotificationBell = ({ color = '#fff', size = 24 }) => {
     <>
       <View style={styles.container}>
         <IconButton
-          icon="notifications"
+          icon="bell"
           iconColor={color}
           size={size}
           onPress={() => setModalVisible(true)}

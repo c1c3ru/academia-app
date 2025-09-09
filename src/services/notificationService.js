@@ -22,6 +22,12 @@ class NotificationService {
   // Inicializar serviço de notificações
   async initialize() {
     try {
+      // Desabilitar notificações push na web por enquanto
+      if (Platform.OS === 'web') {
+        console.log('Notificações push desabilitadas na web');
+        return true;
+      }
+      
       await this.registerForPushNotificationsAsync();
       this.setupNotificationListeners();
       return true;
@@ -33,6 +39,11 @@ class NotificationService {
 
   // Registrar para notificações push
   async registerForPushNotificationsAsync() {
+    // Pular registro na web
+    if (Platform.OS === 'web') {
+      return null;
+    }
+
     let token;
 
     if (Platform.OS === 'android') {

@@ -137,6 +137,39 @@ export const firestoreService = {
     }
   },
 
+  // Buscar documentos com múltiplos filtros e ordenação
+  getDocuments: async (collectionName, filters = [], orderBy = null, limitCount = null) => {
+    try {
+      let q = collection(db, collectionName);
+      
+      // Aplicar filtros
+      if (filters && filters.length > 0) {
+        filters.forEach(filter => {
+          q = query(q, where(filter.field, filter.operator, filter.value));
+        });
+      }
+      
+      // Aplicar ordenação
+      if (orderBy) {
+        q = query(q, orderBy(orderBy.field, orderBy.direction || 'desc'));
+      }
+      
+      // Aplicar limite
+      if (limitCount) {
+        q = query(q, limit(limitCount));
+      }
+      
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error(`Erro ao buscar documentos em ${collectionName}:`, error);
+      throw error;
+    }
+  },
+
   // Escutar mudanças em tempo real
   listen: (collectionName, callback, filters = []) => {
     try {
