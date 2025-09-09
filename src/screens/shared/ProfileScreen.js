@@ -496,6 +496,7 @@ const ProfileScreen = ({ navigation }) => {
                   description={injuries.length > 0 ? `${injuries.length} lesão(ões) registrada(s)` : 'Nenhuma lesão registrada'}
                   left={() => <List.Icon icon="bandage" />}
                   right={() => <List.Icon icon="chevron-right" />}
+                  onPress={() => navigation.navigate('InjuryHistory')}
                 />
               </Card.Content>
             </Card>

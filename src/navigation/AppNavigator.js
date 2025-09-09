@@ -46,6 +46,8 @@ import ProfileScreen from '../screens/shared/ProfileScreen';
 import ChangePasswordScreen from '../screens/shared/ChangePasswordScreen';
 import PhysicalEvaluationScreen from '../screens/shared/PhysicalEvaluationScreen';
 import PhysicalEvaluationHistoryScreen from '../screens/shared/PhysicalEvaluationHistoryScreen';
+import InjuryScreen from '../screens/shared/InjuryScreen';
+import InjuryHistoryScreen from '../screens/shared/InjuryHistoryScreen';
 import LoadingScreen from '../screens/shared/LoadingScreen';
 import ClassDetailsScreen from '../screens/shared/ClassDetailsScreen';
 import StudentDetailsScreen from '../screens/shared/StudentDetailsScreen';
@@ -496,6 +498,42 @@ const MainNavigator = ({ userType }) => {
             <UniversalHeader
               title="Histórico de Avaliações"
               subtitle="Acompanhe sua evolução física"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor={
+                userType === 'admin' ? '#FF9800' :
+                userType === 'instructor' ? '#4CAF50' : '#2196F3'
+              }
+            />
+          ),
+        })}
+      />
+      <Stack.Screen
+        name="Injury"
+        component={InjuryScreen}
+        options={({ navigation }) => ({
+          header: () => (
+            <UniversalHeader
+              title="Gerenciar Lesão"
+              subtitle="Registre e acompanhe lesões"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor={
+                userType === 'admin' ? '#FF9800' :
+                userType === 'instructor' ? '#4CAF50' : '#2196F3'
+              }
+            />
+          ),
+        })}
+      />
+      <Stack.Screen
+        name="InjuryHistory"
+        component={InjuryHistoryScreen}
+        options={({ navigation }) => ({
+          header: () => (
+            <UniversalHeader
+              title="Minhas Lesões"
+              subtitle="Histórico de lesões e recuperação"
               navigation={navigation}
               showBack={true}
               backgroundColor={
