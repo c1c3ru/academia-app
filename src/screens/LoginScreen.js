@@ -28,7 +28,7 @@ export default function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [languageMenuVisible, setLanguageMenuVisible] = useState(false);
   
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle, signInWithFacebook, signInWithMicrosoft, signInWithApple } = useAuth();
   const { isDarkMode, currentLanguage, languages, theme, toggleDarkMode, changeLanguage, getString } = useTheme();
 
   const handleLogin = async () => {
@@ -77,6 +77,58 @@ export default function LoginScreen({ navigation }) {
       navigation.navigate('Register');
     } else {
       Alert.alert('Cadastro', 'Funcionalidade de cadastro em desenvolvimento');
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error('Erro no login Google:', error);
+      Alert.alert(getString('loginError'), 'Erro ao fazer login com Google');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFacebookLogin = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      await signInWithFacebook();
+    } catch (error) {
+      console.error('Erro no login Facebook:', error);
+      Alert.alert(getString('loginError'), 'Erro ao fazer login com Facebook');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMicrosoftLogin = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      await signInWithMicrosoft();
+    } catch (error) {
+      console.error('Erro no login Microsoft:', error);
+      Alert.alert(getString('loginError'), 'Erro ao fazer login com Microsoft');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      await signInWithApple();
+    } catch (error) {
+      console.error('Erro no login Apple:', error);
+      Alert.alert(getString('loginError'), 'Erro ao fazer login com Apple');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -212,6 +264,65 @@ export default function LoginScreen({ navigation }) {
                 >
                   {getString('login')}
                 </AnimatedButton>
+
+                <Divider style={styles.divider} />
+
+                {/* Social Login Buttons */}
+                <View style={styles.socialLoginContainer}>
+                  <Text style={[styles.socialLoginTitle, { color: theme.colors.onSurface }]}>Ou entre com:</Text>
+                  
+                  <View style={styles.socialButtonsRow}>
+                    <Button
+                      mode="outlined"
+                      onPress={handleGoogleLogin}
+                      style={[styles.socialButton, { borderColor: theme.colors.outline }]}
+                      icon="google"
+                      contentStyle={styles.socialButtonContent}
+                      loading={loading}
+                      disabled={loading}
+                    >
+                      Google
+                    </Button>
+                    
+                    <Button
+                      mode="outlined"
+                      onPress={handleFacebookLogin}
+                      style={[styles.socialButton, { borderColor: theme.colors.outline }]}
+                      icon="facebook"
+                      contentStyle={styles.socialButtonContent}
+                      loading={loading}
+                      disabled={loading}
+                    >
+                      Facebook
+                    </Button>
+                  </View>
+                  
+                  <View style={styles.socialButtonsRow}>
+                    <Button
+                      mode="outlined"
+                      onPress={handleMicrosoftLogin}
+                      style={[styles.socialButton, { borderColor: theme.colors.outline }]}
+                      icon="microsoft"
+                      contentStyle={styles.socialButtonContent}
+                      loading={loading}
+                      disabled={loading}
+                    >
+                      Microsoft
+                    </Button>
+                    
+                    <Button
+                      mode="outlined"
+                      onPress={handleAppleLogin}
+                      style={[styles.socialButton, { borderColor: theme.colors.outline }]}
+                      icon="apple"
+                      contentStyle={styles.socialButtonContent}
+                      loading={loading}
+                      disabled={loading}
+                    >
+                      Apple
+                    </Button>
+                  </View>
+                </View>
 
                 <Divider style={styles.divider} />
 
@@ -354,6 +465,27 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     flex: 1,
+  },
+  socialLoginContainer: {
+    marginVertical: 16,
+  },
+  socialLoginTitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 12,
+    opacity: 0.7,
+  },
+  socialButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  socialButton: {
+    flex: 0.48,
+    marginHorizontal: 2,
+  },
+  socialButtonContent: {
+    paddingVertical: 4,
   },
   loadingContainer: {
     flex: 1,
