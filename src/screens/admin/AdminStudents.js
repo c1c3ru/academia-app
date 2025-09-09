@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, paymentService } from '../../services/firestoreService';
+import StudentDisassociationDialog from '../../components/StudentDisassociationDialog';
 
 const AdminStudents = ({ navigation }) => {
   const { user } = useAuth();
@@ -29,6 +30,8 @@ const AdminStudents = ({ navigation }) => {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showDisassociationDialog, setShowDisassociationDialog] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   useEffect(() => {
     loadStudents();
@@ -129,6 +132,11 @@ const AdminStudents = ({ navigation }) => {
 
   const handleEditStudent = (student) => {
     navigation.navigate('EditStudent', { studentId: student.id, studentData: student });
+  };
+
+  const handleDisassociateStudent = (student) => {
+    setSelectedStudent(student);
+    setShowDisassociationDialog(true);
   };
 
   const handleDeleteStudent = (student) => {
@@ -346,6 +354,19 @@ const AdminStudents = ({ navigation }) => {
                     Pagamentos
                   </Button>
                 </View>
+
+                {/* Ações Administrativas */}
+                <View style={styles.adminActions}>
+                  <Button 
+                    mode="outlined" 
+                    onPress={() => handleDisassociateStudent(student)}
+                    style={[styles.actionButton, styles.disassociateButton]}
+                    icon="account-remove"
+                    textColor="#F44336"
+                  >
+                    Desassociar
+                  </Button>
+                </View>
               </Card.Content>
             </Card>
           ))
@@ -407,6 +428,21 @@ const AdminStudents = ({ navigation }) => {
         icon="plus"
         label="Novo Aluno"
         onPress={handleAddStudent}
+      />
+
+      {/* Diálogo de Desassociação */}
+      <StudentDisassociationDialog
+        visible={showDisassociationDialog}
+        onDismiss={() => {
+          setShowDisassociationDialog(false);
+          setSelectedStudent(null);
+        }}
+        student={selectedStudent}
+        onSuccess={() => {
+          loadStudents();
+          setShowDisassociationDialog(false);
+          setSelectedStudent(null);
+        }}
       />
     </SafeAreaView>
   );
@@ -516,6 +552,15 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     marginHorizontal: 2,
+  },
+  adminActions: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  disassociateButton: {
+    borderColor: '#F44336',
   },
   emptyCard: {
     margin: 16,

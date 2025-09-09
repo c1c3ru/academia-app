@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService } from '../../services/firestoreService';
+import PaymentDueDateEditor from '../../components/PaymentDueDateEditor';
 
 const { width } = Dimensions.get('window');
 
@@ -44,6 +45,11 @@ const ProfileScreen = ({ navigation }) => {
     total: 14,
     nextPayment: '03/10/2025'
   });
+  
+  // Estados para pagamentos
+  const [currentPayment, setCurrentPayment] = useState(null);
+  const [showPaymentEditor, setShowPaymentEditor] = useState(false);
+  const [paymentDueNotification, setPaymentDueNotification] = useState(null);
 
   useEffect(() => {
     if (userProfile) {
@@ -55,9 +61,11 @@ const ProfileScreen = ({ navigation }) => {
         medicalInfo: userProfile.medicalInfo || ''
       });
       
-      // Carregar dados específicos do aluno
-      if (userProfile.userType === 'student') {
+      // Carregar dados do aluno se for estudante
+      if (userProfile.role === 'student') {
         loadStudentData();
+        loadCurrentPayment();
+        checkPaymentDueNotification();
       }
     }
   }, [userProfile]);
@@ -110,6 +118,47 @@ const ProfileScreen = ({ navigation }) => {
     });
     
     return data;
+  };
+
+  const loadCurrentPayment = async () => {
+    if (!user || !academia) return;
+    
+    try {
+      const payments = await firestoreService.getDocuments(
+        `academias/${academia.id}/payments`,
+        [{ field: 'userId', operator: '==', value: user.uid }]
+      );
+      
+      // Encontrar pagamento atual (pendente ou mais recente)
+      const current = payments.find(p => p.status === 'pending') || payments[0];
+      setCurrentPayment(current);
+      
+    } catch (error) {
+      console.error('Erro ao carregar pagamento atual:', error);
+    }
+  };
+
+  const checkPaymentDueNotification = async () => {
+    if (!user || !academia || !currentPayment) return;
+    
+    try {
+      const today = new Date();
+      const dueDate = currentPayment.dueDate.toDate ? currentPayment.dueDate.toDate() : new Date(currentPayment.dueDate);
+      const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+      
+      // Mostrar notificação se vencer em 3 dias ou menos
+      if (daysUntilDue <= 3 && daysUntilDue >= 0 && currentPayment.status === 'pending') {
+        setPaymentDueNotification({
+          daysUntilDue,
+          dueDate: dueDate.toLocaleDateString('pt-BR'),
+          amount: currentPayment.amount,
+          planName: currentPayment.planName || 'Mensalidade'
+        });
+      }
+      
+    } catch (error) {
+      console.error('Erro ao verificar vencimento:', error);
+    }
   };
 
   const handleSave = async () => {
@@ -179,6 +228,51 @@ const ProfileScreen = ({ navigation }) => {
             </View>
           </Card.Content>
         </Card>
+
+        {/* Notificação de Vencimento */}
+        {paymentDueNotification && (
+          <Card style={[styles.card, styles.warningCard]}>
+            <Card.Content>
+              <View style={styles.cardHeader}>
+                <Ionicons name="warning-outline" size={24} color="#FF9800" />
+                <Title style={[styles.cardTitle, { color: '#FF9800' }]}>Pagamento Próximo do Vencimento</Title>
+              </View>
+              
+              <View style={styles.paymentWarning}>
+                <Text style={styles.warningText}>
+                  Seu pagamento de {paymentDueNotification.planName} vence em{' '}
+                  <Text style={styles.warningDays}>
+                    {paymentDueNotification.daysUntilDue === 0 ? 'hoje' : 
+                     paymentDueNotification.daysUntilDue === 1 ? 'amanhã' : 
+                     `${paymentDueNotification.daysUntilDue} dias`}
+                  </Text>
+                </Text>
+                <Text style={styles.warningDetails}>
+                  Data: {paymentDueNotification.dueDate} | Valor: R$ {paymentDueNotification.amount?.toFixed(2)}
+                </Text>
+                
+                <View style={styles.warningButtons}>
+                  <Button 
+                    mode="outlined" 
+                    onPress={() => setShowPaymentEditor(true)}
+                    style={styles.editDateButton}
+                    icon="calendar-edit"
+                  >
+                    Alterar Data
+                  </Button>
+                  <Button 
+                    mode="contained" 
+                    onPress={() => navigation.navigate('StudentPayments')}
+                    style={styles.payNowButton}
+                    icon="credit-card"
+                  >
+                    Pagar Agora
+                  </Button>
+                </View>
+              </View>
+            </Card.Content>
+          </Card>
+        )}
 
         {/* Informações Pessoais */}
         <Card style={styles.card}>
@@ -492,6 +586,17 @@ const ProfileScreen = ({ navigation }) => {
           </Card>
         </Modal>
       </Portal>
+      
+      {/* Modal Editor de Data de Vencimento */}
+      <PaymentDueDateEditor
+        visible={showPaymentEditor}
+        onDismiss={() => setShowPaymentEditor(false)}
+        currentPayment={currentPayment}
+        onUpdate={() => {
+          loadCurrentPayment();
+          checkPaymentDueNotification();
+        }}
+      />
     </SafeAreaView>
   );
   
@@ -583,6 +688,42 @@ const styles = StyleSheet.create({
   userTypeChip: {
     alignSelf: 'flex-start',
     borderWidth: 1,
+  },
+  warningCard: {
+    backgroundColor: '#FFF3E0',
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF9800',
+  },
+  paymentWarning: {
+    marginTop: 8,
+  },
+  warningText: {
+    fontSize: 16,
+    marginBottom: 8,
+    color: '#333',
+  },
+  warningDays: {
+    fontWeight: 'bold',
+    color: '#FF9800',
+  },
+  warningDetails: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+  },
+  warningButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  editDateButton: {
+    flex: 1,
+    marginRight: 8,
+    borderColor: '#FF9800',
+  },
+  payNowButton: {
+    flex: 1,
+    marginLeft: 8,
+    backgroundColor: '#4CAF50',
   },
   card: {
     margin: 16,
