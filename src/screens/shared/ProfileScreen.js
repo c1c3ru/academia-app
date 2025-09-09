@@ -511,7 +511,7 @@ const ProfileScreen = ({ navigation }) => {
               description="Clique para alterar sua senha"
               left={() => <List.Icon icon="lock" />}
               right={() => <List.Icon icon="chevron-right" />}
-              onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}
+              onPress={() => navigation.navigate('ChangePassword')}
             />
             <Divider />
             

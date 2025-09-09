@@ -41,7 +41,7 @@ const SettingsScreen = ({ navigation }) => {
   };
 
   const handleChangePassword = () => {
-    Alert.alert('Em Desenvolvimento', 'Funcionalidade será implementada em breve');
+    navigation.navigate('ChangePassword');
   };
 
   const handleDataExport = () => {

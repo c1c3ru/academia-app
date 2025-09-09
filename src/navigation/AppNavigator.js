@@ -43,6 +43,7 @@ import InviteManagement from '../screens/admin/InviteManagement';
 
 // Telas Compartilhadas
 import ProfileScreen from '../screens/shared/ProfileScreen';
+import ChangePasswordScreen from '../screens/shared/ChangePasswordScreen';
 import LoadingScreen from '../screens/shared/LoadingScreen';
 import ClassDetailsScreen from '../screens/shared/ClassDetailsScreen';
 import StudentDetailsScreen from '../screens/shared/StudentDetailsScreen';
@@ -439,6 +440,24 @@ const MainNavigator = ({ userType }) => {
             <UniversalHeader
               title="Meu Perfil"
               subtitle="Informações pessoais e configurações"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor={
+                userType === 'admin' ? '#FF9800' :
+                userType === 'instructor' ? '#4CAF50' : '#2196F3'
+              }
+            />
+          ),
+        })}
+      />
+      <Stack.Screen
+        name="ChangePassword"
+        component={ChangePasswordScreen}
+        options={({ navigation }) => ({
+          header: () => (
+            <UniversalHeader
+              title="Alterar Senha"
+              subtitle="Atualizar sua senha de acesso"
               navigation={navigation}
               showBack={true}
               backgroundColor={
