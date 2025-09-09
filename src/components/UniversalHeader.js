@@ -4,6 +4,7 @@ import { Appbar, Avatar, Menu, Divider, Modal, Portal, Button, Text } from 'reac
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { ResponsiveUtils } from '../utils/animations';
+import NotificationBell from './NotificationBell';
 
 const UniversalHeader = ({ 
   title, 
@@ -138,6 +139,8 @@ const UniversalHeader = ({
           titleStyle={styles.appName}
           subtitleStyle={styles.subtitle}
         />
+
+        {showMenu && <NotificationBell color="white" size={24} />}
 
         {showMenu && (
           <Menu

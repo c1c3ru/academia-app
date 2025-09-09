@@ -27,12 +27,12 @@ export default function App() {
       <FirebaseInitializer>
         <SafeAreaProvider>
           <PaperProvider theme={theme}>
-            <NotificationProvider>
-              <AuthProvider>
+            <AuthProvider>
+              <NotificationProvider>
                 <StatusBar style="auto" />
                 <AppNavigator />
-              </AuthProvider>
-            </NotificationProvider>
+              </NotificationProvider>
+            </AuthProvider>
           </PaperProvider>
         </SafeAreaProvider>
       </FirebaseInitializer>
