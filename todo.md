@@ -2,6 +2,7 @@
 
 Este documento detalha os bugs encontrados e as funcionalidades a serem implementadas/melhoradas no aplicativo.
 
+ faça as correções e adiçõe necessárias mas mantenha as compatibilidades para o bom funcionamento do aplicativo
 ---
 
 ## 🐞 Bugs e Erros a Corrigir
