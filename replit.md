@@ -58,6 +58,8 @@ The app uses Firebase with the following services:
 - ✅ Built comprehensive physical evaluation system with BMI calculation
 - ✅ Developed complete injury tracking system for students
 - ✅ Enhanced admin UI with modern ActionButton component system
+- ✅ Implemented professional email invitation system with SendGrid integration
+- ✅ Created comprehensive LGPD privacy policy screen with legal compliance
 
 ## User Preferences
 - Project follows existing code structure and conventions
