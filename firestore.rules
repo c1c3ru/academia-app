@@ -107,8 +107,8 @@ service cloud.firestore {
     // Coleção legacy 'users' - manter compatibilidade temporária
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
-      // Permitir leitura para admins (para AdminDashboard e AdminStudents)
-      allow read: if isSignedIn() && isAdmin();
+      // Permitir leitura para admins e instrutores (para dashboards e busca de alunos)
+      allow read: if isSignedIn() && (isAdmin() || isInstructor());
     }
     
     // Coleção legacy 'classes' - compatibilidade temporária
