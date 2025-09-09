@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF3E0',
     padding: 12,
     borderRadius: 8,
-    borderLeft: 4,
+    borderLeftWidth: 4,
     borderLeftColor: '#FF9800',
     marginTop: 16,
   },
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
-    borderLeft: 4,
+    borderLeftWidth: 4,
     borderLeftColor: '#2196F3',
   },
   rightTitle: {
