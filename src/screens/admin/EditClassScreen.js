@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // import { Picker } from '@react-native-picker/picker'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, classService } from '../../services/firestoreService';
+import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';
 
 const EditClassScreen = ({ navigation, route }) => {
   const { user } = useAuth();
@@ -424,37 +425,38 @@ const EditClassScreen = ({ navigation, route }) => {
             </View>
 
             {/* Botões */}
-            <View style={styles.buttonContainer}>
-              <Button
+            <ActionButtonGroup style={styles.buttonContainer}>
+              <ActionButton
                 mode="outlined"
                 onPress={() => navigation.goBack()}
                 style={styles.button}
                 disabled={loading}
+                variant="secondary"
               >
                 Cancelar
-              </Button>
-              <Button
+              </ActionButton>
+              <ActionButton
                 mode="contained"
                 onPress={handleSubmit}
                 style={styles.button}
                 loading={loading}
                 disabled={loading || modalities.length === 0}
+                variant="success"
               >
                 Salvar
-              </Button>
-            </View>
+              </ActionButton>
+            </ActionButtonGroup>
 
             {/* Botão Excluir */}
-            <Button
+            <ActionButton
               mode="outlined"
               onPress={handleDelete}
               style={[styles.deleteButton, { marginTop: 20 }]}
-              buttonColor="#ffebee"
-              textColor="#d32f2f"
               disabled={loading}
+              variant="danger"
             >
               Excluir Turma
-            </Button>
+            </ActionButton>
           </Card.Content>
         </Card>
       </ScrollView>

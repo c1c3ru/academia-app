@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, paymentService } from '../../services/firestoreService';
+import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';
 import StudentDisassociationDialog from '../../components/StudentDisassociationDialog';
 
 const AdminStudents = ({ navigation }) => {
@@ -326,46 +327,53 @@ const AdminStudents = ({ navigation }) => {
 
                 <Divider style={styles.divider} />
 
-                <View style={styles.studentActions}>
-                  <Button 
+                <ActionButtonGroup style={styles.studentActions}>
+                  <ActionButton 
                     mode="outlined" 
                     onPress={() => handleStudentPress(student)}
                     style={styles.actionButton}
                     icon="eye"
+                    variant="primary"
+                    size="small"
                   >
                     Ver Perfil
-                  </Button>
+                  </ActionButton>
 
-                  <Button 
+                  <ActionButton 
                     mode="outlined" 
                     onPress={() => handleEditStudent(student)}
                     style={styles.actionButton}
                     icon="pencil"
+                    variant="warning"
+                    size="small"
                   >
                     Editar
-                  </Button>
+                  </ActionButton>
 
-                  <Button 
+                  <ActionButton 
                     mode="contained" 
                     onPress={() => navigation.navigate('StudentPayments', { studentId: student.id })}
                     style={styles.actionButton}
                     icon="cash"
+                    variant="success"
+                    size="small"
                   >
                     Pagamentos
-                  </Button>
-                </View>
+                  </ActionButton>
+                </ActionButtonGroup>
 
                 {/* Ações Administrativas */}
                 <View style={styles.adminActions}>
-                  <Button 
+                  <ActionButton 
                     mode="outlined" 
                     onPress={() => handleDisassociateStudent(student)}
-                    style={[styles.actionButton, styles.disassociateButton]}
+                    style={styles.actionButton}
                     icon="account-remove"
-                    textColor="#F44336"
+                    variant="danger"
+                    size="small"
                   >
                     Desassociar
-                  </Button>
+                  </ActionButton>
                 </View>
               </Card.Content>
             </Card>

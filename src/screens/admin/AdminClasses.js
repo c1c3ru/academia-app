@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, classService, studentService } from '../../services/firestoreService';
+import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';
 
 const AdminClasses = ({ navigation }) => {
   const { user } = useAuth();
@@ -343,34 +344,40 @@ const AdminClasses = ({ navigation }) => {
 
                 <Divider style={styles.divider} />
 
-                <View style={styles.classActions}>
-                  <Button 
+                <ActionButtonGroup style={styles.classActions}>
+                  <ActionButton 
                     mode="outlined" 
                     onPress={() => handleClassPress(classItem)}
                     style={styles.actionButton}
                     icon="eye"
+                    variant="primary"
+                    size="small"
                   >
                     Ver Detalhes
-                  </Button>
+                  </ActionButton>
 
-                  <Button 
+                  <ActionButton 
                     mode="outlined" 
                     onPress={() => handleEditClass(classItem)}
                     style={styles.actionButton}
                     icon="pencil"
+                    variant="warning"
+                    size="small"
                   >
                     Editar
-                  </Button>
+                  </ActionButton>
 
-                  <Button 
+                  <ActionButton 
                     mode="contained" 
                     onPress={() => navigation.navigate('ClassDetails', { classId: classItem.id, classData: classItem })}
                     style={styles.actionButton}
                     icon="account"
+                    variant="success"
+                    size="small"
                   >
                     Alunos
-                  </Button>
-                </View>
+                  </ActionButton>
+                </ActionButtonGroup>
               </Card.Content>
             </Card>
           ))
@@ -512,12 +519,10 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   classActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    marginTop: 4,
   },
   actionButton: {
     flex: 1,
-    marginHorizontal: 2,
   },
   emptyCard: {
     margin: 16,
