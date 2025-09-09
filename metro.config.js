@@ -5,20 +5,28 @@ const { getDefaultConfig } = require('expo/metro-config');
 const config = getDefaultConfig(__dirname);
 
 // Configure for Replit environment
-if (process.env.NODE_ENV === 'development') {
-  // Allow all hosts for Replit proxy
-  config.server = {
-    ...config.server,
-    enhanceMiddleware: (middleware) => {
-      return (req, res, next) => {
-        // Allow requests from any host (Replit proxy)
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-        return middleware(req, res, next);
-      };
-    },
-  };
-}
+config.server = {
+  ...config.server,
+  // Bind to all interfaces for Replit
+  host: '0.0.0.0',
+  port: 5000,
+  enhanceMiddleware: (middleware) => {
+    return (req, res, next) => {
+      // Allow requests from any host (Replit proxy)
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      
+      // Handle preflight requests
+      if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+      }
+      
+      return middleware(req, res, next);
+    };
+  },
+};
 
 module.exports = config;
