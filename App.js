@@ -7,13 +7,11 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 // Componentes e contextos
 import { AuthProvider } from './src/contexts/AuthContext';
 import { NotificationProvider } from './src/contexts/NotificationContext';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import FirebaseInitializer from './src/components/FirebaseInitializer';
 import WebCompatibility from './src/components/WebCompatibility';
-
-// Tema
-import theme from './src/utils/theme';
 
 console.log('🚀 App.js carregado - Platform:', Platform.OS);
 
@@ -26,18 +24,28 @@ export default function App() {
     <ErrorBoundary>
       <FirebaseInitializer>
         <SafeAreaProvider>
-          <PaperProvider theme={theme}>
-            <AuthProvider>
-              <NotificationProvider>
-                <StatusBar style="auto" />
-                <AppNavigator />
-              </NotificationProvider>
-            </AuthProvider>
-          </PaperProvider>
+          <ThemeProvider>
+            <ThemedApp />
+          </ThemeProvider>
         </SafeAreaProvider>
       </FirebaseInitializer>
     </ErrorBoundary>
   );
+
+  const ThemedApp = () => {
+    const { theme } = useTheme();
+    
+    return (
+      <PaperProvider theme={theme}>
+        <AuthProvider>
+          <NotificationProvider>
+            <StatusBar style="auto" />
+            <AppNavigator />
+          </NotificationProvider>
+        </AuthProvider>
+      </PaperProvider>
+    );
+  };
 
   // Para web, adicionar wrapper de compatibilidade
   if (Platform.OS === 'web') {

@@ -9,11 +9,15 @@ import {
   ActivityIndicator,
   Button,
   Text,
+  Switch,
+  Menu,
+  TouchableRipple
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import AnimatedCard from '../components/AnimatedCard';
 import AnimatedButton from '../components/AnimatedButton';
 
@@ -22,11 +26,14 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [languageMenuVisible, setLanguageMenuVisible] = useState(false);
+  
   const { signIn } = useAuth();
+  const { isDarkMode, currentLanguage, languages, theme, toggleDarkMode, changeLanguage, getString } = useTheme();
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos');
+      Alert.alert(getString('error'), getString('fillAllFields'));
       return;
     }
 
@@ -35,19 +42,19 @@ export default function LoginScreen({ navigation }) {
       await signIn(email.trim(), password);
     } catch (error) {
       console.error('Erro no login:', error);
-      let errorMessage = 'Verifique suas credenciais';
+      let errorMessage = getString('checkCredentials');
       
       if (error.code === 'auth/user-not-found') {
-        errorMessage = 'Usuário não encontrado';
+        errorMessage = getString('userNotFound');
       } else if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Senha incorreta';
+        errorMessage = getString('wrongPassword');
       } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Email inválido';
+        errorMessage = getString('invalidEmail');
       } else if (error.message) {
         errorMessage = error.message;
       }
       
-      Alert.alert('Erro no Login', errorMessage);
+      Alert.alert(getString('loginError'), errorMessage);
     } finally {
       setLoading(false);
     }
@@ -75,20 +82,74 @@ export default function LoginScreen({ navigation }) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" />
-        <Paragraph style={styles.loadingText}>Fazendo login...</Paragraph>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Paragraph style={[styles.loadingText, { color: theme.colors.text }]}>{getString('loggingIn')}</Paragraph>
       </View>
     );
   }
 
   return (
     <LinearGradient
-      colors={['#667eea', '#764ba2']}
+      colors={isDarkMode ? ['#1a1a1a', '#2d2d30'] : ['#667eea', '#764ba2']}
       style={styles.gradient}
     >
       <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {/* Settings Row */}
+          <View style={styles.settingsRow}>
+            {/* Language Selector */}
+            <View style={styles.settingItem}>
+              <Menu
+                visible={languageMenuVisible}
+                onDismiss={() => setLanguageMenuVisible(false)}
+                anchor={
+                  <TouchableRipple 
+                    style={styles.languageButton}
+                    onPress={() => setLanguageMenuVisible(true)}
+                    rippleColor="rgba(255,255,255,0.1)"
+                  >
+                    <View style={styles.languageButtonContent}>
+                      <Text style={styles.flagEmoji}>{languages[currentLanguage].flag}</Text>
+                      <Text style={styles.languageButtonText}>{languages[currentLanguage].name}</Text>
+                      <MaterialCommunityIcons name="chevron-down" size={20} color="white" />
+                    </View>
+                  </TouchableRipple>
+                }
+              >
+                {Object.keys(languages).map((langCode) => (
+                  <Menu.Item
+                    key={langCode}
+                    onPress={() => {
+                      changeLanguage(langCode);
+                      setLanguageMenuVisible(false);
+                    }}
+                    title={`${languages[langCode].flag} ${languages[langCode].name}`}
+                  />
+                ))}
+              </Menu>
+            </View>
+            
+            {/* Dark Mode Toggle */}
+            <View style={styles.settingItem}>
+              <View style={styles.darkModeToggle}>
+                <MaterialCommunityIcons 
+                  name={isDarkMode ? "weather-night" : "weather-sunny"} 
+                  size={20} 
+                  color="white" 
+                  style={styles.darkModeIcon}
+                />
+                <Text style={styles.darkModeText}>{getString('darkMode')}</Text>
+                <Switch
+                  value={isDarkMode}
+                  onValueChange={toggleDarkMode}
+                  thumbColor={isDarkMode ? theme.colors.primary : '#f4f3f4'}
+                  trackColor={{ false: '#767577', true: theme.colors.primary }}
+                />
+              </View>
+            </View>
+          </View>
+
           <View style={styles.header}>
             <MaterialCommunityIcons 
               name="school" 
@@ -96,61 +157,47 @@ export default function LoginScreen({ navigation }) {
               color="white" 
               style={styles.headerIcon}
             />
-            <Title style={styles.headerTitle}>Academia App</Title>
+            <Title style={styles.headerTitle}>{getString('appName')}</Title>
             <Paragraph style={styles.headerSubtitle}>
-              Bem-vindo de volta!
+              {getString('welcome')}
             </Paragraph>
           </View>
 
           <View style={styles.content}>
-            <AnimatedCard elevation="medium" animationType="fadeIn">
-              <Card.Content style={styles.cardContent}>
-                <Title style={styles.title}>Entrar</Title>
-                <Paragraph style={styles.subtitle}>
-                  Faça login para continuar
-                </Paragraph>
-
-                <Divider style={styles.divider} />
-
+            <AnimatedCard style={[styles.loginCard, { backgroundColor: theme.colors.surface }]} delay={200}>
+              <Card.Content>
                 <TextInput
-                  label="Email"
+                  label={getString('email')}
                   value={email}
                   onChangeText={setEmail}
-                  mode="outlined"
                   style={styles.input}
+                  mode="outlined"
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  disabled={loading}
+                  autoComplete="email"
+                  textContentType="emailAddress"
                   left={<TextInput.Icon icon="email" />}
+                  theme={theme}
                 />
 
                 <TextInput
-                  label="Senha"
+                  label={getString('password')}
                   value={password}
                   onChangeText={setPassword}
-                  mode="outlined"
                   style={styles.input}
+                  mode="outlined"
                   secureTextEntry={!showPassword}
-                  disabled={loading}
+                  autoComplete="password"
+                  textContentType="password"
                   left={<TextInput.Icon icon="lock" />}
                   right={
-                    <TextInput.Icon 
-                      icon={showPassword ? "eye-off" : "eye"} 
+                    <TextInput.Icon
+                      icon={showPassword ? "eye-off" : "eye"}
                       onPress={() => setShowPassword(!showPassword)}
                     />
                   }
+                  theme={theme}
                 />
-
-                <View style={styles.forgotPasswordContainer}>
-                  <Button
-                    mode="text"
-                    onPress={handleForgotPassword}
-                    disabled={loading}
-                    style={styles.forgotPasswordButton}
-                  >
-                    Esqueci minha senha
-                  </Button>
-                </View>
 
                 <AnimatedButton
                   mode="contained"
@@ -158,23 +205,33 @@ export default function LoginScreen({ navigation }) {
                   style={styles.loginButton}
                   loading={loading}
                   disabled={loading}
-                  icon="login"
+                  contentStyle={styles.buttonContent}
+                  labelStyle={styles.buttonLabel}
+                  buttonColor={theme.colors.primary}
+                  delay={400}
                 >
-                  Entrar
+                  {getString('login')}
                 </AnimatedButton>
 
-                <Divider style={styles.dividerRegister} />
+                <Divider style={styles.divider} />
 
-                <View style={styles.registerContainer}>
-                  <Text style={styles.registerText}>Ainda não tem uma conta?</Text>
+                <View style={styles.linkContainer}>
                   <Button
-                    mode="outlined"
-                    onPress={handleGoToRegister}
-                    disabled={loading}
-                    style={styles.registerButton}
-                    icon="account-plus"
+                    mode="text"
+                    onPress={handleForgotPassword}
+                    textColor={theme.colors.primary}
+                    style={styles.linkButton}
                   >
-                    Criar Conta
+                    {getString('forgotPassword')}
+                  </Button>
+
+                  <Button
+                    mode="text"
+                    onPress={handleGoToRegister}
+                    textColor={theme.colors.primary}
+                    style={styles.linkButton}
+                  >
+                    {getString('register')}
                   </Button>
                 </View>
               </Card.Content>
@@ -192,107 +249,119 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    padding: 16,
+  },
+  settingsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 20 : 40,
+    paddingBottom: 10,
+  },
+  settingItem: {
+    alignItems: 'center',
+  },
+  languageButton: {
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  languageButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  flagEmoji: {
+    fontSize: 16,
+    marginRight: 4,
+  },
+  languageButtonText: {
+    color: 'white',
+    fontSize: 14,
+    marginRight: 4,
+  },
+  darkModeToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  darkModeIcon: {
+    marginRight: 6,
+  },
+  darkModeText: {
+    color: 'white',
+    fontSize: 14,
+    marginRight: 8,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 30,
+    paddingVertical: 40,
   },
   headerIcon: {
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   headerTitle: {
     fontSize: 32,
     fontWeight: 'bold',
     color: 'white',
     marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    color: 'rgba(255,255,255,0.8)',
   },
   content: {
-    maxWidth: 400,
-    alignSelf: 'center',
-    width: '100%',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  loginCard: {
+    marginHorizontal: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  input: {
+    marginBottom: 16,
+  },
+  loginButton: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  buttonContent: {
+    paddingVertical: 6,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  divider: {
+    marginVertical: 16,
+  },
+  linkContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  linkButton: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
   loadingText: {
     marginTop: 16,
-    textAlign: 'center',
-  },
-  cardContent: {
-    padding: 24,
-  },
-  title: {
-    textAlign: 'center',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
-  },
-  subtitle: {
-    textAlign: 'center',
-    marginBottom: 16,
-    color: '#666',
-  },
-  divider: {
-    marginVertical: 16,
-  },
-  input: {
-    marginBottom: 16,
-    backgroundColor: 'white',
-  },
-  forgotPasswordContainer: {
-    alignItems: 'flex-end',
-    marginBottom: 8,
-  },
-  forgotPasswordButton: {
-    padding: 0,
-  },
-  loginButton: {
-    marginTop: 8,
-    paddingVertical: 8,
-    borderRadius: 25,
-  },
-  dividerRegister: {
-    marginVertical: 24,
-  },
-  registerContainer: {
-    alignItems: 'center',
-  },
-  registerText: {
-    marginBottom: 12,
-    color: '#666',
-    fontSize: 14,
-  },
-  registerButton: {
-    borderColor: '#2196F3',
-    borderRadius: 25,
+    fontSize: 16,
   },
 });
