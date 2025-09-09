@@ -53,18 +53,50 @@ const InstructorStudents = ({ navigation }) => {
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      // Load students
-      const instructorStudents = await studentService.getStudentsByInstructor(user.uid);
+      console.log('👥 Carregando dados do instrutor:', user.uid);
+      
+      // Load students with error handling
+      let instructorStudents = [];
+      try {
+        instructorStudents = await studentService.getStudentsByInstructor(user.uid);
+        console.log(`✅ ${instructorStudents.length} alunos encontrados`);
+      } catch (studentError) {
+        console.warn('⚠️ Erro ao buscar alunos via service:', studentError);
+        // Fallback: definir array vazio
+        instructorStudents = [];
+      }
       setStudents(instructorStudents);
-      // Load classes for this instructor
-      const instructorClasses = await firestoreService.getWhere('classes', 'instructorId', '==', user.uid);
+      
+      // Load classes for this instructor with error handling
+      let instructorClasses = [];
+      try {
+        instructorClasses = await firestoreService.getWhere('classes', 'instructorId', '==', user.uid);
+        console.log(`✅ ${instructorClasses.length} turmas encontradas`);
+      } catch (classError) {
+        console.warn('⚠️ Erro ao buscar turmas:', classError);
+        instructorClasses = [];
+      }
       setClasses(instructorClasses || []);
-      // Load modalities (for filter options)
-      const allModalities = await firestoreService.getAll('modalities');
+      
+      // Load modalities (for filter options) with error handling
+      let allModalities = [];
+      try {
+        allModalities = await firestoreService.getAll('modalities');
+        console.log(`✅ ${allModalities.length} modalidades carregadas`);
+      } catch (modalityError) {
+        console.warn('⚠️ Erro ao buscar modalidades:', modalityError);
+        allModalities = [];
+      }
       setModalities(allModalities || []);
+      
+      console.log('✅ Dados do instrutor carregados com sucesso');
     } catch (error) {
-      console.error('Erro ao carregar alunos:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os alunos');
+      console.error('Erro geral ao carregar dados do instrutor:', error);
+      // Em caso de erro total, definir arrays vazios para evitar crash
+      setStudents([]);
+      setClasses([]);
+      setModalities([]);
+      Alert.alert('Aviso', 'Algumas informações podem estar limitadas. Tente novamente mais tarde.');
     } finally {
       setLoading(false);
       setRefreshing(false);

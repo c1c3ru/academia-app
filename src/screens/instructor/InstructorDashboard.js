@@ -46,12 +46,33 @@ const InstructorDashboard = ({ navigation }) => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
+      console.log('📊 Carregando dashboard do instrutor:', user.uid);
       
-      // Buscar turmas do professor (suporta schemas legados por email)
-      const instructorClasses = await classService.getClassesByInstructor(user.uid, user?.email);
+      // Buscar turmas do professor com tratamento de erro
+      let instructorClasses = [];
+      try {
+        instructorClasses = await classService.getClassesByInstructor(user.uid, user?.email);
+        console.log(`✅ ${instructorClasses.length} turmas carregadas`);
+      } catch (classError) {
+        console.warn('⚠️ Erro ao buscar turmas via service:', classError);
+        try {
+          instructorClasses = await firestoreService.getWhere('classes', 'instructorId', '==', user.uid);
+          console.log(`✅ Fallback: ${instructorClasses.length} turmas encontradas`);
+        } catch (fallbackError) {
+          console.error('❌ Falha no fallback para turmas:', fallbackError);
+          instructorClasses = [];
+        }
+      }
       
-      // Buscar alunos do professor
-      const instructorStudents = await studentService.getStudentsByInstructor(user.uid);
+      // Buscar alunos do professor com tratamento de erro
+      let instructorStudents = [];
+      try {
+        instructorStudents = await studentService.getStudentsByInstructor(user.uid);
+        console.log(`✅ ${instructorStudents.length} alunos carregados`);
+      } catch (studentError) {
+        console.warn('⚠️ Erro ao buscar alunos via service:', studentError);
+        instructorStudents = [];
+      }
       
       // Filtrar aulas de hoje
       const today = new Date().getDay();
@@ -83,8 +104,19 @@ const InstructorDashboard = ({ navigation }) => {
         recentGraduations,
         upcomingClasses
       });
+      
+      console.log('✅ Dashboard do instrutor carregado com sucesso');
     } catch (error) {
-      console.error('Erro ao carregar dashboard do professor:', error);
+      console.error('Erro geral ao carregar dashboard do professor:', error);
+      // Em caso de erro total, definir dados vazios para evitar crash
+      setDashboardData({
+        myClasses: [],
+        todayClasses: [],
+        totalStudents: 0,
+        activeCheckIns: 0,
+        recentGraduations: [],
+        upcomingClasses: []
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);

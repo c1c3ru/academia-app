@@ -440,14 +440,21 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 2px 3.84px rgba(0, 0, 0, 0.25)'
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+      }
+    }),
   },
   title: {
     fontSize: 32,
@@ -481,16 +488,23 @@ const styles = StyleSheet.create({
     }),
   },
   card: {
-    elevation: 8,
     borderRadius: 20,
     backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 4px 4.65px rgba(0, 0, 0, 0.3)'
+      },
+      default: {
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 0,
+          height: 4,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+      }
+    }),
   },
   cardTitle: {
     textAlign: 'center',

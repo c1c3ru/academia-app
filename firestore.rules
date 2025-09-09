@@ -8,7 +8,7 @@ service cloud.firestore {
     }
     
     function getUserData() {
-      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
     
     function isMemberOf(academiaId) {
@@ -20,7 +20,7 @@ service cloud.firestore {
     }
     
     function isInstructor() {
-      return isSignedIn() && (getUserData().tipo == 'instrutor' || getUserData().userType == 'instructor');
+      return isSignedIn() && (getUserData().tipo == 'instrutor' || getUserData().userType == 'instructor' || getUserData().tipo == 'instructor');
     }
     
     function isStudent() {
@@ -28,8 +28,10 @@ service cloud.firestore {
     }
     
     // Coleção de usuários - acesso restrito ao próprio usuário
-    match /usuarios/{userId} {
+    match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
+      // Permitir leitura para admins e instrutores (para dashboards e busca de alunos)
+      allow read: if isSignedIn() && (isAdmin() || isInstructor());
     }
     
     // Coleção de academias
@@ -104,11 +106,9 @@ service cloud.firestore {
       allow write: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
     }
     
-    // Coleção legacy 'users' - manter compatibilidade temporária
-    match /users/{userId} {
+    // Coleção legacy 'usuarios' - manter compatibilidade temporária  
+    match /usuarios/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
-      // Permitir leitura para admins e instrutores (para dashboards e busca de alunos)
-      allow read: if isSignedIn() && (isAdmin() || isInstructor());
     }
     
     // Coleção legacy 'classes' - compatibilidade temporária

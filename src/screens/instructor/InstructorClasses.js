@@ -36,24 +36,53 @@ const InstructorClasses = ({ navigation }) => {
   const loadClasses = async () => {
     try {
       setLoading(true);
-      const instructorClasses = await classService.getClassesByInstructor(user.uid, user?.email);
+      console.log('📚 Carregando turmas do instrutor:', user.uid);
       
-      // Buscar número de alunos para cada turma
+      // Primeiro, tentar buscar turmas do instrutor
+      let instructorClasses = [];
+      try {
+        instructorClasses = await classService.getClassesByInstructor(user.uid, user?.email);
+        console.log(`✅ ${instructorClasses.length} turmas encontradas`);
+      } catch (classError) {
+        console.warn('⚠️ Erro ao buscar turmas via service, tentando consulta direta:', classError);
+        // Fallback: busca direta sem dependência do service
+        try {
+          instructorClasses = await firestoreService.getWhere('classes', 'instructorId', '==', user.uid);
+          console.log(`✅ Fallback: ${instructorClasses.length} turmas encontradas`);
+        } catch (fallbackError) {
+          console.error('❌ Falha no fallback para turmas:', fallbackError);
+          instructorClasses = [];
+        }
+      }
+      
+      // Buscar número de alunos para cada turma (com tratamento de erro)
       const classesWithStudents = await Promise.all(
         instructorClasses.map(async (classItem) => {
-          const students = await studentService.getStudentsByClass(classItem.id);
-          return {
-            ...classItem,
-            currentStudents: students.length,
-            students: students
-          };
+          try {
+            const students = await studentService.getStudentsByClass(classItem.id);
+            return {
+              ...classItem,
+              currentStudents: students.length,
+              students: students
+            };
+          } catch (studentError) {
+            console.warn(`⚠️ Erro ao buscar alunos da turma ${classItem.id}:`, studentError);
+            return {
+              ...classItem,
+              currentStudents: 0,
+              students: []
+            };
+          }
         })
       );
       
       setClasses(classesWithStudents);
+      console.log(`✅ Dashboard carregado com ${classesWithStudents.length} turmas`);
     } catch (error) {
-      console.error('Erro ao carregar turmas:', error);
-      Alert.alert('Erro', 'Não foi possível carregar as turmas');
+      console.error('Erro geral ao carregar turmas:', error);
+      // Em caso de erro total, definir array vazio para evitar crash
+      setClasses([]);
+      Alert.alert('Aviso', 'Algumas informações podem estar limitadas. Tente novamente mais tarde.');
     } finally {
       setLoading(false);
       setRefreshing(false);

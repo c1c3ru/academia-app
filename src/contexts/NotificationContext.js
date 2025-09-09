@@ -69,19 +69,34 @@ export const NotificationProvider = ({ children }) => {
     if (!user || !userProfile?.academiaId) return;
 
     try {
+      console.log('📬 Carregando notificações para usuário:', user.uid);
+      
+      // Estratégia: usar apenas filtro por userId para evitar erro de índice
+      // Filtrar por data em memória é mais eficiente para volumes pequenos
       const userNotifications = await firestoreService.getDocuments(
         `academias/${userProfile.academiaId}/notifications`,
         [
-          { field: 'userId', operator: '==', value: user.uid },
-          { field: 'createdAt', operator: '>=', value: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } // Últimos 30 dias
+          { field: 'userId', operator: '==', value: user.uid }
         ],
         { field: 'createdAt', direction: 'desc' },
-        50
+        100 // Buscar mais documentos para filtrar em memória
       );
 
-      setUnreadNotifications(userNotifications.filter(n => !n.isRead));
+      // Filtrar últimos 30 dias em memória
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const recentNotifications = userNotifications.filter(notification => {
+        const createdAt = notification.createdAt?.seconds 
+          ? new Date(notification.createdAt.seconds * 1000)
+          : new Date(notification.createdAt);
+        return createdAt >= thirtyDaysAgo;
+      }).slice(0, 50); // Limitar a 50 mais recentes
+
+      console.log(`📬 ${recentNotifications.length} notificações carregadas dos últimos 30 dias`);
+      setUnreadNotifications(recentNotifications.filter(n => !n.isRead));
     } catch (error) {
       console.error('❌ Erro ao carregar notificações:', error);
+      // Em caso de erro, definir array vazio para evitar crash
+      setUnreadNotifications([]);
     }
   };
 
