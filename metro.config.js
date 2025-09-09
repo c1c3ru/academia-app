@@ -7,9 +7,6 @@ const config = getDefaultConfig(__dirname);
 // Configure for Replit environment
 config.server = {
   ...config.server,
-  // Bind to all interfaces for Replit
-  host: '0.0.0.0',
-  port: 5000,
   enhanceMiddleware: (middleware) => {
     return (req, res, next) => {
       // Allow requests from any host (Replit proxy)
