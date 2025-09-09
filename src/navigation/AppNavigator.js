@@ -509,7 +509,14 @@ const AppNavigator = () => {
   }
 
   // Determinar tipo de usuário (userType é o campo principal)
-  const userType = userProfile.userType || userProfile.tipo || 'student';
+  let userType = userProfile.userType || userProfile.tipo || 'student';
+  
+  // Mapear valores em português para inglês para compatibilidade
+  if (userType === 'instrutor') {
+    userType = 'instructor';
+  } else if (userType === 'aluno') {
+    userType = 'student';
+  }
   
   // Usuário completo com academia, mostrar app principal
   console.log('🧭 AppNavigator: Renderizando MainNavigator para:', userType, {

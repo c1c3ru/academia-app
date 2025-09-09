@@ -26,6 +26,83 @@ export const AuthProvider = ({ children }) => {
   const [academia, setAcademia] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchAcademiaData = async (academiaId) => {
+    try {
+      console.log('🏢 fetchAcademiaData: Buscando dados da academia:', academiaId);
+      const academiaDoc = await getDoc(doc(db, 'academias', academiaId));
+      if (academiaDoc.exists()) {
+        console.log('✅ fetchAcademiaData: Academia encontrada');
+        setAcademia({
+          id: academiaId,
+          ...academiaDoc.data()
+        });
+      } else {
+        console.log('❌ fetchAcademiaData: Academia não encontrada');
+        setAcademia(null);
+      }
+    } catch (error) {
+      console.error('❌ fetchAcademiaData: Erro ao buscar dados da academia:', error);
+    }
+  };
+
+  const fetchUserProfile = async (userId) => {
+    try {
+      console.log('🔍 fetchUserProfile: Buscando perfil para userId:', userId);
+      
+      // Primeiro tenta buscar na nova estrutura 'usuarios'
+      console.log('🔍 fetchUserProfile: Tentando buscar em usuarios...');
+      let userDoc = await getDoc(doc(db, 'usuarios', userId));
+      let foundIn = null;
+      
+      if (userDoc.exists()) {
+        foundIn = 'usuarios';
+        console.log('✅ fetchUserProfile: Encontrado em usuarios');
+      } else {
+        console.log('❌ fetchUserProfile: Não encontrado em usuarios, tentando users...');
+        // Se não encontrar, tenta na estrutura legacy 'users'
+        userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+          foundIn = 'users';
+          console.log('✅ fetchUserProfile: Encontrado em users (legacy)');
+        }
+      }
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        console.log('📊 fetchUserProfile: Dados do usuário carregados:', {
+          email: userData.email,
+          academiaId: userData.academiaId,
+          tipo: userData.tipo,
+          userType: userData.userType,
+          foundIn: foundIn,
+          hasAcademiaId: !!userData.academiaId
+        });
+        
+        setUserProfile(userData);
+        
+        // Se o usuário tem academiaId, buscar dados da academia
+        if (userData.academiaId) {
+          console.log('🏢 fetchUserProfile: Usuário tem academiaId, buscando dados da academia...');
+          await fetchAcademiaData(userData.academiaId);
+        } else {
+          console.log('⚠️ fetchUserProfile: Usuário SEM academiaId - será redirecionado para seleção');
+          setAcademia(null);
+        }
+      } else {
+        console.log('❌ fetchUserProfile: Usuário não encontrado em nenhuma coleção');
+        setUserProfile(null);
+        setAcademia(null);
+      }
+    } catch (error) {
+      console.error('❌ fetchUserProfile: Erro ao buscar perfil do usuário:', error);
+      console.error('❌ fetchUserProfile: Detalhes:', {
+        userId,
+        code: error.code,
+        message: error.message
+      });
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log('🔐 AuthStateChanged: Firebase user mudou:', firebaseUser?.email || 'null');
@@ -33,8 +110,22 @@ export const AuthProvider = ({ children }) => {
       if (firebaseUser) {
         console.log('🔐 AuthStateChanged: Usuário logado, definindo user state');
         setUser(firebaseUser);
+        
+        // TESTE: Verificar se fetchUserProfile existe
+        console.log('🔐 AuthStateChanged: fetchUserProfile existe?', typeof fetchUserProfile);
+        
         // Buscar perfil do usuário no Firestore
-        await fetchUserProfile(firebaseUser.uid);
+        console.log('🔐 AuthStateChanged: Chamando fetchUserProfile para UID:', firebaseUser.uid);
+        
+        // Chamada direta com log imediato
+        console.log('🔐 AuthStateChanged: ANTES de chamar fetchUserProfile');
+        try {
+          await fetchUserProfile(firebaseUser.uid);
+          console.log('🔐 AuthStateChanged: fetchUserProfile concluído');
+        } catch (error) {
+          console.error('🔐 AuthStateChanged: Erro no fetchUserProfile:', error);
+        }
+        console.log('🔐 AuthStateChanged: DEPOIS de chamar fetchUserProfile');
       } else {
         console.log('🔐 AuthContext: Usuário deslogado, limpando estados');
         setUser(null);
@@ -46,46 +137,6 @@ export const AuthProvider = ({ children }) => {
 
     return unsubscribe;
   }, []);
-
-  const fetchUserProfile = async (userId) => {
-    try {
-      // Primeiro tenta buscar na nova estrutura 'usuarios'
-      let userDoc = await getDoc(doc(db, 'usuarios', userId));
-      
-      // Se não encontrar, tenta na estrutura legacy 'users'
-      if (!userDoc.exists()) {
-        userDoc = await getDoc(doc(db, 'users', userId));
-      }
-      
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        setUserProfile(userData);
-        
-        // Se o usuário tem academiaId, buscar dados da academia
-        if (userData.academiaId) {
-          await fetchAcademiaData(userData.academiaId);
-        } else {
-          setAcademia(null);
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao buscar perfil do usuário:', error);
-    }
-  };
-
-  const fetchAcademiaData = async (academiaId) => {
-    try {
-      const academiaDoc = await getDoc(doc(db, 'academias', academiaId));
-      if (academiaDoc.exists()) {
-        setAcademia({
-          id: academiaId,
-          ...academiaDoc.data()
-        });
-      }
-    } catch (error) {
-      console.error('Erro ao buscar dados da academia:', error);
-    }
-  };
 
   const signUp = async (email, password, userData) => {
     try {
@@ -213,28 +264,77 @@ export const AuthProvider = ({ children }) => {
 
   const updateUserProfile = async (updates) => {
     try {
+      console.log('📝 updateUserProfile: Iniciando atualização do perfil');
+      console.log('📝 updateUserProfile: Updates:', updates);
+      console.log('📝 updateUserProfile: User UID:', user?.uid);
+      console.log('📝 updateUserProfile: UserProfile atual:', {
+        email: userProfile?.email,
+        academiaId: userProfile?.academiaId,
+        tipo: userProfile?.tipo
+      });
+      
       if (user) {
-        // Atualizar na nova estrutura 'usuarios'
-        await setDoc(doc(db, 'usuarios', user.uid), {
+        const updateData = {
           ...userProfile,
           ...updates,
           updatedAt: new Date()
-        }, { merge: true });
+        };
         
+        console.log('📝 updateUserProfile: Dados finais para salvar:', {
+          email: updateData.email,
+          academiaId: updateData.academiaId,
+          tipo: updateData.tipo,
+          updatedAt: updateData.updatedAt
+        });
+        
+        // Atualizar na nova estrutura 'usuarios'
+        console.log('📝 updateUserProfile: Salvando em usuarios...');
+        await setDoc(doc(db, 'usuarios', user.uid), updateData, { merge: true });
+        console.log('✅ updateUserProfile: Salvo com sucesso em usuarios');
+        
+        console.log('📝 updateUserProfile: Recarregando perfil...');
         await fetchUserProfile(user.uid);
+        console.log('✅ updateUserProfile: Perfil recarregado');
+      } else {
+        console.error('❌ updateUserProfile: Usuário não está logado');
       }
     } catch (error) {
+      console.error('❌ updateUserProfile: Erro na atualização:', error);
+      console.error('❌ updateUserProfile: Detalhes:', {
+        userId: user?.uid,
+        updates,
+        code: error.code,
+        message: error.message
+      });
       throw error;
     }
   };
 
   const updateAcademiaAssociation = async (academiaId) => {
     try {
+      console.log('🔗 updateAcademiaAssociation: Iniciando associação com academia:', academiaId);
+      console.log('🔗 updateAcademiaAssociation: User UID:', user?.uid);
+      console.log('🔗 updateAcademiaAssociation: User email:', user?.email);
+      
       if (user) {
+        console.log('🔗 updateAcademiaAssociation: Atualizando perfil do usuário...');
         await updateUserProfile({ academiaId });
+        console.log('✅ updateAcademiaAssociation: Perfil atualizado com sucesso');
+        
+        console.log('🔗 updateAcademiaAssociation: Buscando dados da academia...');
         await fetchAcademiaData(academiaId);
+        console.log('✅ updateAcademiaAssociation: Associação completa!');
+      } else {
+        console.error('❌ updateAcademiaAssociation: Usuário não está logado');
       }
     } catch (error) {
+      console.error('❌ updateAcademiaAssociation: Erro na associação:', error);
+      console.error('❌ updateAcademiaAssociation: Detalhes:', {
+        academiaId,
+        userId: user?.uid,
+        code: error.code,
+        message: error.message
+      });
       throw error;
     }
   };

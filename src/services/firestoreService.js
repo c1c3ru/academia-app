@@ -138,7 +138,7 @@ export const firestoreService = {
   },
 
   // Buscar documentos com múltiplos filtros e ordenação
-  getDocuments: async (collectionName, filters = [], orderBy = null, limitCount = null) => {
+  getDocuments: async (collectionName, filters = [], orderByConfig = null, limitCount = null) => {
     try {
       let q = collection(db, collectionName);
       
@@ -150,8 +150,8 @@ export const firestoreService = {
       }
       
       // Aplicar ordenação
-      if (orderBy) {
-        q = query(q, orderBy(orderBy.field, orderBy.direction || 'desc'));
+      if (orderByConfig) {
+        q = query(q, orderBy(orderByConfig.field, orderByConfig.direction || 'desc'));
       }
       
       // Aplicar limite

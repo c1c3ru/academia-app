@@ -20,11 +20,11 @@ service cloud.firestore {
     }
     
     function isInstructor() {
-      return isSignedIn() && getUserData().tipo == 'instrutor';
+      return isSignedIn() && (getUserData().tipo == 'instrutor' || getUserData().userType == 'instructor');
     }
     
     function isStudent() {
-      return isSignedIn() && getUserData().tipo == 'aluno';
+      return isSignedIn() && (getUserData().tipo == 'aluno' || getUserData().userType == 'student');
     }
     
     // Coleção de usuários - acesso restrito ao próprio usuário
@@ -75,6 +75,14 @@ service cloud.firestore {
       match /planos/{planoId} {
         allow read: if isSignedIn() && isMemberOf(academiaId);
         allow write: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
+      }
+      
+      // Subcoleção de notificações
+      match /notifications/{notificationId} {
+        allow read: if isSignedIn() && isMemberOf(academiaId);
+        allow create: if isSignedIn() && isMemberOf(academiaId) && (isAdmin() || isInstructor());
+        allow update: if isSignedIn() && isMemberOf(academiaId);
+        allow delete: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
       }
     }
     

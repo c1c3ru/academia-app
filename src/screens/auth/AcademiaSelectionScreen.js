@@ -82,7 +82,7 @@ export default function AcademiaSelectionScreen({ navigation }) {
   useEffect(() => {
     // Se o usuário já tem academia associada, redirecionar
     if (userProfile?.academiaId) {
-      navigation.replace('Main');
+      navigation.replace('MainTabs');
     }
   }, [userProfile, navigation]);
 
@@ -129,7 +129,7 @@ export default function AcademiaSelectionScreen({ navigation }) {
       showSnackbar('Você foi associado à academia com sucesso! Redirecionando para o dashboard...', 'success');
       setTimeout(() => {
         // Navegar para a tela principal - o AppNavigator irá detectar a mudança automaticamente
-        navigation.replace('Main');
+        navigation.replace('MainTabs');
       }, 2000);
     } catch (error) {
       console.error('Erro ao associar à academia:', error);
