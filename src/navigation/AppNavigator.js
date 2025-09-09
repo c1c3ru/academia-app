@@ -44,6 +44,8 @@ import InviteManagement from '../screens/admin/InviteManagement';
 // Telas Compartilhadas
 import ProfileScreen from '../screens/shared/ProfileScreen';
 import ChangePasswordScreen from '../screens/shared/ChangePasswordScreen';
+import PhysicalEvaluationScreen from '../screens/shared/PhysicalEvaluationScreen';
+import PhysicalEvaluationHistoryScreen from '../screens/shared/PhysicalEvaluationHistoryScreen';
 import LoadingScreen from '../screens/shared/LoadingScreen';
 import ClassDetailsScreen from '../screens/shared/ClassDetailsScreen';
 import StudentDetailsScreen from '../screens/shared/StudentDetailsScreen';
@@ -458,6 +460,42 @@ const MainNavigator = ({ userType }) => {
             <UniversalHeader
               title="Alterar Senha"
               subtitle="Atualizar sua senha de acesso"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor={
+                userType === 'admin' ? '#FF9800' :
+                userType === 'instructor' ? '#4CAF50' : '#2196F3'
+              }
+            />
+          ),
+        })}
+      />
+      <Stack.Screen
+        name="PhysicalEvaluation"
+        component={PhysicalEvaluationScreen}
+        options={({ navigation }) => ({
+          header: () => (
+            <UniversalHeader
+              title="Avaliação Física"
+              subtitle="Registre suas medidas corporais"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor={
+                userType === 'admin' ? '#FF9800' :
+                userType === 'instructor' ? '#4CAF50' : '#2196F3'
+              }
+            />
+          ),
+        })}
+      />
+      <Stack.Screen
+        name="PhysicalEvaluationHistory"
+        component={PhysicalEvaluationHistoryScreen}
+        options={({ navigation }) => ({
+          header: () => (
+            <UniversalHeader
+              title="Histórico de Avaliações"
+              subtitle="Acompanhe sua evolução física"
               navigation={navigation}
               showBack={true}
               backgroundColor={

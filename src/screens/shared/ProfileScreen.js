@@ -477,9 +477,13 @@ const ProfileScreen = ({ navigation }) => {
               <Card.Content>
                 <List.Item
                   title="Avaliações físicas"
-                  description="Última avaliação: -"
+                  description={physicalEvaluations.length > 0 ? 
+                    `${physicalEvaluations.length} avaliação(ões) registrada(s)` : 
+                    'Nenhuma avaliação registrada'
+                  }
                   left={() => <List.Icon icon="clipboard-pulse-outline" />}
                   right={() => <List.Icon icon="chevron-right" />}
+                  onPress={() => navigation.navigate('PhysicalEvaluationHistory')}
                 />
               </Card.Content>
             </Card>
@@ -512,6 +516,15 @@ const ProfileScreen = ({ navigation }) => {
               left={() => <List.Icon icon="lock" />}
               right={() => <List.Icon icon="chevron-right" />}
               onPress={() => navigation.navigate('ChangePassword')}
+            />
+            <Divider />
+            
+            <List.Item
+              title="Avaliações Físicas"
+              description="Acompanhe sua evolução física e IMC"
+              left={() => <List.Icon icon="scale" />}
+              right={() => <List.Icon icon="chevron-right" />}
+              onPress={() => navigation.navigate('PhysicalEvaluationHistory')}
             />
             <Divider />
             
