@@ -14,15 +14,26 @@ import {
   Title,
   TextInput,
   HelperText,
-  RadioButton
+  RadioButton,
+  Snackbar,
+  ActivityIndicator,
+  Banner
 } from 'react-native-paper';
 // import { Picker } from '@react-native-picker/picker'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService } from '../../services/firestoreService';
 
 const AddStudentScreen = ({ navigation, route }) => {
-  const { user } = useAuth();
+  const { user, userProfile, academia } = useAuth();
   const [loading, setLoading] = useState(false);
+  
+  // Feedback states
+  const [snackbar, setSnackbar] = useState({
+    visible: false,
+    message: '',
+    type: 'info' // 'success', 'error', 'info'
+  });
+  const [showValidationBanner, setShowValidationBanner] = useState(false);
   
   // Form data
   const [formData, setFormData] = useState({
@@ -40,6 +51,18 @@ const AddStudentScreen = ({ navigation, route }) => {
   });
 
   const [errors, setErrors] = useState({});
+
+  const showSnackbar = (message, type = 'info') => {
+    setSnackbar({
+      visible: true,
+      message,
+      type
+    });
+  };
+
+  const hideSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, visible: false }));
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -71,7 +94,16 @@ const AddStudentScreen = ({ navigation, route }) => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const hasErrors = Object.keys(newErrors).length > 0;
+    
+    if (hasErrors) {
+      setShowValidationBanner(true);
+      showSnackbar('Por favor, preencha todos os campos obrigatórios', 'error');
+    } else {
+      setShowValidationBanner(false);
+    }
+    
+    return !hasErrors;
   };
 
   const handleSubmit = async () => {
@@ -96,6 +128,7 @@ const AddStudentScreen = ({ navigation, route }) => {
         userType: 'student',
         isActive: true,
         createdBy: user.uid,
+        academiaId: userProfile?.academiaId || academia?.id || null,
         createdAt: new Date(),
         updatedAt: new Date(),
         graduations: [],
@@ -104,20 +137,41 @@ const AddStudentScreen = ({ navigation, route }) => {
 
       await firestoreService.create('users', studentData);
 
-      Alert.alert(
-        'Sucesso',
-        'Aluno cadastrado com sucesso!',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack()
-          }
-        ]
-      );
+      showSnackbar('Aluno cadastrado com sucesso!', 'success');
+      
+      // Limpar formulário após sucesso
+      setTimeout(() => {
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          birthDate: '',
+          address: '',
+          emergencyContact: '',
+          emergencyPhone: '',
+          medicalConditions: '',
+          goals: '',
+          status: 'active',
+          userType: 'student'
+        });
+        setErrors({});
+        navigation.goBack();
+      }, 2000);
 
     } catch (error) {
       console.error('Erro ao cadastrar aluno:', error);
-      Alert.alert('Erro', 'Não foi possível cadastrar o aluno. Tente novamente.');
+      
+      let errorMessage = 'Não foi possível cadastrar o aluno. Tente novamente.';
+      
+      if (error.code === 'permission-denied') {
+        errorMessage = 'Você não tem permissão para cadastrar alunos. Verifique suas credenciais.';
+      } else if (error.code === 'network-request-failed') {
+        errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      } else if (error.message?.includes('email')) {
+        errorMessage = 'Este email já está em uso. Tente outro email.';
+      }
+      
+      showSnackbar(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -135,11 +189,40 @@ const AddStudentScreen = ({ navigation, route }) => {
         ...prev,
         [field]: null
       }));
+      
+      // Hide validation banner if no more errors
+      const remainingErrors = Object.keys(errors).filter(key => key !== field && errors[key]);
+      if (remainingErrors.length === 0) {
+        setShowValidationBanner(false);
+      }
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Banner de validação */}
+      <Banner
+        visible={showValidationBanner}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => setShowValidationBanner(false),
+          },
+        ]}
+        icon="alert-circle"
+        style={styles.validationBanner}
+      >
+        Preencha todos os campos obrigatórios marcados com *
+      </Banner>
+
+      {/* Loading overlay */}
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#6200ee" />
+          <Text style={styles.loadingText}>Cadastrando aluno...</Text>
+        </View>
+      )}
+
       <ScrollView 
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
