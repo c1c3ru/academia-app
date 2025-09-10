@@ -11,7 +11,9 @@ import {
   Text,
   Switch,
   Menu,
-  TouchableRipple
+  TouchableRipple,
+  Snackbar,
+  HelperText
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,35 +30,79 @@ export default function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [languageMenuVisible, setLanguageMenuVisible] = useState(false);
   
+  // Feedback states
+  const [snackbar, setSnackbar] = useState({
+    visible: false,
+    message: '',
+    type: 'info' // 'success', 'error', 'info'
+  });
+  const [errors, setErrors] = useState({});
+  
   const { signIn, signInWithGoogle, signInWithFacebook, signInWithMicrosoft, signInWithApple } = useAuth();
   const { isDarkMode, currentLanguage, languages, theme, toggleDarkMode, changeLanguage, getString } = useTheme();
 
+  const showSnackbar = (message, type = 'info') => {
+    setSnackbar({
+      visible: true,
+      message,
+      type
+    });
+  };
+
+  const hideSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, visible: false }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!email.trim()) {
+      newErrors.email = getString('emailRequired') || 'Email é obrigatório';
+    } else if (!/\S+@\S+\.\S+/.test(email.trim())) {
+      newErrors.email = getString('invalidEmail') || 'Email inválido';
+    }
+
+    if (!password.trim()) {
+      newErrors.password = getString('passwordRequired') || 'Senha é obrigatória';
+    } else if (password.length < 6) {
+      newErrors.password = getString('passwordTooShort') || 'Senha deve ter pelo menos 6 caracteres';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert(getString('error'), getString('fillAllFields'));
+    if (!validateForm()) {
+      showSnackbar(getString('fillAllFields') || 'Preencha todos os campos corretamente', 'error');
       return;
     }
 
     setLoading(true);
     try {
       await signIn(email.trim(), password);
+      showSnackbar(getString('loginSuccess') || 'Login realizado com sucesso!', 'success');
     } catch (error) {
       console.error('Erro no login:', error);
-      let errorMessage = getString('checkCredentials');
+      let errorMessage = getString('checkCredentials') || 'Verifique suas credenciais';
       
       if (error.code === 'auth/user-not-found') {
-        errorMessage = getString('userNotFound');
+        errorMessage = getString('userNotFound') || 'Usuário não encontrado';
       } else if (error.code === 'auth/wrong-password') {
-        errorMessage = getString('wrongPassword');
+        errorMessage = getString('wrongPassword') || 'Senha incorreta';
       } else if (error.code === 'auth/invalid-credential') {
-        errorMessage = getString('invalidCredentials');
+        errorMessage = getString('invalidCredentials') || 'Credenciais inválidas';
       } else if (error.code === 'auth/invalid-email') {
-        errorMessage = getString('invalidEmail');
+        errorMessage = getString('invalidEmail') || 'Email inválido';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Muitas tentativas de login. Tente novamente mais tarde.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Erro de conexão. Verifique sua internet.';
       } else if (error.message) {
         errorMessage = error.message;
       }
       
-      Alert.alert(getString('loginError'), errorMessage);
+      showSnackbar(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -87,9 +133,10 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       await signInWithGoogle();
+      showSnackbar('Login com Google realizado com sucesso!', 'success');
     } catch (error) {
       console.error('Erro no login Google:', error);
-      Alert.alert(getString('loginError'), getString('googleLoginError'));
+      showSnackbar(getString('googleLoginError') || 'Erro no login com Google', 'error');
     } finally {
       setLoading(false);
     }
@@ -100,9 +147,10 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       await signInWithFacebook();
+      showSnackbar('Login com Facebook realizado com sucesso!', 'success');
     } catch (error) {
       console.error('Erro no login Facebook:', error);
-      Alert.alert(getString('loginError'), getString('facebookLoginError'));
+      showSnackbar(getString('facebookLoginError') || 'Erro no login com Facebook', 'error');
     } finally {
       setLoading(false);
     }
@@ -113,9 +161,10 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       await signInWithMicrosoft();
+      showSnackbar('Login com Microsoft realizado com sucesso!', 'success');
     } catch (error) {
       console.error('Erro no login Microsoft:', error);
-      Alert.alert(getString('loginError'), getString('microsoftLoginError'));
+      showSnackbar(getString('microsoftLoginError') || 'Erro no login com Microsoft', 'error');
     } finally {
       setLoading(false);
     }
@@ -126,9 +175,10 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       await signInWithApple();
+      showSnackbar('Login com Apple realizado com sucesso!', 'success');
     } catch (error) {
       console.error('Erro no login Apple:', error);
-      Alert.alert(getString('loginError'), getString('appleLoginError'));
+      showSnackbar(getString('appleLoginError') || 'Erro no login com Apple', 'error');
     } finally {
       setLoading(false);
     }
@@ -223,7 +273,12 @@ export default function LoginScreen({ navigation }) {
                 <TextInput
                   label={getString('email')}
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    if (errors.email) {
+                      setErrors(prev => ({ ...prev, email: null }));
+                    }
+                  }}
                   style={styles.input}
                   mode="outlined"
                   keyboardType="email-address"
@@ -232,12 +287,19 @@ export default function LoginScreen({ navigation }) {
                   textContentType="emailAddress"
                   left={<TextInput.Icon icon="email" />}
                   theme={theme}
+                  error={!!errors.email}
                 />
+                {errors.email && <HelperText type="error" style={styles.errorText}>{errors.email}</HelperText>}
 
                 <TextInput
                   label={getString('password')}
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    if (errors.password) {
+                      setErrors(prev => ({ ...prev, password: null }));
+                    }
+                  }}
                   style={styles.input}
                   mode="outlined"
                   secureTextEntry={!showPassword}
@@ -251,7 +313,9 @@ export default function LoginScreen({ navigation }) {
                     />
                   }
                   theme={theme}
+                  error={!!errors.password}
                 />
+                {errors.password && <HelperText type="error" style={styles.errorText}>{errors.password}</HelperText>}
 
                 <AnimatedButton
                   mode="contained"
@@ -352,6 +416,25 @@ export default function LoginScreen({ navigation }) {
           </View>
           
         </ScrollView>
+        
+        {/* Snackbar para feedback */}
+        <Snackbar
+          visible={snackbar.visible}
+          onDismiss={hideSnackbar}
+          duration={snackbar.type === 'success' ? 3000 : 5000}
+          style={[
+            styles.snackbar,
+            snackbar.type === 'success' && styles.snackbarSuccess,
+            snackbar.type === 'error' && styles.snackbarError
+          ]}
+          action={{
+            label: 'Fechar',
+            onPress: hideSnackbar,
+            textColor: 'white'
+          }}
+        >
+          <Text style={styles.snackbarText}>{snackbar.message}</Text>
+        </Snackbar>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -497,6 +580,27 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
+    fontSize: 16,
+  },
+  errorText: {
+    marginBottom: 8,
+    marginTop: -8,
+  },
+  snackbar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    margin: 16,
+  },
+  snackbarSuccess: {
+    backgroundColor: '#4caf50',
+  },
+  snackbarError: {
+    backgroundColor: '#f44336',
+  },
+  snackbarText: {
+    color: 'white',
     fontSize: 16,
   },
 });
