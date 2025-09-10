@@ -115,6 +115,14 @@ const InstructorClasses = ({ navigation }) => {
     navigation.navigate('CheckIns', { classId: classItem.id, className: classItem.name });
   };
 
+  const handleManageStudents = (classItem) => {
+    navigation.navigate('ClassDetails', { 
+      classId: classItem.id, 
+      classData: classItem,
+      focusTab: 'students'
+    });
+  };
+
   const formatSchedule = (classItem) => {
     try {
       const schedule = classItem?.schedule;
@@ -206,19 +214,31 @@ const InstructorClasses = ({ navigation }) => {
                   <Button 
                     mode="outlined" 
                     onPress={() => handleClassPress(classItem)}
-                    style={styles.actionButton}
+                    style={styles.detailsButton}
                     icon="eye"
+                    compact
                   >
-                    Ver Detalhes
+                    Ver
                   </Button>
 
                   <Button 
                     mode="contained" 
                     onPress={() => handleCheckIns(classItem)}
-                    style={styles.actionButton}
+                    style={styles.checkInsButton}
                     icon="check"
+                    compact
                   >
                     Check-ins
+                  </Button>
+
+                  <Button 
+                    mode="outlined" 
+                    onPress={() => handleManageStudents(classItem)}
+                    style={styles.studentsButtonInstructor}
+                    icon="account-group"
+                    compact
+                  >
+                    {classItem.currentStudents} Alunos
                   </Button>
                 </View>
 
@@ -353,10 +373,21 @@ const styles = StyleSheet.create({
   classActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 8,
+    gap: 6,
   },
-  actionButton: {
+  detailsButton: {
+    flex: 0.7,
+    minWidth: 50,
+  },
+  checkInsButton: {
     flex: 1,
-    marginHorizontal: 4,
+    minWidth: 80,
+  },
+  studentsButtonInstructor: {
+    flex: 1.1,
+    minWidth: 85,
+    borderColor: '#4CAF50',
   },
   studentsPreview: {
     marginTop: 12,

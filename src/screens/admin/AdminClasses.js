@@ -162,10 +162,19 @@ const AdminClasses = ({ navigation }) => {
     navigation.navigate('EditClass', { classId: classItem.id, classData: classItem });
   };
 
+  const handleManageStudents = (classItem) => {
+    // Navegar para tela de gerenciamento de alunos da turma
+    navigation.navigate('ClassDetails', { 
+      classId: classItem.id, 
+      classData: classItem,
+      focusTab: 'students' // Indicar que deve focar na aba de alunos
+    });
+  };
+
   const handleDeleteClass = (classItem) => {
     Alert.alert(
       'Confirmar Exclusão',
-      `Tem certeza que deseja excluir a turma ${classItem.name}?`,
+      `Tem certeza que deseja excluir a turma ${classItem.name}?\n\nEsta ação removerá:\n• A turma e suas configurações\n• Vínculos com ${classItem.currentStudents} aluno(s)\n• Histórico de check-ins\n\nEsta ação não pode ser desfeita.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         { 
@@ -183,7 +192,7 @@ const AdminClasses = ({ navigation }) => {
             } catch (error) {
               // Em caso de erro, recarregar lista para reverter remoção otimista
               loadClasses();
-              Alert.alert('Erro', 'Não foi possível excluir a turma');
+              Alert.alert('Erro', 'Não foi possível excluir a turma. Verifique suas permissões.');
             }
           }
         }
@@ -376,22 +385,22 @@ const AdminClasses = ({ navigation }) => {
 
                 <Divider style={styles.divider} />
 
-                <ActionButtonGroup style={styles.classActions}>
+                <View style={styles.classActions}>
                   <ActionButton 
                     mode="outlined" 
                     onPress={() => handleClassPress(classItem)}
-                    style={styles.actionButton}
+                    style={styles.detailsButton}
                     icon="eye"
                     variant="primary"
                     size="small"
                   >
-                    Ver Detalhes
+                    Ver
                   </ActionButton>
 
                   <ActionButton 
                     mode="outlined" 
                     onPress={() => handleEditClass(classItem)}
-                    style={styles.actionButton}
+                    style={styles.editButton}
                     icon="pencil"
                     variant="warning"
                     size="small"
@@ -401,15 +410,15 @@ const AdminClasses = ({ navigation }) => {
 
                   <ActionButton 
                     mode="contained" 
-                    onPress={() => navigation.navigate('ClassDetails', { classId: classItem.id, classData: classItem })}
-                    style={styles.actionButton}
-                    icon="account"
+                    onPress={() => handleManageStudents(classItem)}
+                    style={styles.studentsButton}
+                    icon="account-group"
                     variant="success"
                     size="small"
                   >
-                    Alunos
+                    {classItem.currentStudents} Alunos
                   </ActionButton>
-                </ActionButtonGroup>
+                </View>
               </Card.Content>
             </Card>
           ))
@@ -551,10 +560,22 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   classActions: {
-    marginTop: 4,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    gap: 8,
   },
-  actionButton: {
-    flex: 1,
+  detailsButton: {
+    flex: 0.8,
+    minWidth: 60,
+  },
+  editButton: {
+    flex: 0.9,
+    minWidth: 70,
+  },
+  studentsButton: {
+    flex: 1.3,
+    minWidth: 90,
   },
   emptyCard: {
     margin: 16,
