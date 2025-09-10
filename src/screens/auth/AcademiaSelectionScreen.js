@@ -80,11 +80,10 @@ export default function AcademiaSelectionScreen({ navigation }) {
   };
 
   useEffect(() => {
-    // Se o usuário já tem academia associada, redirecionar
-    if (userProfile?.academiaId) {
-      navigation.replace('MainTabs');
-    }
-  }, [userProfile, navigation]);
+    // O AppNavigator irá gerenciar o redirecionamento automaticamente
+    // quando o usuário tiver academiaId
+    console.log('🏢 AcademiaSelection: userProfile.academiaId:', userProfile?.academiaId);
+  }, [userProfile]);
 
   const searchAcademiaByCode = async () => {
     if (!searchCode.trim()) {
@@ -126,11 +125,9 @@ export default function AcademiaSelectionScreen({ navigation }) {
     setLoading(true);
     try {
       await updateAcademiaAssociation(academiaId);
-      showSnackbar('Você foi associado à academia com sucesso! Redirecionando para o dashboard...', 'success');
-      setTimeout(() => {
-        // Navegar para a tela principal - o AppNavigator irá detectar a mudança automaticamente
-        navigation.replace('MainTabs');
-      }, 2000);
+      showSnackbar('Você foi associado à academia com sucesso!', 'success');
+      // O AppNavigator irá detectar a mudança e redirecionar automaticamente
+      console.log('✅ AcademiaSelection: Usuário associado, AppNavigator irá redirecionar');
     } catch (error) {
       console.error('Erro ao associar à academia:', error);
       showSnackbar('Erro ao associar à academia. Tente novamente', 'error');

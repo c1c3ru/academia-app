@@ -10,13 +10,11 @@ import {
   Card, 
   Text, 
   Button, 
-  Input
-} from 'react-native-elements';
-import { 
   TextInput,
   HelperText,
   Title,
-  RadioButton
+  RadioButton,
+  ActivityIndicator
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
@@ -213,7 +211,8 @@ const EditStudentScreen = ({ navigation, route }) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Text>Carregando dados do aluno...</Text>
+          <ActivityIndicator size="large" />
+          <Text style={styles.loadingText}>Carregando dados do aluno...</Text>
         </View>
       </SafeAreaView>
     );
@@ -362,30 +361,34 @@ const EditStudentScreen = ({ navigation, route }) => {
             {/* Botões */}
             <View style={styles.buttonContainer}>
               <Button
-                title="Cancelar"
-                type="outline"
+                mode="outlined"
                 onPress={() => navigation.goBack()}
-                buttonStyle={[styles.button, styles.cancelButton]}
+                style={[styles.button, styles.cancelButton]}
                 disabled={loading}
-              />
+              >
+                Cancelar
+              </Button>
               <Button
-                title="Salvar"
+                mode="contained"
                 onPress={handleSubmit}
-                buttonStyle={[styles.button, styles.saveButton]}
+                style={[styles.button, styles.saveButton]}
                 loading={loading}
                 disabled={loading}
-              />
+              >
+                Salvar
+              </Button>
             </View>
 
             {/* Botão Excluir */}
             <Button
-              title="Excluir Aluno"
-              type="outline"
+              mode="outlined"
               onPress={handleDelete}
-              buttonStyle={[styles.button, styles.deleteButton]}
-              titleStyle={styles.deleteButtonText}
+              style={[styles.button, styles.deleteButton]}
+              textColor="#d32f2f"
               disabled={loading}
-            />
+            >
+              Excluir Aluno
+            </Button>
           </Card.Content>
         </Card>
       </ScrollView>
@@ -409,6 +412,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
   },
   card: {
     marginBottom: 20,
@@ -452,11 +460,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 30,
+    gap: 16,
   },
   button: {
     flex: 1,
-    marginHorizontal: 8,
-    paddingVertical: 12,
   },
   cancelButton: {
     borderColor: '#666',
@@ -467,9 +474,6 @@ const styles = StyleSheet.create({
   deleteButton: {
     borderColor: '#d32f2f',
     marginTop: 20,
-  },
-  deleteButtonText: {
-    color: '#d32f2f',
   },
 });
 

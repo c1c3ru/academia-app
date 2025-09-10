@@ -50,6 +50,8 @@ import PhysicalEvaluationHistoryScreen from '../screens/shared/PhysicalEvaluatio
 import InjuryScreen from '../screens/shared/InjuryScreen';
 import InjuryHistoryScreen from '../screens/shared/InjuryHistoryScreen';
 import PrivacyPolicyScreen from '../screens/shared/PrivacyPolicyScreen';
+import NotificationSettingsScreen from '../screens/shared/NotificationSettingsScreen';
+import PrivacySettingsScreen from '../screens/shared/PrivacySettingsScreen';
 import LoadingScreen from '../screens/shared/LoadingScreen';
 import ClassDetailsScreen from '../screens/shared/ClassDetailsScreen';
 import StudentDetailsScreen from '../screens/shared/StudentDetailsScreen';
@@ -564,6 +566,42 @@ const MainNavigator = ({ userType }) => {
           ),
         })}
       />
+      <Stack.Screen
+        name="NotificationSettings"
+        component={NotificationSettingsScreen}
+        options={({ navigation }) => ({
+          header: () => (
+            <UniversalHeader
+              title="Configurações de Notificação"
+              subtitle="Gerencie suas notificações"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor={
+                userType === 'admin' ? '#FF9800' :
+                userType === 'instructor' ? '#4CAF50' : '#2196F3'
+              }
+            />
+          ),
+        })}
+      />
+      <Stack.Screen
+        name="PrivacySettings"
+        component={PrivacySettingsScreen}
+        options={({ navigation }) => ({
+          header: () => (
+            <UniversalHeader
+              title="Configurações de Privacidade"
+              subtitle="LGPD e proteção de dados"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor={
+                userType === 'admin' ? '#FF9800' :
+                userType === 'instructor' ? '#4CAF50' : '#2196F3'
+              }
+            />
+          ),
+        })}
+      />
     </Stack.Navigator>
   );
 };
@@ -607,8 +645,8 @@ const AppNavigator = () => {
 
   // Se usuário não completou o perfil (tipo não definido), mostrar seleção de tipo
   // APENAS para usuários que realmente não têm tipo definido (novos usuários de login social)
-  if (!userProfile.userType && !userProfile.tipo) {
-    console.log('🧭 AppNavigator: Usuário sem tipo definido, mostrando seleção de tipo');
+  if ((!userProfile.userType && !userProfile.tipo) || userProfile.profileCompleted === false) {
+    console.log('🧭 AppNavigator: Usuário sem tipo definido ou perfil incompleto, mostrando seleção de tipo');
     return (
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -645,14 +683,19 @@ const AppNavigator = () => {
     userType = 'instructor';
   } else if (userType === 'aluno') {
     userType = 'student';
+  } else if (userType === 'administrador') {
+    userType = 'admin';
   }
   
   // Usuário completo com academia, mostrar app principal
   console.log('🧭 AppNavigator: Renderizando MainNavigator para:', userType, {
     tipo: userProfile.tipo,
     userType: userProfile.userType,
-    finalUserType: userType
+    finalUserType: userType,
+    academiaId: userProfile.academiaId,
+    academiaName: academia?.nome
   });
+  
   return (
     <NavigationContainer>
       <MainNavigator userType={userType} />

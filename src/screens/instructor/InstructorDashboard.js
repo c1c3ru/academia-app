@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Animated, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Animated, Platform, ActivityIndicator } from 'react-native';
 import { 
   Card, 
   Title, 
@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthContext';
-import { firestoreService, classService, studentService } from '../../services/firestoreService';
+import { firestoreService, classService, studentService, announcementService } from '../../services/firestoreService';
 import AnimatedCard from '../../components/AnimatedCard';
 import AnimatedButton from '../../components/AnimatedButton';
 import { useAnimation, ResponsiveUtils } from '../../utils/animations';
@@ -35,13 +35,68 @@ const InstructorDashboard = ({ navigation }) => {
     recentGraduations: [],
     upcomingClasses: []
   });
+  const [announcements, setAnnouncements] = useState([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
+    loadAnnouncements();
     startEntryAnimation();
   }, []);
+
+  // Carregar anúncios do Firestore
+  const loadAnnouncements = async () => {
+    try {
+      setLoadingAnnouncements(true);
+      const userAnnouncements = await announcementService.getActiveAnnouncements('instructor');
+      
+      // Formatar dados para exibição
+      const formattedAnnouncements = userAnnouncements.map(announcement => ({
+        id: announcement.id,
+        title: announcement.title,
+        message: announcement.message,
+        date: formatDate(announcement.createdAt),
+        priority: announcement.priority || 0
+      }));
+      
+      setAnnouncements(formattedAnnouncements);
+    } catch (error) {
+      console.error('Erro ao carregar anúncios:', error);
+      // Em caso de erro, exibe uma mensagem genérica
+      setAnnouncements([{
+        id: 'error',
+        title: 'Erro ao carregar',
+        message: 'Não foi possível carregar os avisos. Tente novamente mais tarde.',
+        date: 'Agora',
+        isError: true
+      }]);
+    } finally {
+      setLoadingAnnouncements(false);
+    }
+  };
+
+  // Função para formatar a data do anúncio
+  const formatDate = (date) => {
+    if (!date) return 'Data desconhecida';
+    
+    try {
+      const now = new Date();
+      const announcementDate = date.toDate ? date.toDate() : new Date(date);
+      const diffTime = Math.abs(now - announcementDate);
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return 'Hoje';
+      if (diffDays === 1) return 'Ontem';
+      if (diffDays < 7) return `Há ${diffDays} dias`;
+      
+      return announcementDate.toLocaleDateString('pt-BR');
+    } catch (error) {
+      console.error('Erro ao formatar data:', error);
+      return 'Data desconhecida';
+    }
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -123,9 +178,13 @@ const InstructorDashboard = ({ navigation }) => {
     }
   };
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    loadDashboardData();
+    await Promise.all([
+      loadDashboardData(),
+      loadAnnouncements()
+    ]);
+    setRefreshing(false);
   };
 
   const formatTime = (hour, minute = 0) => {
@@ -413,6 +472,78 @@ const InstructorDashboard = ({ navigation }) => {
                 </LinearGradient>
               </Animated.View>
             </View>
+          </Card.Content>
+        </AnimatedCard>
+
+        {/* Avisos e Comunicados */}
+        <AnimatedCard delay={350} style={styles.modernCard}>
+          <Card.Content>
+            <View style={styles.modernCardHeader}>
+              <View style={styles.headerIconContainer}>
+                <MaterialCommunityIcons name="bullhorn" size={24} color="#FF5722" />
+              </View>
+              <View style={styles.headerTitleContainer}>
+                <Title style={styles.modernCardTitle}>Avisos</Title>
+                <Text style={styles.modernCardSubtitle}>Comunicados importantes</Text>
+              </View>
+              <AnimatedButton
+                icon="refresh"
+                mode="text"
+                onPress={loadAnnouncements}
+                loading={loadingAnnouncements}
+                compact
+                style={styles.refreshButton}
+              >
+                {loadingAnnouncements ? '' : 'Atualizar'}
+              </AnimatedButton>
+            </View>
+            
+            {loadingAnnouncements ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#4CAF50" />
+                <Text style={styles.loadingText}>Carregando avisos...</Text>
+              </View>
+            ) : announcements.length > 0 ? (
+              <View style={styles.announcementsContainer}>
+                {announcements.map((announcement, index) => (
+                  <View 
+                    key={announcement.id} 
+                    style={[
+                      styles.announcementItem,
+                      announcement.priority > 0 && styles.highPriorityAnnouncement
+                    ]}
+                  >
+                    {announcement.priority > 0 && (
+                      <View style={styles.priorityBadge}>
+                        <MaterialCommunityIcons name="alert-circle" size={16} color="#FFC107" />
+                        <Text style={styles.priorityText}>Importante</Text>
+                      </View>
+                    )}
+                    <Text style={styles.announcementTitle}>
+                      {announcement.title}
+                    </Text>
+                    <Text style={styles.announcementMessage}>
+                      {announcement.message}
+                    </Text>
+                    <View style={styles.announcementFooter}>
+                      <Text style={styles.announcementDate}>
+                        {announcement.date}
+                      </Text>
+                      {announcement.isRead && (
+                        <MaterialCommunityIcons name="check-all" size={16} color="#4CAF50" />
+                      )}
+                    </View>
+                    {index < announcements.length - 1 && <Divider style={styles.announcementDivider} />}
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.emptyState}>
+                <MaterialCommunityIcons name="bell-off-outline" size={48} color="#BDBDBD" />
+                <Text style={styles.emptyStateText}>Nenhum aviso no momento</Text>
+                <Text style={styles.emptyStateSubtext}>Você será notificado quando houver novos comunicados</Text>
+              </View>
+            )}
           </Card.Content>
         </AnimatedCard>
 
@@ -767,6 +898,81 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
     marginTop: 4,
+  },
+
+  // Estilos para avisos
+  headerTitleContainer: {
+    flex: 1,
+  },
+  refreshButton: {
+    margin: 0,
+    padding: 0,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: ResponsiveUtils.spacing.md,
+  },
+  loadingText: {
+    marginTop: 8,
+    color: '#757575',
+    fontSize: ResponsiveUtils.fontSize.small,
+  },
+  announcementsContainer: {
+    maxHeight: 400,
+    marginTop: ResponsiveUtils.spacing.sm,
+  },
+  announcementItem: {
+    paddingVertical: ResponsiveUtils.spacing.sm,
+    position: 'relative',
+  },
+  highPriorityAnnouncement: {
+    backgroundColor: 'rgba(255, 152, 0, 0.05)',
+    borderRadius: ResponsiveUtils.borderRadius.small,
+    marginHorizontal: -ResponsiveUtils.spacing.sm,
+    paddingHorizontal: ResponsiveUtils.spacing.sm,
+    paddingTop: ResponsiveUtils.spacing.sm,
+  },
+  priorityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 193, 7, 0.2)',
+    paddingHorizontal: ResponsiveUtils.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: ResponsiveUtils.spacing.xs,
+  },
+  priorityText: {
+    fontSize: 12,
+    color: '#FF8F00',
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  announcementTitle: {
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: ResponsiveUtils.spacing.xs,
+    fontSize: ResponsiveUtils.fontSize.medium,
+  },
+  announcementMessage: {
+    color: '#666',
+    marginBottom: ResponsiveUtils.spacing.xs,
+    fontSize: ResponsiveUtils.fontSize.small,
+    lineHeight: 20,
+  },
+  announcementFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: ResponsiveUtils.spacing.xs,
+  },
+  announcementDate: {
+    color: '#999',
+    fontSize: ResponsiveUtils.fontSize.small,
+  },
+  announcementDivider: {
+    marginTop: ResponsiveUtils.spacing.md,
   },
   
   // Estilos legados mantidos para compatibilidade

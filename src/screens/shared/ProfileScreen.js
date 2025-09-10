@@ -534,16 +534,16 @@ const ProfileScreen = ({ navigation }) => {
               description="Configurar notificações do app"
               left={() => <List.Icon icon="bell" />}
               right={() => <List.Icon icon="chevron-right" />}
-              onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}
+              onPress={() => navigation.navigate('NotificationSettings')}
             />
             <Divider />
             
             <List.Item
               title="Privacidade"
-              description="Configurações de privacidade"
+              description="Configurações de privacidade e LGPD"
               left={() => <List.Icon icon="shield" />}
               right={() => <List.Icon icon="chevron-right" />}
-              onPress={() => Alert.alert('Info', 'Funcionalidade será implementada')}
+              onPress={() => navigation.navigate('PrivacySettings')}
             />
           </Card.Content>
         </Card>

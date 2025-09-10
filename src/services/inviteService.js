@@ -109,6 +109,15 @@ export class InviteService {
         throw new Error('Academia não encontrada');
       }
 
+      // Agendar remoção do convite aceito após 24 horas (opcional)
+      setTimeout(async () => {
+        try {
+          await this.cleanupAcceptedInvite(inviteId);
+        } catch (error) {
+          console.error('Erro ao limpar convite aceito:', error);
+        }
+      }, 24 * 60 * 60 * 1000); // 24 horas
+
       return {
         academiaId: inviteData.academiaId,
         tipo: inviteData.tipo,
@@ -191,6 +200,87 @@ export class InviteService {
     }
 
     return null;
+  }
+
+  /**
+   * Limpar convite aceito (remover do sistema após aceite)
+   * @param {string} inviteId - ID do convite
+   * @returns {Promise<void>}
+   */
+  static async cleanupAcceptedInvite(inviteId) {
+    try {
+      const inviteRef = doc(db, 'invites', inviteId);
+      const inviteDoc = await getDoc(inviteRef);
+      
+      if (inviteDoc.exists() && inviteDoc.data().status === 'accepted') {
+        // Marcar como removido em vez de deletar para manter histórico
+        await updateDoc(inviteRef, {
+          status: 'removed',
+          removedAt: new Date()
+        });
+        console.log('✅ Convite aceito removido do mural:', inviteId);
+      }
+    } catch (error) {
+      console.error('Erro ao limpar convite aceito:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Limpar convites aceitos de uma academia
+   * @param {string} academiaId - ID da academia
+   * @returns {Promise<number>} Número de convites limpos
+   */
+  static async cleanupAcceptedInvites(academiaId) {
+    try {
+      const q = query(
+        collection(db, 'invites'),
+        where('academiaId', '==', academiaId),
+        where('status', '==', 'accepted')
+      );
+      
+      const snapshot = await getDocs(q);
+      let cleanedCount = 0;
+      
+      for (const docSnapshot of snapshot.docs) {
+        await updateDoc(doc(db, 'invites', docSnapshot.id), {
+          status: 'removed',
+          removedAt: new Date()
+        });
+        cleanedCount++;
+      }
+      
+      console.log(`✅ ${cleanedCount} convites aceitos removidos do mural`);
+      return cleanedCount;
+    } catch (error) {
+      console.error('Erro ao limpar convites aceitos:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Listar convites ativos (pendentes) de uma academia
+   * @param {string} academiaId - ID da academia
+   * @returns {Promise<Array>} Lista de convites ativos
+   */
+  static async getActiveInvites(academiaId) {
+    try {
+      const q = query(
+        collection(db, 'invites'),
+        where('academiaId', '==', academiaId),
+        where('status', 'in', ['pending', 'expired'])
+      );
+      
+      const snapshot = await getDocs(q);
+      
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Erro ao listar convites ativos:', error);
+      throw error;
+    }
   }
 
   /**

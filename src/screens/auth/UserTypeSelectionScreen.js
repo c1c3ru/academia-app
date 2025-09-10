@@ -82,8 +82,8 @@ const UserTypeSelectionScreen = ({ navigation, route }) => {
         updatedAt: new Date()
       });
 
-      // Navegar para seleção de academia
-      navigation.replace('AcademiaSelection');
+      // O AppNavigator irá detectar a mudança e redirecionar automaticamente
+      console.log('✅ UserTypeSelection: Perfil atualizado, AppNavigator irá redirecionar');
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
       Alert.alert('Erro', 'Não foi possível salvar o tipo de usuário. Tente novamente.');

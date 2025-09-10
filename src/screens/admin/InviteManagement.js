@@ -37,10 +37,9 @@ export default function InviteManagement({ navigation }) {
   const loadInvites = async () => {
     try {
       setLoading(true);
-      const academiaInvites = await InviteService.getAcademiaInvites(academia.id);
-      // Filtrar apenas convites pendentes (não aceitos)
-      const pendingInvites = academiaInvites.filter(invite => invite.status !== 'accepted');
-      setInvites(pendingInvites);
+      // Usar a nova função que já filtra convites ativos (pendentes e expirados)
+      const activeInvites = await InviteService.getActiveInvites(academia.id);
+      setInvites(activeInvites);
     } catch (error) {
       console.error('Erro ao carregar convites:', error);
       Alert.alert('Erro', 'Não foi possível carregar os convites');
@@ -115,6 +114,28 @@ export default function InviteManagement({ navigation }) {
       });
     } catch (error) {
       console.error('Erro ao compartilhar:', error);
+    }
+  };
+
+  const cleanupAcceptedInvites = async () => {
+    try {
+      setLoading(true);
+      const cleanedCount = await InviteService.cleanupAcceptedInvites(academia.id);
+      
+      if (cleanedCount > 0) {
+        Alert.alert(
+          'Limpeza Concluída',
+          `${cleanedCount} convite(s) aceito(s) foram removidos do mural.`,
+          [{ text: 'OK', onPress: loadInvites }]
+        );
+      } else {
+        Alert.alert('Info', 'Nenhum convite aceito encontrado para remover.');
+      }
+    } catch (error) {
+      console.error('Erro ao limpar convites:', error);
+      Alert.alert('Erro', 'Não foi possível limpar os convites aceitos');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -220,9 +241,22 @@ export default function InviteManagement({ navigation }) {
         {/* Lista de Convites */}
         <Card style={styles.listCard}>
           <Card.Content>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              Convites Enviados ({invites.length})
-            </Text>
+            <View style={styles.listHeader}>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Convites Enviados ({invites.length})
+              </Text>
+              <ActionButton
+                mode="text"
+                onPress={cleanupAcceptedInvites}
+                loading={loading}
+                icon="broom"
+                size="small"
+                variant="secondary"
+                style={styles.cleanupButton}
+              >
+                Limpar Aceitos
+              </ActionButton>
+            </View>
             
             {invites.length === 0 ? (
               <Text variant="bodyMedium" style={styles.emptyText}>
@@ -380,6 +414,15 @@ const styles = {
   sectionTitle: {
     fontWeight: 'bold',
     marginBottom: 16,
+  },
+  listHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  cleanupButton: {
+    marginLeft: 8,
   },
   optionButtons: {
     flexDirection: 'row',
