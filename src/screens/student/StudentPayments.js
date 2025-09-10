@@ -15,9 +15,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { paymentService } from '../../services/firestoreService';
+import { Linking } from 'react-native';
 
 const StudentPayments = ({ navigation }) => {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, academia } = useAuth();
   const [payments, setPayments] = useState([]);
   const [currentPayment, setCurrentPayment] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -56,6 +57,33 @@ const StudentPayments = ({ navigation }) => {
       'Funcionalidade de pagamento PIX será implementada em breve',
       [{ text: 'OK' }]
     );
+  };
+
+  const handleContactWhatsApp = () => {
+    if (!academia?.telefone?.numero) {
+      Alert.alert('Erro', 'Número do WhatsApp da academia não encontrado');
+      return;
+    }
+
+    const phoneNumber = academia.telefone.numero.replace(/\D/g, ''); // Remove caracteres não numéricos
+    const countryCode = academia.telefone.codigoPais === 'BR' ? '55' : '1'; // Default para Brasil
+    const message = encodeURIComponent(`Olá! Sou ${userProfile?.name || 'um aluno'} e gostaria de tirar dúvidas sobre pagamentos.`);
+    
+    const whatsappUrl = `whatsapp://send?phone=${countryCode}${phoneNumber}&text=${message}`;
+    const whatsappWebUrl = `https://wa.me/${countryCode}${phoneNumber}?text=${message}`;
+
+    Linking.canOpenURL(whatsappUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(whatsappUrl);
+        } else {
+          return Linking.openURL(whatsappWebUrl);
+        }
+      })
+      .catch((err) => {
+        console.error('Erro ao abrir WhatsApp:', err);
+        Alert.alert('Erro', 'Não foi possível abrir o WhatsApp');
+      });
   };
 
   const getStatusColor = (status) => {
@@ -208,9 +236,9 @@ const StudentPayments = ({ navigation }) => {
       {/* Botão de Contato */}
       <FAB
         style={styles.fab}
-        icon="message"
+        icon="whatsapp"
         label="Contato"
-        onPress={() => Alert.alert('Contato', 'Funcionalidade de contato será implementada')}
+        onPress={handleContactWhatsApp}
       />
     </SafeAreaView>
   );

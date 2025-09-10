@@ -12,6 +12,12 @@ import {
   Button, 
   Input
 } from 'react-native-elements';
+import { 
+  TextInput,
+  HelperText,
+  Title,
+  RadioButton
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService } from '../../services/firestoreService';
@@ -356,35 +362,30 @@ const EditStudentScreen = ({ navigation, route }) => {
             {/* Botões */}
             <View style={styles.buttonContainer}>
               <Button
-                mode="outlined"
+                title="Cancelar"
+                type="outline"
                 onPress={() => navigation.goBack()}
-                style={styles.button}
+                buttonStyle={[styles.button, styles.cancelButton]}
                 disabled={loading}
-              >
-                Cancelar
-              </Button>
+              />
               <Button
-                mode="contained"
+                title="Salvar"
                 onPress={handleSubmit}
-                style={styles.button}
+                buttonStyle={[styles.button, styles.saveButton]}
                 loading={loading}
                 disabled={loading}
-              >
-                Salvar
-              </Button>
+              />
             </View>
 
             {/* Botão Excluir */}
             <Button
-              mode="outlined"
+              title="Excluir Aluno"
+              type="outline"
               onPress={handleDelete}
-              style={[styles.deleteButton, { marginTop: 20 }]}
-              buttonColor="#ffebee"
-              textColor="#d32f2f"
+              buttonStyle={[styles.button, styles.deleteButton]}
+              titleStyle={styles.deleteButtonText}
               disabled={loading}
-            >
-              Excluir Aluno
-            </Button>
+            />
           </Card.Content>
         </Card>
       </ScrollView>
@@ -455,9 +456,20 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     marginHorizontal: 8,
+    paddingVertical: 12,
+  },
+  cancelButton: {
+    borderColor: '#666',
+  },
+  saveButton: {
+    backgroundColor: '#4CAF50',
   },
   deleteButton: {
     borderColor: '#d32f2f',
+    marginTop: 20,
+  },
+  deleteButtonText: {
+    color: '#d32f2f',
   },
 });
 

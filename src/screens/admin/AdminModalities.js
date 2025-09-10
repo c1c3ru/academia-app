@@ -37,7 +37,12 @@ const AdminModalities = ({ navigation }) => {
   // Estados para formulários
   const [newModality, setNewModality] = useState({ name: '', description: '' });
   const [newPlan, setNewPlan] = useState({ name: '', value: '', duration: '', description: '' });
-  const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '', expirationDate: '' });
+  const [newAnnouncement, setNewAnnouncement] = useState({ 
+    title: '', 
+    content: '', 
+    expirationDate: '',
+    targetAudience: 'all' // 'all', 'students', 'instructors'
+  });
 
   useEffect(() => {
     loadData();
@@ -182,11 +187,13 @@ const AdminModalities = ({ navigation }) => {
       const announcementData = {
         ...newAnnouncement,
         expirationDate: newAnnouncement.expirationDate ? new Date(newAnnouncement.expirationDate) : null,
-        publishedBy: user.uid
+        publishedBy: user.uid,
+        targetAudience: newAnnouncement.targetAudience,
+        createdAt: new Date()
       };
       
       await firestoreService.create('announcements', announcementData);
-      setNewAnnouncement({ title: '', content: '', expirationDate: '' });
+      setNewAnnouncement({ title: '', content: '', expirationDate: '', targetAudience: 'all' });
       setAnnouncementDialogVisible(false);
       loadData();
       Alert.alert('Sucesso', 'Aviso publicado com sucesso');
@@ -503,6 +510,31 @@ const AdminModalities = ({ navigation }) => {
               placeholder="DD/MM/AAAA"
               style={styles.dialogInput}
             />
+            
+            <Text style={styles.sectionLabel}>Público-alvo:</Text>
+            <View style={styles.audienceContainer}>
+              <Chip 
+                selected={newAnnouncement.targetAudience === 'all'}
+                onPress={() => setNewAnnouncement({...newAnnouncement, targetAudience: 'all'})}
+                style={styles.audienceChip}
+              >
+                Todos
+              </Chip>
+              <Chip 
+                selected={newAnnouncement.targetAudience === 'students'}
+                onPress={() => setNewAnnouncement({...newAnnouncement, targetAudience: 'students'})}
+                style={styles.audienceChip}
+              >
+                Alunos
+              </Chip>
+              <Chip 
+                selected={newAnnouncement.targetAudience === 'instructors'}
+                onPress={() => setNewAnnouncement({...newAnnouncement, targetAudience: 'instructors'})}
+                style={styles.audienceChip}
+              >
+                Instrutores
+              </Chip>
+            </View>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setAnnouncementDialogVisible(false)}>Cancelar</Button>
@@ -581,7 +613,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   dialogInput: {
-    marginBottom: 12,
+    marginBottom: 16,
+  },
+  sectionLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+    color: '#333',
+  },
+  audienceContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 16,
+  },
+  audienceChip: {
+    marginRight: 8,
+    marginBottom: 8,
   },
 });
 

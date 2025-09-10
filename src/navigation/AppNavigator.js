@@ -619,6 +619,7 @@ const AppNavigator = () => {
   }
 
   // Se usuário não tem academia associada, mostrar tela de seleção
+  // Administradores também precisam criar/associar academia no primeiro login
   if (!userProfile.academiaId) {
     console.log('🧭 AppNavigator: Usuário sem academia, mostrando seleção');
     return (

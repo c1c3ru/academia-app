@@ -38,7 +38,9 @@ export default function InviteManagement({ navigation }) {
     try {
       setLoading(true);
       const academiaInvites = await InviteService.getAcademiaInvites(academia.id);
-      setInvites(academiaInvites);
+      // Filtrar apenas convites pendentes (não aceitos)
+      const pendingInvites = academiaInvites.filter(invite => invite.status !== 'accepted');
+      setInvites(pendingInvites);
     } catch (error) {
       console.error('Erro ao carregar convites:', error);
       Alert.alert('Erro', 'Não foi possível carregar os convites');

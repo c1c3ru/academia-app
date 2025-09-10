@@ -290,12 +290,95 @@ export const paymentService = {
 };
 
 export const announcementService = {
-  getActiveAnnouncements: async () => {
-    const today = new Date();
-    const announcements = await firestoreService.getAll('announcements');
-    return announcements.filter(announcement => 
-      !announcement.expirationDate || new Date(announcement.expirationDate) >= today
-    );
+  /**
+   * Busca anúncios ativos, opcionalmente filtrando por tipo de usuário
+   * @param {string} userType - Tipo de usuário para filtrar os anúncios (admin, instructor, student)
+   * @returns {Promise<Array>} Lista de anúncios ativos
+   */
+  getActiveAnnouncements: async (userType = null) => {
+    try {
+      const today = new Date();
+      const announcements = await firestoreService.getAll('announcements');
+      
+      return announcements
+        .filter(announcement => {
+          // Verifica se o anúncio está ativo (não expirado)
+          const isActive = !announcement.expirationDate || new Date(announcement.expirationDate) >= today;
+          
+          // Se não houver tipo de usuário definido, retorna todos os anúncios ativos
+          if (!userType) return isActive;
+          
+          // Se o anúncio não tem restrição de tipo, está disponível para todos
+          if (!announcement.targetUserTypes || announcement.targetUserTypes.length === 0) {
+            return isActive;
+          }
+          
+          // Verifica se o tipo de usuário atual está na lista de alvos do anúncio
+          return isActive && announcement.targetUserTypes.includes(userType);
+        })
+        .sort((a, b) => {
+          // Ordena por prioridade (maior primeiro) e depois por data de criação (mais recente primeiro)
+          const priorityDiff = (b.priority || 0) - (a.priority || 0);
+          if (priorityDiff !== 0) return priorityDiff;
+          
+          const aDate = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+          const bDate = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+          return bDate - aDate;
+        });
+    } catch (error) {
+      console.error('Erro ao buscar anúncios:', error);
+      return [];
+    }
+  },
+  
+  /**
+   * Cria um novo anúncio
+   * @param {Object} announcementData - Dados do anúncio
+   * @returns {Promise<string>} ID do anúncio criado
+   */
+  createAnnouncement: async (announcementData) => {
+    try {
+      return await firestoreService.create('announcements', {
+        ...announcementData,
+        createdAt: new Date(),
+        isActive: true
+      });
+    } catch (error) {
+      console.error('Erro ao criar anúncio:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Atualiza um anúncio existente
+   * @param {string} id - ID do anúncio
+   * @param {Object} updates - Campos para atualizar
+   * @returns {Promise<void>}
+   */
+  updateAnnouncement: async (id, updates) => {
+    try {
+      await firestoreService.update('announcements', id, {
+        ...updates,
+        updatedAt: new Date()
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar anúncio:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Remove um anúncio
+   * @param {string} id - ID do anúncio
+   * @returns {Promise<void>}
+   */
+  deleteAnnouncement: async (id) => {
+    try {
+      await firestoreService.delete('announcements', id);
+    } catch (error) {
+      console.error('Erro ao remover anúncio:', error);
+      throw error;
+    }
   }
 };
 
