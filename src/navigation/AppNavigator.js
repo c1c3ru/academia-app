@@ -606,7 +606,8 @@ const AppNavigator = () => {
   }
 
   // Se usuário não completou o perfil (tipo não definido), mostrar seleção de tipo
-  if (!userProfile.profileCompleted || !userProfile.userType) {
+  // APENAS para usuários que realmente não têm tipo definido (novos usuários de login social)
+  if (!userProfile.userType && !userProfile.tipo) {
     console.log('🧭 AppNavigator: Usuário sem tipo definido, mostrando seleção de tipo');
     return (
       <NavigationContainer>
