@@ -237,17 +237,18 @@ const AddStudentScreen = ({ navigation, route }) => {
             <Text style={styles.sectionTitle}>Dados Pessoais</Text>
 
             <TextInput
-              label="Nome Completo"
+              label="Nome Completo *"
               value={formData.name}
               onChangeText={(value) => updateFormData('name', value)}
               mode="outlined"
               style={styles.input}
               error={!!errors.name}
+              left={<TextInput.Icon icon="account" />}
             />
             {errors.name && <HelperText type="error">{errors.name}</HelperText>}
 
             <TextInput
-              label="Email"
+              label="Email *"
               value={formData.email}
               onChangeText={(value) => updateFormData('email', value)}
               mode="outlined"
@@ -255,28 +256,31 @@ const AddStudentScreen = ({ navigation, route }) => {
               autoCapitalize="none"
               style={styles.input}
               error={!!errors.email}
+              left={<TextInput.Icon icon="email" />}
             />
             {errors.email && <HelperText type="error">{errors.email}</HelperText>}
 
             <TextInput
-              label="Telefone"
+              label="Telefone *"
               value={formData.phone}
               onChangeText={(value) => updateFormData('phone', value)}
               mode="outlined"
               keyboardType="phone-pad"
               style={styles.input}
               error={!!errors.phone}
+              left={<TextInput.Icon icon="phone" />}
             />
             {errors.phone && <HelperText type="error">{errors.phone}</HelperText>}
 
             <TextInput
-              label="Data de Nascimento (DD/MM/AAAA)"
+              label="Data de Nascimento (DD/MM/AAAA) *"
               value={formData.birthDate}
               onChangeText={(value) => updateFormData('birthDate', value)}
               mode="outlined"
               placeholder="01/01/1990"
               style={styles.input}
               error={!!errors.birthDate}
+              left={<TextInput.Icon icon="calendar" />}
             />
             {errors.birthDate && <HelperText type="error">{errors.birthDate}</HelperText>}
 
