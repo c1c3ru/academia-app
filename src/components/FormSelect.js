@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Menu, Button, HelperText, Text } from 'react-native-paper';
+import { useTheme } from '../contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const FormSelect = ({
@@ -10,11 +11,12 @@ const FormSelect = ({
   options = [],
   error,
   touched,
-  placeholder = "Selecione uma opção",
+  placeholder,
   disabled = false,
   style
 }) => {
   const [visible, setVisible] = useState(false);
+  const { getString } = useTheme();
 
   const openMenu = () => setVisible(true);
   const closeMenu = () => setVisible(false);
@@ -25,7 +27,7 @@ const FormSelect = ({
   };
 
   const getDisplayValue = () => {
-    if (!value) return placeholder;
+    if (!value) return placeholder || getString('selectOption');
     const option = options.find(opt => opt.value === value);
     return option ? option.label : value;
   };

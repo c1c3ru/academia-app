@@ -15,10 +15,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService, classService } from '../../services/firestoreService';
 
 const StudentCalendar = ({ navigation }) => {
   const { user, userProfile } = useAuth();
+  const { getString } = useTheme();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [classes, setClasses] = useState([]);
   const [markedDates, setMarkedDates] = useState({});
@@ -74,7 +76,7 @@ const StudentCalendar = ({ navigation }) => {
       setMarkedDates(marks);
     } catch (error) {
       console.error('Erro ao carregar aulas:', error);
-      Alert.alert('Erro', 'Não foi possível carregar as aulas');
+      Alert.alert(getString('error'), getString('cannotLoadClasses'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -167,7 +169,7 @@ const StudentCalendar = ({ navigation }) => {
     if (canCheckIn) {
       Alert.alert('Check-in', 'Check-in realizado com sucesso!');
     } else {
-      Alert.alert('Check-in', 'Check-in só pode ser feito 15 minutos antes ou depois do horário da aula');
+      Alert.alert(getString('checkIn'), getString('checkInTimeError'));
     }
   };
 

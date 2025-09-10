@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { ResponsiveUtils } from '../utils/animations';
 import NotificationBell from './NotificationBell';
+import { useTheme } from '../contexts/ThemeContext';
 
 const UniversalHeader = ({ 
   title, 
@@ -15,6 +16,7 @@ const UniversalHeader = ({
   backgroundColor = '#4CAF50'
 }) => {
   const { user, userProfile, logout } = useAuth();
+  const { getString } = useTheme();
   const [menuVisible, setMenuVisible] = React.useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = React.useState(false);
 
@@ -35,7 +37,7 @@ const UniversalHeader = ({
     
     if (!logout) {
       console.error('🔐 Função logout não está disponível!');
-      Alert.alert('Erro', 'Função de logout não está disponível. Recarregue o app.');
+      Alert.alert(getString('error'), getString('logoutNotAvailable'));
       return;
     }
     
@@ -44,16 +46,16 @@ const UniversalHeader = ({
       setLogoutModalVisible(true);
     } else {
       Alert.alert(
-        'Confirmar Saída',
-        'Tem certeza que deseja sair da sua conta?',
+        getString('confirmExit'),
+        getString('sureToLogout'),
         [
           {
-            text: 'Cancelar',
+            text: getString('cancel'),
             style: 'cancel',
             onPress: () => console.log('🔐 Logout cancelado pelo usuário')
           },
           {
-            text: 'Sair',
+            text: getString('exit'),
             style: 'destructive',
             onPress: async () => {
               try {
@@ -63,7 +65,7 @@ const UniversalHeader = ({
                 console.log('🔐 Logout executado com sucesso');
               } catch (error) {
                 console.error('🔐 Erro no logout:', error);
-                Alert.alert('Erro', 'Não foi possível fazer logout. Tente novamente.');
+                Alert.alert(getString('error'), getString('cannotLogout'));
               }
             },
           },
@@ -81,7 +83,7 @@ const UniversalHeader = ({
       console.log('🔐 Logout executado com sucesso');
     } catch (error) {
       console.error('🔐 Erro no logout:', error);
-      Alert.alert('Erro', 'Não foi possível fazer logout. Tente novamente.');
+      Alert.alert(getString('error'), getString('cannotLogout'));
     }
   };
 

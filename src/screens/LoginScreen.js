@@ -20,7 +20,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import AnimatedCard from '../components/AnimatedCard';
 import AnimatedButton from '../components/AnimatedButton';
-import DebugUserFix from '../components/DebugUserFix';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -49,6 +48,8 @@ export default function LoginScreen({ navigation }) {
         errorMessage = getString('userNotFound');
       } else if (error.code === 'auth/wrong-password') {
         errorMessage = getString('wrongPassword');
+      } else if (error.code === 'auth/invalid-credential') {
+        errorMessage = getString('invalidCredentials');
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = getString('invalidEmail');
       } else if (error.message) {
@@ -66,9 +67,9 @@ export default function LoginScreen({ navigation }) {
       navigation.navigate('ForgotPassword');
     } else {
       Alert.alert(
-        'Recuperar Senha',
-        'Entre em contato com o suporte para recuperar sua senha.',
-        [{ text: 'OK' }]
+        getString('recoverPassword'),
+        getString('contactSupport'),
+        [{ text: getString('ok') }]
       );
     }
   };
@@ -77,7 +78,7 @@ export default function LoginScreen({ navigation }) {
     if (navigation) {
       navigation.navigate('Register');
     } else {
-      Alert.alert('Cadastro', 'Funcionalidade de cadastro em desenvolvimento');
+      Alert.alert(getString('register'), getString('registrationDevelopment'));
     }
   };
 
@@ -88,7 +89,7 @@ export default function LoginScreen({ navigation }) {
       await signInWithGoogle();
     } catch (error) {
       console.error('Erro no login Google:', error);
-      Alert.alert(getString('loginError'), 'Erro ao fazer login com Google');
+      Alert.alert(getString('loginError'), getString('googleLoginError'));
     } finally {
       setLoading(false);
     }
@@ -101,7 +102,7 @@ export default function LoginScreen({ navigation }) {
       await signInWithFacebook();
     } catch (error) {
       console.error('Erro no login Facebook:', error);
-      Alert.alert(getString('loginError'), 'Erro ao fazer login com Facebook');
+      Alert.alert(getString('loginError'), getString('facebookLoginError'));
     } finally {
       setLoading(false);
     }
@@ -114,7 +115,7 @@ export default function LoginScreen({ navigation }) {
       await signInWithMicrosoft();
     } catch (error) {
       console.error('Erro no login Microsoft:', error);
-      Alert.alert(getString('loginError'), 'Erro ao fazer login com Microsoft');
+      Alert.alert(getString('loginError'), getString('microsoftLoginError'));
     } finally {
       setLoading(false);
     }
@@ -127,7 +128,7 @@ export default function LoginScreen({ navigation }) {
       await signInWithApple();
     } catch (error) {
       console.error('Erro no login Apple:', error);
-      Alert.alert(getString('loginError'), 'Erro ao fazer login com Apple');
+      Alert.alert(getString('loginError'), getString('appleLoginError'));
     } finally {
       setLoading(false);
     }
@@ -270,7 +271,7 @@ export default function LoginScreen({ navigation }) {
 
                 {/* Social Login Buttons */}
                 <View style={styles.socialLoginContainer}>
-                  <Text style={[styles.socialLoginTitle, { color: theme.colors.onSurface }]}>Ou entre com:</Text>
+                  <Text style={[styles.socialLoginTitle, { color: theme.colors.onSurface }]}>{getString('orLoginWith')}</Text>
                   
                   <View style={styles.socialButtonsRow}>
                     <Button
@@ -350,8 +351,6 @@ export default function LoginScreen({ navigation }) {
             </AnimatedCard>
           </View>
           
-          {/* Componente temporário para corrigir usuários */}
-          <DebugUserFix />
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>

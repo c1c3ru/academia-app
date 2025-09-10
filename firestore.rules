@@ -29,14 +29,9 @@ service cloud.firestore {
     
     // Coleção de usuários - acesso restrito ao próprio usuário
     match /users/{userId} {
-      // Leitura: o próprio usuário, admins e instrutores
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin() || isInstructor());
-      // Criação: admins e instrutores podem criar usuários (ex.: cadastro de alunos)
-      allow create: if isSignedIn() && (isAdmin() || isInstructor());
-      // Atualização: o próprio usuário pode atualizar seu registro; admins podem atualizar qualquer um
-      allow update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      // Exclusão: apenas admins
-      allow delete: if isSignedIn() && isAdmin();
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      // Permitir leitura para admins e instrutores (para dashboards e busca de alunos)
+      allow read: if isSignedIn() && (isAdmin() || isInstructor());
     }
     
     // Coleção de academias

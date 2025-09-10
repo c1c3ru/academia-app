@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
 import { useResponsive } from '../hooks/useResponsive';
 
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import UniversalHeader from '../components/UniversalHeader';
 
 // Telas de Autenticação
@@ -61,7 +62,10 @@ const Stack = createStackNavigator();
 // Stack Navigator para Admin (para telas modais/detalhes)
 const AdminStack = createStackNavigator();
 
-const AdminStackNavigator = () => (
+const AdminStackNavigator = () => {
+  const { getString } = useTheme();
+  
+  return (
   <AdminStack.Navigator id="AdminStack" screenOptions={{ headerShown: false }}>
     <AdminStack.Screen name="AdminTabs" component={AdminTabNavigator} />
     <AdminStack.Screen 
@@ -71,7 +75,7 @@ const AdminStackNavigator = () => (
         headerShown: true,
         header: ({ navigation }) => (
           <UniversalHeader
-            title="Nova Turma"
+            title={getString('newClass')}
             navigation={navigation}
             showBack={true}
             backgroundColor="#FF9800"
@@ -86,7 +90,7 @@ const AdminStackNavigator = () => (
         headerShown: true,
         header: ({ navigation }) => (
           <UniversalHeader
-            title="Alunos da Turma"
+            title={getString('classStudents')}
             navigation={navigation}
             showBack={true}
             backgroundColor="#FF9800"
@@ -116,7 +120,7 @@ const AdminStackNavigator = () => (
         headerShown: true,
         header: ({ navigation }) => (
           <UniversalHeader
-            title="Editar Turma"
+            title={getString('editClass')}
             navigation={navigation}
             showBack={true}
             backgroundColor="#FF9800"
@@ -131,7 +135,7 @@ const AdminStackNavigator = () => (
         headerShown: true,
         header: ({ navigation }) => (
           <UniversalHeader
-            title="Detalhes da Turma"
+            title={getString('classDetails')}
             navigation={navigation}
             showBack={true}
             backgroundColor="#FF9800"
@@ -146,7 +150,7 @@ const AdminStackNavigator = () => (
         headerShown: true,
         header: ({ navigation }) => (
           <UniversalHeader
-            title="Novo Aluno"
+            title={getString('newStudent')}
             navigation={navigation}
             showBack={true}
             backgroundColor="#FF9800"
@@ -161,7 +165,7 @@ const AdminStackNavigator = () => (
         headerShown: true,
         header: ({ navigation }) => (
           <UniversalHeader
-            title="Editar Aluno"
+            title={getString('editStudent')}
             navigation={navigation}
             showBack={true}
             backgroundColor="#FF9800"
@@ -176,7 +180,7 @@ const AdminStackNavigator = () => (
         headerShown: true,
         header: ({ navigation }) => (
           <UniversalHeader
-            title="Detalhes do Aluno"
+            title={getString('studentDetails')}
             navigation={navigation}
             showBack={true}
             backgroundColor="#FF9800"
@@ -191,7 +195,7 @@ const AdminStackNavigator = () => (
         headerShown: true,
         header: ({ navigation }) => (
           <UniversalHeader
-            title="Pagamentos do Aluno"
+            title={getString('studentPayments')}
             navigation={navigation}
             showBack={true}
             backgroundColor="#FF9800"
@@ -206,7 +210,7 @@ const AdminStackNavigator = () => (
         headerShown: true,
         header: ({ navigation }) => (
           <UniversalHeader
-            title="Relatórios"
+            title={getString('reports')}
             navigation={navigation}
             showBack={true}
             backgroundColor="#FF9800"
@@ -215,11 +219,15 @@ const AdminStackNavigator = () => (
       }}
     />
   </AdminStack.Navigator>
-);
+  );
+};
 const Tab = createBottomTabNavigator();
 
 // Navegação para Alunos
-const StudentTabNavigator = () => (
+const StudentTabNavigator = () => {
+  const { getString } = useTheme();
+  
+  return (
   <Tab.Navigator
     screenOptions={({ route, navigation }) => ({
       header: ({ options, route: hdrRoute, navigation: hdrNav }) => (
@@ -250,30 +258,34 @@ const StudentTabNavigator = () => (
     <Tab.Screen 
       name="Dashboard" 
       component={StudentDashboard}
-      options={{ title: 'Painel do Aluno' }}
+      options={{ title: getString('studentDashboard') }}
     />
     <Tab.Screen 
       name="Pagamentos" 
       component={StudentPayments}
-      options={{ title: 'Pagamentos' }}
+      options={{ title: getString('payments') }}
     />
     <Tab.Screen 
       name="Evolução" 
       component={StudentEvolution}
-      options={{ title: 'Minha Evolução' }}
+      options={{ title: getString('evolution') }}
     />
     <Tab.Screen 
       name="Calendário" 
       component={StudentCalendar}
-      options={{ title: 'Calendário de Aulas' }}
+      options={{ title: getString('calendar') }}
     />
   </Tab.Navigator>
-);
+  );
+};
 
 // Stack Navigator para Instrutor (para incluir telas modais)
 const InstructorStack = createStackNavigator();
 
-const InstructorStackNavigator = () => (
+const InstructorStackNavigator = () => {
+  const { getString } = useTheme();
+  
+  return (
   <InstructorStack.Navigator screenOptions={{ headerShown: false }}>
     <InstructorStack.Screen name="InstructorTabs" component={InstructorTabNavigator} />
     <InstructorStack.Screen 
@@ -283,7 +295,7 @@ const InstructorStackNavigator = () => (
         headerShown: true,
         header: ({ navigation }) => (
           <UniversalHeader
-            title="Nova Aula"
+            title={getString('newLesson')}
             navigation={navigation}
             showBack={true}
             backgroundColor="#4CAF50"
@@ -298,7 +310,7 @@ const InstructorStackNavigator = () => (
         headerShown: true,
         header: ({ navigation }) => (
           <UniversalHeader
-            title="Check-in"
+            title={getString('checkIn')}
             navigation={navigation}
             showBack={true}
             backgroundColor="#4CAF50"
@@ -313,7 +325,67 @@ const InstructorStackNavigator = () => (
         headerShown: true,
         header: ({ navigation }) => (
           <UniversalHeader
-            title="Relatórios"
+            title={getString('reports')}
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#4CAF50"
+          />
+        ),
+      }}
+    />
+    <InstructorStack.Screen 
+      name="ClassDetails" 
+      component={ClassDetailsScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title={getString('classDetails')}
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#4CAF50"
+          />
+        ),
+      }}
+    />
+    <InstructorStack.Screen 
+      name="CheckIns" 
+      component={CheckIn}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title={getString('checkIns')}
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#4CAF50"
+          />
+        ),
+      }}
+    />
+    <InstructorStack.Screen 
+      name="AddClass" 
+      component={AddClassScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title={getString('newClass')}
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#4CAF50"
+          />
+        ),
+      }}
+    />
+    <InstructorStack.Screen 
+      name="AddStudent" 
+      component={AddStudentScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title={getString('newStudent')}
             navigation={navigation}
             showBack={true}
             backgroundColor="#4CAF50"
@@ -322,10 +394,14 @@ const InstructorStackNavigator = () => (
       }}
     />
   </InstructorStack.Navigator>
-);
+  );
+};
 
 // Navegação para Professores
-const InstructorTabNavigator = () => (
+const InstructorTabNavigator = () => {
+  const { getString } = useTheme();
+  
+  return (
   <Tab.Navigator
     screenOptions={({ route, navigation }) => ({
       header: ({ options, route: hdrRoute, navigation: hdrNav }) => (
@@ -354,23 +430,27 @@ const InstructorTabNavigator = () => (
     <Tab.Screen 
       name="Dashboard" 
       component={InstructorDashboard}
-      options={{ title: 'Painel do Instrutor' }}
+      options={{ title: getString('dashboard') }}
     />
     <Tab.Screen 
       name="Turmas" 
       component={InstructorClasses}
-      options={{ title: 'Minhas Turmas' }}
+      options={{ title: getString('classes') }}
     />
     <Tab.Screen 
       name="Alunos" 
       component={InstructorStudents}
-      options={{ title: 'Meus Alunos' }}
+      options={{ title: getString('students') }}
     />
   </Tab.Navigator>
-);
+  );
+};
 
 // Navegação para Administradores
-const AdminTabNavigator = () => (
+const AdminTabNavigator = () => {
+  const { getString } = useTheme();
+  
+  return (
   <Tab.Navigator
     screenOptions={({ route, navigation }) => ({
       header: ({ options, route: hdrRoute, navigation: hdrNav }) => (
@@ -403,30 +483,31 @@ const AdminTabNavigator = () => (
     <Tab.Screen 
       name="Dashboard" 
       component={AdminDashboard}
-      options={{ title: 'Painel Administrativo' }}
+      options={{ title: getString('dashboard') }}
     />
     <Tab.Screen 
       name="Alunos" 
       component={AdminStudents}
-      options={{ title: 'Gerenciar Alunos' }}
+      options={{ title: getString('students') }}
     />
     <Tab.Screen 
       name="Turmas" 
       component={AdminClasses}
-      options={{ title: 'Gerenciar Turmas' }}
+      options={{ title: getString('classes') }}
     />
     <Tab.Screen 
       name="Gestão" 
       component={AdminModalities}
-      options={{ title: 'Configurações' }}
+      options={{ title: getString('modalities') }}
     />
     <Tab.Screen 
       name="Convites" 
       component={InviteManagement}
-      options={{ title: 'Gerenciar Convites' }}
+      options={{ title: getString('invites') }}
     />
   </Tab.Navigator>
-);
+  );
+};
 
 // Navegação de Autenticação
 const AuthNavigator = () => {
@@ -448,6 +529,7 @@ const AuthNavigator = () => {
 
 // Navegação Principal (simplificada: apenas Stack + Tabs)
 const MainNavigator = ({ userType }) => {
+  const { getString } = useTheme();
   let TabNavigator;
   switch (userType) {
     case 'student':
@@ -476,8 +558,8 @@ const MainNavigator = ({ userType }) => {
         options={({ navigation }) => ({
           header: () => (
             <UniversalHeader
-              title="Meu Perfil"
-              subtitle="Informações pessoais e configurações"
+              title={getString('myProfile')}
+              subtitle={getString('personalInfoAndSettings')}
               navigation={navigation}
               showBack={true}
               backgroundColor={
@@ -494,8 +576,8 @@ const MainNavigator = ({ userType }) => {
         options={({ navigation }) => ({
           header: () => (
             <UniversalHeader
-              title="Alterar Senha"
-              subtitle="Atualizar sua senha de acesso"
+              title={getString('changePassword')}
+              subtitle={getString('updateYourPassword')}
               navigation={navigation}
               showBack={true}
               backgroundColor={
@@ -512,8 +594,8 @@ const MainNavigator = ({ userType }) => {
         options={({ navigation }) => ({
           header: () => (
             <UniversalHeader
-              title="Avaliação Física"
-              subtitle="Registre suas medidas corporais"
+              title={getString('physicalEvaluation')}
+              subtitle={getString('recordBodyMeasurements')}
               navigation={navigation}
               showBack={true}
               backgroundColor={
@@ -530,8 +612,8 @@ const MainNavigator = ({ userType }) => {
         options={({ navigation }) => ({
           header: () => (
             <UniversalHeader
-              title="Histórico de Avaliações"
-              subtitle="Acompanhe sua evolução física"
+              title={getString('evaluationHistory')}
+              subtitle={getString('trackPhysicalEvolution')}
               navigation={navigation}
               showBack={true}
               backgroundColor={
@@ -548,8 +630,8 @@ const MainNavigator = ({ userType }) => {
         options={({ navigation }) => ({
           header: () => (
             <UniversalHeader
-              title="Gerenciar Lesão"
-              subtitle="Registre e acompanhe lesões"
+              title={getString('manageInjury')}
+              subtitle={getString('recordAndTrackInjuries')}
               navigation={navigation}
               showBack={true}
               backgroundColor={
@@ -566,8 +648,8 @@ const MainNavigator = ({ userType }) => {
         options={({ navigation }) => ({
           header: () => (
             <UniversalHeader
-              title="Minhas Lesões"
-              subtitle="Histórico de lesões e recuperação"
+              title={getString('myInjuries')}
+              subtitle={getString('injuryHistoryAndRecovery')}
               navigation={navigation}
               showBack={true}
               backgroundColor={
@@ -584,8 +666,8 @@ const MainNavigator = ({ userType }) => {
         options={({ navigation }) => ({
           header: () => (
             <UniversalHeader
-              title="Política de Privacidade"
-              subtitle="Proteção de dados e LGPD"
+              title={getString('privacyPolicy')}
+              subtitle={getString('dataProtectionAndLGPD')}
               navigation={navigation}
               showBack={true}
               backgroundColor={
@@ -602,8 +684,8 @@ const MainNavigator = ({ userType }) => {
         options={({ navigation }) => ({
           header: () => (
             <UniversalHeader
-              title="Configurações de Notificação"
-              subtitle="Gerencie suas notificações"
+              title={getString('notificationSettings')}
+              subtitle={getString('manageYourNotifications')}
               navigation={navigation}
               showBack={true}
               backgroundColor={
@@ -620,8 +702,8 @@ const MainNavigator = ({ userType }) => {
         options={({ navigation }) => ({
           header: () => (
             <UniversalHeader
-              title="Configurações de Privacidade"
-              subtitle="LGPD e proteção de dados"
+              title={getString('privacySettings')}
+              subtitle={getString('lgpdAndDataProtection')}
               navigation={navigation}
               showBack={true}
               backgroundColor={

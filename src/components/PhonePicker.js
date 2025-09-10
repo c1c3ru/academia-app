@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { TextInput, Menu, Button } from 'react-native-paper';
+import { useTheme } from '../contexts/ThemeContext';
 import { countries } from '../data/countries';
 
 export default function PhonePicker({ 
   selectedCountry, 
   phoneNumber, 
   onPhoneChange,
-  label = "Telefone",
-  placeholder = "Digite o número"
+  label,
+  placeholder
 }) {
   const [showCountryMenu, setShowCountryMenu] = useState(false);
+  const { getString } = useTheme();
 
   const selectedCountryData = countries.find(c => c.code === selectedCountry) || countries[0];
 

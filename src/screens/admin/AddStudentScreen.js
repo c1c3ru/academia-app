@@ -14,10 +14,7 @@ import {
   Title,
   TextInput,
   HelperText,
-  RadioButton,
-  Snackbar,
-  ActivityIndicator,
-  Banner
+  RadioButton
 } from 'react-native-paper';
 // import { Picker } from '@react-native-picker/picker'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthContext';
@@ -26,14 +23,6 @@ import { firestoreService } from '../../services/firestoreService';
 const AddStudentScreen = ({ navigation, route }) => {
   const { user, userProfile, academia } = useAuth();
   const [loading, setLoading] = useState(false);
-  
-  // Feedback states
-  const [snackbar, setSnackbar] = useState({
-    visible: false,
-    message: '',
-    type: 'info' // 'success', 'error', 'info'
-  });
-  const [showValidationBanner, setShowValidationBanner] = useState(false);
   
   // Form data
   const [formData, setFormData] = useState({
@@ -51,18 +40,6 @@ const AddStudentScreen = ({ navigation, route }) => {
   });
 
   const [errors, setErrors] = useState({});
-
-  const showSnackbar = (message, type = 'info') => {
-    setSnackbar({
-      visible: true,
-      message,
-      type
-    });
-  };
-
-  const hideSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, visible: false }));
-  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -94,16 +71,7 @@ const AddStudentScreen = ({ navigation, route }) => {
     }
 
     setErrors(newErrors);
-    const hasErrors = Object.keys(newErrors).length > 0;
-    
-    if (hasErrors) {
-      setShowValidationBanner(true);
-      showSnackbar('Por favor, preencha todos os campos obrigatórios', 'error');
-    } else {
-      setShowValidationBanner(false);
-    }
-    
-    return !hasErrors;
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
@@ -128,50 +96,37 @@ const AddStudentScreen = ({ navigation, route }) => {
         userType: 'student',
         isActive: true,
         createdBy: user.uid,
-        academiaId: userProfile?.academiaId || academia?.id || null,
         createdAt: new Date(),
         updatedAt: new Date(),
         graduations: [],
         currentGraduation: null
       };
 
-      await firestoreService.create('users', studentData);
-
-      showSnackbar('Aluno cadastrado com sucesso!', 'success');
+      // Garantir associação com a academia do instrutor/admin
+      studentData.academiaId = userProfile?.academiaId || academia?.id || null;
       
-      // Limpar formulário após sucesso
-      setTimeout(() => {
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          birthDate: '',
-          address: '',
-          emergencyContact: '',
-          emergencyPhone: '',
-          medicalConditions: '',
-          goals: '',
-          status: 'active',
-          userType: 'student'
-        });
-        setErrors({});
-        navigation.goBack();
-      }, 2000);
+      console.log('✅ Criando aluno:', studentData);
+      const newStudentId = await firestoreService.create('users', studentData);
+      console.log('✅ Aluno criado com ID:', newStudentId);
+
+      Alert.alert(
+        'Sucesso!',
+        `Aluno "${formData.name.trim()}" foi cadastrado com sucesso!`,
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack()
+          }
+        ]
+      );
 
     } catch (error) {
-      console.error('Erro ao cadastrar aluno:', error);
-      
-      let errorMessage = 'Não foi possível cadastrar o aluno. Tente novamente.';
-      
-      if (error.code === 'permission-denied') {
-        errorMessage = 'Você não tem permissão para cadastrar alunos. Verifique suas credenciais.';
-      } else if (error.code === 'network-request-failed') {
-        errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
-      } else if (error.message?.includes('email')) {
-        errorMessage = 'Este email já está em uso. Tente outro email.';
-      }
-      
-      showSnackbar(errorMessage, 'error');
+      console.error('❌ Erro ao cadastrar aluno:', error);
+      Alert.alert(
+        'Erro ao Cadastrar Aluno',
+        `Não foi possível cadastrar o aluno "${formData.name.trim()}". Verifique os dados e tente novamente.\n\nDetalhes: ${error.message || error}`,
+        [{ text: 'OK' }]
+      );
     } finally {
       setLoading(false);
     }
@@ -189,40 +144,11 @@ const AddStudentScreen = ({ navigation, route }) => {
         ...prev,
         [field]: null
       }));
-      
-      // Hide validation banner if no more errors
-      const remainingErrors = Object.keys(errors).filter(key => key !== field && errors[key]);
-      if (remainingErrors.length === 0) {
-        setShowValidationBanner(false);
-      }
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Banner de validação */}
-      <Banner
-        visible={showValidationBanner}
-        actions={[
-          {
-            label: 'OK',
-            onPress: () => setShowValidationBanner(false),
-          },
-        ]}
-        icon="alert-circle"
-        style={styles.validationBanner}
-      >
-        Preencha todos os campos obrigatórios marcados com *
-      </Banner>
-
-      {/* Loading overlay */}
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#6200ee" />
-          <Text style={styles.loadingText}>Cadastrando aluno...</Text>
-        </View>
-      )}
-
       <ScrollView 
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -237,18 +163,17 @@ const AddStudentScreen = ({ navigation, route }) => {
             <Text style={styles.sectionTitle}>Dados Pessoais</Text>
 
             <TextInput
-              label="Nome Completo *"
+              label="Nome Completo"
               value={formData.name}
               onChangeText={(value) => updateFormData('name', value)}
               mode="outlined"
               style={styles.input}
               error={!!errors.name}
-              left={<TextInput.Icon icon="account" />}
             />
             {errors.name && <HelperText type="error">{errors.name}</HelperText>}
 
             <TextInput
-              label="Email *"
+              label="Email"
               value={formData.email}
               onChangeText={(value) => updateFormData('email', value)}
               mode="outlined"
@@ -256,31 +181,28 @@ const AddStudentScreen = ({ navigation, route }) => {
               autoCapitalize="none"
               style={styles.input}
               error={!!errors.email}
-              left={<TextInput.Icon icon="email" />}
             />
             {errors.email && <HelperText type="error">{errors.email}</HelperText>}
 
             <TextInput
-              label="Telefone *"
+              label="Telefone"
               value={formData.phone}
               onChangeText={(value) => updateFormData('phone', value)}
               mode="outlined"
               keyboardType="phone-pad"
               style={styles.input}
               error={!!errors.phone}
-              left={<TextInput.Icon icon="phone" />}
             />
             {errors.phone && <HelperText type="error">{errors.phone}</HelperText>}
 
             <TextInput
-              label="Data de Nascimento (DD/MM/AAAA) *"
+              label="Data de Nascimento (DD/MM/AAAA)"
               value={formData.birthDate}
               onChangeText={(value) => updateFormData('birthDate', value)}
               mode="outlined"
               placeholder="01/01/1990"
               style={styles.input}
               error={!!errors.birthDate}
-              left={<TextInput.Icon icon="calendar" />}
             />
             {errors.birthDate && <HelperText type="error">{errors.birthDate}</HelperText>}
 
@@ -292,32 +214,29 @@ const AddStudentScreen = ({ navigation, route }) => {
               multiline
               numberOfLines={2}
               style={styles.input}
-              left={<TextInput.Icon icon="home" />}
             />
 
             {/* Contato de Emergência */}
             <Text style={styles.sectionTitle}>Contato de Emergência</Text>
 
             <TextInput
-              label="Nome do Contato *"
+              label="Nome do Contato"
               value={formData.emergencyContact}
               onChangeText={(value) => updateFormData('emergencyContact', value)}
               mode="outlined"
               style={styles.input}
               error={!!errors.emergencyContact}
-              left={<TextInput.Icon icon="account-heart" />}
             />
             {errors.emergencyContact && <HelperText type="error">{errors.emergencyContact}</HelperText>}
 
             <TextInput
-              label="Telefone de Emergência *"
+              label="Telefone de Emergência"
               value={formData.emergencyPhone}
               onChangeText={(value) => updateFormData('emergencyPhone', value)}
               mode="outlined"
               keyboardType="phone-pad"
               style={styles.input}
               error={!!errors.emergencyPhone}
-              left={<TextInput.Icon icon="phone-alert" />}
             />
             {errors.emergencyPhone && <HelperText type="error">{errors.emergencyPhone}</HelperText>}
 
@@ -333,7 +252,6 @@ const AddStudentScreen = ({ navigation, route }) => {
               numberOfLines={3}
               placeholder="Informe alergias, lesões, medicamentos, etc."
               style={styles.input}
-              left={<TextInput.Icon icon="medical-bag" />}
             />
 
             <TextInput
@@ -345,7 +263,6 @@ const AddStudentScreen = ({ navigation, route }) => {
               numberOfLines={2}
               placeholder="Perda de peso, ganho de massa, condicionamento..."
               style={styles.input}
-              left={<TextInput.Icon icon="target" />}
             />
 
             {/* Status */}
@@ -389,24 +306,6 @@ const AddStudentScreen = ({ navigation, route }) => {
           </Card.Content>
         </Card>
       </ScrollView>
-      
-      {/* Snackbar para feedback */}
-      <Snackbar
-        visible={snackbar.visible}
-        onDismiss={hideSnackbar}
-        duration={snackbar.type === 'success' ? 2000 : 4000}
-        style={[
-          styles.snackbar,
-          snackbar.type === 'success' && styles.snackbarSuccess,
-          snackbar.type === 'error' && styles.snackbarError
-        ]}
-        action={{
-          label: 'Fechar',
-          onPress: hideSnackbar,
-        }}
-      >
-        {snackbar.message}
-      </Snackbar>
     </SafeAreaView>
   );
 };
@@ -469,35 +368,6 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     marginHorizontal: 8,
-  },
-  validationBanner: {
-    backgroundColor: '#ffebee',
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '500',
-  },
-  snackbar: {
-    marginBottom: 16,
-  },
-  snackbarSuccess: {
-    backgroundColor: '#4caf50',
-  },
-  snackbarError: {
-    backgroundColor: '#f44336',
   },
 });
 

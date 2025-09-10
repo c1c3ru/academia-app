@@ -14,11 +14,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { paymentService } from '../../services/firestoreService';
 import { Linking } from 'react-native';
 
 const StudentPayments = ({ navigation }) => {
   const { user, userProfile, academia } = useAuth();
+  const { getString } = useTheme();
   const [payments, setPayments] = useState([]);
   const [currentPayment, setCurrentPayment] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +41,7 @@ const StudentPayments = ({ navigation }) => {
       setCurrentPayment(current);
     } catch (error) {
       console.error('Erro ao carregar pagamentos:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os pagamentos');
+      Alert.alert(getString('error'), getString('cannotLoadPayments'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -53,15 +55,15 @@ const StudentPayments = ({ navigation }) => {
 
   const handlePayWithPix = () => {
     Alert.alert(
-      'Pagamento PIX',
-      'Funcionalidade de pagamento PIX será implementada em breve',
-      [{ text: 'OK' }]
+      getString('pixPayment'),
+      getString('pixFeatureComingSoon'),
+      [{ text: getString('ok') }]
     );
   };
 
   const handleContactWhatsApp = () => {
     if (!academia?.telefone?.numero) {
-      Alert.alert('Erro', 'Número do WhatsApp da academia não encontrado');
+      Alert.alert(getString('error'), getString('whatsappNotFound'));
       return;
     }
 
@@ -82,7 +84,7 @@ const StudentPayments = ({ navigation }) => {
       })
       .catch((err) => {
         console.error('Erro ao abrir WhatsApp:', err);
-        Alert.alert('Erro', 'Não foi possível abrir o WhatsApp');
+        Alert.alert(getString('error'), getString('cannotOpenWhatsapp'));
       });
   };
 

@@ -15,10 +15,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';
 
 const StudentEvolution = ({ navigation }) => {
   const { user, userProfile } = useAuth();
+  const { getString } = useTheme();
   const [graduations, setGraduations] = useState([]);
   const [stats, setStats] = useState({
     totalGraduations: 0,
@@ -255,19 +257,19 @@ const StudentEvolution = ({ navigation }) => {
             </View>
             
             <List.Item
-              title="Manter frequência nas aulas"
+              title={getString('maintainFrequency')}
               description="Continue participando regularmente das aulas"
               left={() => <List.Icon icon="check-circle-outline" color="#4CAF50" />}
             />
             
             <List.Item
-              title="Aperfeiçoar técnicas"
+              title={getString('improveTechniques')}
               description="Foque no desenvolvimento técnico"
               left={() => <List.Icon icon="trending-up" color="#2196F3" />}
             />
             
             <List.Item
-              title="Próxima graduação"
+              title={getString('nextGraduation')}
               description="Continue se dedicando para a próxima faixa"
               left={() => <List.Icon icon="trophy" color="#FFD700" />}
             />

@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
@@ -42,6 +43,7 @@ const RegisterScreen = ({ navigation }) => {
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
   const { signUp } = useAuth();
+  const { getString } = useTheme();
 
   useEffect(() => {
     // Animação de entrada
@@ -68,21 +70,21 @@ const RegisterScreen = ({ navigation }) => {
     const newErrors = {};
     
     if (!formData.name.trim()) {
-      newErrors.name = 'Nome é obrigatório';
+      newErrors.name = getString('nameRequired');
     }
     
     if (!formData.email.trim()) {
-      newErrors.email = 'Email é obrigatório';
+      newErrors.email = getString('emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email inválido';
+      newErrors.email = getString('invalidEmail');
     }
     
     if (formData.password.length < 6) {
-      newErrors.password = 'Senha deve ter pelo menos 6 caracteres';
+      newErrors.password = getString('passwordMinLength');
     }
     
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Senhas não coincidem';
+      newErrors.confirmPassword = getString('passwordsMismatch');
     }
     
     setErrors(newErrors);
@@ -109,7 +111,7 @@ const RegisterScreen = ({ navigation }) => {
       };
 
       await signUp(formData.email, formData.password, userData);
-      showSnackbar('Conta criada com sucesso! 🎉', 'success');
+      showSnackbar(getString('accountCreatedSuccess'), 'success');
       
       // Animação de sucesso
       Animated.sequence([
@@ -126,14 +128,14 @@ const RegisterScreen = ({ navigation }) => {
       ]).start();
     } catch (error) {
       console.error('Erro no cadastro:', error);
-      let errorMessage = 'Erro ao criar conta';
+      let errorMessage = getString('registrationError');
       
       if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'Este email já está em uso';
+        errorMessage = getString('emailAlreadyInUse');
       } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'Senha muito fraca';
+        errorMessage = getString('weakPassword');
       } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Email inválido';
+        errorMessage = getString('invalidEmail');
       }
       
       showSnackbar(errorMessage, 'error');
@@ -204,9 +206,9 @@ const RegisterScreen = ({ navigation }) => {
               color="white" 
               style={styles.headerIcon}
             />
-            <Title style={styles.title}>Criar Conta</Title>
+            <Title style={styles.title}>{getString('createAccount')}</Title>
             <Paragraph style={styles.subtitle}>
-              Preencha os dados para se cadastrar
+              {getString('fillDataToRegister')}
             </Paragraph>
           </Animated.View>
 
@@ -217,10 +219,10 @@ const RegisterScreen = ({ navigation }) => {
           >
             <Card style={styles.card}>
           <Card.Content>
-            <Title style={styles.cardTitle}>Dados Pessoais</Title>
+            <Title style={styles.cardTitle}>{getString('personalData')}</Title>
             
             <TextInput
-              label="Nome Completo *"
+              label={getString('fullName')}
               value={formData.name}
               onChangeText={(text) => updateFormData('name', text)}
               mode="outlined"
@@ -236,7 +238,7 @@ const RegisterScreen = ({ navigation }) => {
             )}
 
             <TextInput
-              label="Email *"
+              label={getString('email') + ' *'}
               value={formData.email}
               onChangeText={(text) => updateFormData('email', text)}
               mode="outlined"
@@ -254,7 +256,7 @@ const RegisterScreen = ({ navigation }) => {
             )}
 
             <TextInput
-              label="Telefone/WhatsApp"
+              label={getString('phoneWhatsApp')}
               value={formData.phone}
               onChangeText={(text) => updateFormData('phone', text)}
               mode="outlined"
@@ -266,12 +268,12 @@ const RegisterScreen = ({ navigation }) => {
 
             <Divider style={styles.divider} />
 
-            <Title style={styles.sectionTitle}>Tipo de Usuário</Title>
+            <Title style={styles.sectionTitle}>{getString('userType')}</Title>
             <View style={styles.userTypeContainer}>
               {[
-                { value: 'student', label: 'Aluno', description: 'Acesso às aulas e evolução' },
-                { value: 'instructor', label: 'Professor', description: 'Gerenciar turmas e alunos' },
-                { value: 'admin', label: 'Administrador', description: 'Controle total do sistema' }
+                { value: 'student', label: getString('student'), description: getString('studentDescription') },
+                { value: 'instructor', label: getString('instructor'), description: getString('instructorDescription') },
+                { value: 'admin', label: getString('administrator'), description: getString('adminDescription') }
               ].map((type) => (
                 <Card 
                   key={type.value}
@@ -310,10 +312,10 @@ const RegisterScreen = ({ navigation }) => {
 
             <Divider style={styles.divider} />
 
-            <Title style={styles.sectionTitle}>Senha</Title>
+            <Title style={styles.sectionTitle}>{getString('passwordSection')}</Title>
 
             <TextInput
-              label="Senha *"
+              label={getString('password') + ' *'}
               value={formData.password}
               onChangeText={(text) => updateFormData('password', text)}
               mode="outlined"
@@ -336,7 +338,7 @@ const RegisterScreen = ({ navigation }) => {
             )}
 
             <TextInput
-              label="Confirmar Senha *"
+              label={getString('confirmPassword')}
               value={formData.confirmPassword}
               onChangeText={(text) => updateFormData('confirmPassword', text)}
               mode="outlined"
@@ -359,7 +361,7 @@ const RegisterScreen = ({ navigation }) => {
             )}
 
             <Text style={styles.passwordHint}>
-              * A senha deve ter pelo menos 6 caracteres
+              * {getString('passwordMinLength')}
             </Text>
 
             <Button
@@ -373,21 +375,21 @@ const RegisterScreen = ({ navigation }) => {
               {loading ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator color="white" size="small" />
-                  <Text style={styles.loadingText}>Criando conta...</Text>
+                  <Text style={styles.loadingText}>{getString('creatingAccount')}</Text>
                 </View>
               ) : (
-                'Criar Conta'
+                getString('createAccount')
               )}
             </Button>
 
             <View style={styles.loginContainer}>
-              <Text>Já tem uma conta? </Text>
+              <Text>{getString('alreadyHaveAccount')} </Text>
               <Button
                 mode="text"
                 onPress={() => navigation.navigate('Login')}
                 disabled={loading}
               >
-                Fazer Login
+                {getString('signIn')}
               </Button>
             </View>
           </Card.Content>

@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { View, Alert, TextInput } from 'react-native';
 import { Text, Button, Card } from 'react-native-paper';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function QRCodeScanner({ onScan, onCancel }) {
   const [manualCode, setManualCode] = useState('');
+  const { getString } = useTheme();
 
   const handleManualSubmit = () => {
     if (!manualCode.trim()) {
-      Alert.alert('Erro', 'Digite um código válido');
+      Alert.alert(getString('error'), getString('invalidCode'));
       return;
     }
     
@@ -20,7 +22,7 @@ export default function QRCodeScanner({ onScan, onCancel }) {
       onScan?.(qrData);
     } catch (error) {
       console.error('Erro ao processar código:', error);
-      Alert.alert('Erro', 'Não foi possível processar o código');
+      Alert.alert(getString('error'), getString('cannotProcessCode'));
     }
   };
 
@@ -37,7 +39,7 @@ export default function QRCodeScanner({ onScan, onCancel }) {
         
         <TextInput
           style={styles.input}
-          placeholder="Código da academia ou link completo"
+          placeholder={getString('academyCodeOrLink')}
           value={manualCode}
           onChangeText={setManualCode}
           multiline

@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
-import { classService, studentService } from '../../services/firestoreService';
+import { firestoreService, classService, studentService } from '../../services/firestoreService';
 
 const InstructorClasses = ({ navigation }) => {
   const { user } = useAuth();
@@ -24,6 +24,7 @@ const InstructorClasses = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [studentCounts, setStudentCounts] = useState({});
 
   useEffect(() => {
     loadClasses();
@@ -38,54 +39,38 @@ const InstructorClasses = ({ navigation }) => {
       setLoading(true);
       console.log('📚 Carregando turmas do instrutor:', user.uid);
       
-      // Primeiro, tentar buscar turmas do instrutor
-      let instructorClasses = [];
-      try {
-        instructorClasses = await classService.getClassesByInstructor(user.uid, user?.email);
-        console.log(`✅ ${instructorClasses.length} turmas encontradas`);
-      } catch (classError) {
-        console.warn('⚠️ Erro ao buscar turmas via service, tentando consulta direta:', classError);
-        // Fallback: busca direta sem dependência do service
-        try {
-          instructorClasses = await firestoreService.getWhere('classes', 'instructorId', '==', user.uid);
-          console.log(`✅ Fallback: ${instructorClasses.length} turmas encontradas`);
-        } catch (fallbackError) {
-          console.error('❌ Falha no fallback para turmas:', fallbackError);
-          instructorClasses = [];
-        }
-      }
+      // Buscar turmas do instrutor usando o service correto
+      const classesData = await classService.getClassesByInstructor(user.uid, user?.email);
+      setClasses(Array.isArray(classesData) ? classesData : []);
+      console.log('✅', classesData.length, 'turmas encontradas');
       
-      // Buscar número de alunos para cada turma (com tratamento de erro)
-      const classesWithStudents = await Promise.all(
-        instructorClasses.map(async (classItem) => {
-          try {
-            const students = await studentService.getStudentsByClass(classItem.id);
-            return {
-              ...classItem,
-              currentStudents: students.length,
-              students: students
-            };
-          } catch (studentError) {
-            console.warn(`⚠️ Erro ao buscar alunos da turma ${classItem.id}:`, studentError);
-            return {
-              ...classItem,
-              currentStudents: 0,
-              students: []
-            };
-          }
-        })
-      );
-      
-      setClasses(classesWithStudents);
-      console.log(`✅ Dashboard carregado com ${classesWithStudents.length} turmas`);
+      // Carregar contagem de alunos para cada turma
+      await loadStudentCounts(classesData);
     } catch (error) {
-      console.error('Erro geral ao carregar turmas:', error);
-      // Em caso de erro total, definir array vazio para evitar crash
+      console.error('❌ Erro ao carregar turmas:', error);
       setClasses([]);
-      Alert.alert('Aviso', 'Algumas informações podem estar limitadas. Tente novamente mais tarde.');
+      Alert.alert('Erro', 'Não foi possível carregar as turmas.');
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const loadStudentCounts = async (classes) => {
+    try {
+      const counts = {};
+      for (const classItem of classes) {
+        try {
+          const students = await studentService.getStudentsByClass(classItem.id);
+          counts[classItem.id] = Array.isArray(students) ? students.length : 0;
+        } catch (error) {
+          console.warn(`⚠️ Erro ao carregar alunos da turma ${classItem.id}:`, error);
+          counts[classItem.id] = 0;
+        }
+      }
+      setStudentCounts(counts);
+    } catch (error) {
+      console.error('❌ Erro ao carregar contagens de alunos:', error);
     }
   };
 
@@ -96,8 +81,8 @@ const InstructorClasses = ({ navigation }) => {
     }
     
     const filtered = classes.filter(classItem =>
-      classItem.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      classItem.modality.toLowerCase().includes(searchQuery.toLowerCase())
+      classItem.name?.toLowerCase()?.includes(searchQuery.toLowerCase()) ||
+      classItem.modality?.toLowerCase()?.includes(searchQuery.toLowerCase())
     );
     setFilteredClasses(filtered);
   };
@@ -112,14 +97,9 @@ const InstructorClasses = ({ navigation }) => {
   };
 
   const handleCheckIns = (classItem) => {
-    navigation.navigate('CheckIns', { classId: classItem.id, className: classItem.name });
-  };
-
-  const handleManageStudents = (classItem) => {
-    navigation.navigate('ClassDetails', { 
-      classId: classItem.id, 
-      classData: classItem,
-      focusTab: 'students'
+    navigation.navigate('CheckIn', { 
+      classId: classItem.id,
+      className: classItem.name 
     });
   };
 
@@ -144,166 +124,111 @@ const InstructorClasses = ({ navigation }) => {
     }
   };
 
-  const getCapacityColor = (current, max) => {
-    if (!max) return '#666';
-    const percentage = (current / max) * 100;
-    if (percentage >= 90) return '#F44336';
-    if (percentage >= 70) return '#FF9800';
-    return '#4CAF50';
+  const renderClassCard = (classItem) => {
+    const studentCount = studentCounts[classItem.id] || classItem.currentStudents || 0;
+    
+    return (
+      <Card key={classItem.id} style={styles.card}>
+        <Card.Content>
+          <View style={styles.cardHeader}>
+            <Title style={styles.className}>{classItem.name}</Title>
+            <Chip 
+              style={[styles.statusChip, { backgroundColor: classItem.status === 'active' ? '#4CAF50' : '#FFC107' }]}
+              textStyle={{ color: 'white', fontSize: 12 }}
+            >
+              {classItem.status === 'active' ? 'Ativa' : 'Inativa'}
+            </Chip>
+          </View>
+          
+          <Paragraph style={styles.modalityText}>
+            <Ionicons name="fitness-outline" size={16} color="#666" />
+            {' '}{classItem.modality}
+          </Paragraph>
+          
+          <View style={styles.classInfo}>
+            <Text style={styles.infoItem}>
+              <Ionicons name="time-outline" size={16} color="#666" />
+              {' '}{formatSchedule(classItem)}
+            </Text>
+            
+            <Text style={styles.infoItem}>
+              <Ionicons name="people-outline" size={16} color="#666" />
+              {' '}{studentCount}/{classItem.maxStudents || 0} alunos
+            </Text>
+            
+            {classItem.price && (
+              <Text style={styles.infoItem}>
+                <Ionicons name="card-outline" size={16} color="#666" />
+                {' '}R$ {classItem.price.toFixed(2)}
+              </Text>
+            )}
+          </View>
+
+          {classItem.description && (
+            <Paragraph style={styles.description}>{classItem.description}</Paragraph>
+          )}
+        </Card.Content>
+        
+        <Card.Actions style={styles.cardActions}>
+          <Button 
+            mode="outlined" 
+            onPress={() => handleClassPress(classItem)}
+            style={styles.actionButton}
+          >
+            Detalhes
+          </Button>
+          <Button 
+            mode="contained" 
+            onPress={() => handleCheckIns(classItem)}
+            style={styles.actionButton}
+          >
+            Check-ins
+          </Button>
+        </Card.Actions>
+      </Card>
+    );
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text>Carregando turmas...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Searchbar
-          placeholder="Buscar turmas..."
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={styles.searchbar}
-        />
-      </View>
-
-      <ScrollView 
+      <Searchbar
+        placeholder="Buscar turmas..."
+        onChangeText={setSearchQuery}
+        value={searchQuery}
+        style={styles.searchbar}
+      />
+      
+      <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {filteredClasses.length > 0 ? (
-          filteredClasses.map((classItem, index) => (
-            <Card key={classItem.id || index} style={styles.classCard}>
-              <Card.Content>
-                <View style={styles.classHeader}>
-                  <View style={styles.classInfo}>
-                    <Title style={styles.className}>{classItem.name}</Title>
-                    <Chip mode="outlined" style={styles.modalityChip}>
-                      {classItem.modality}
-                    </Chip>
-                  </View>
-                </View>
-
-                <View style={styles.classDetails}>
-                  <View style={styles.detailRow}>
-                    <Ionicons name="time-outline" size={16} color="#666" />
-                    <Text style={styles.detailText}>
-                      {formatSchedule(classItem)}
-                    </Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <Ionicons name="people-outline" size={16} color="#666" />
-                    <Text style={[
-                      styles.detailText,
-                      { color: getCapacityColor(classItem.currentStudents, classItem.maxCapacity) }
-                    ]}>
-                      {classItem.currentStudents}/{classItem.maxCapacity || 'N/A'} alunos
-                    </Text>
-                  </View>
-
-                  {classItem.location && (
-                    <View style={styles.detailRow}>
-                      <Ionicons name="location-outline" size={16} color="#666" />
-                      <Text style={styles.detailText}>{classItem.location}</Text>
-                    </View>
-                  )}
-                </View>
-
-                <Divider style={styles.divider} />
-
-                <View style={styles.classActions}>
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => handleClassPress(classItem)}
-                    style={styles.detailsButton}
-                    icon="eye"
-                    compact
-                  >
-                    Ver
-                  </Button>
-
-                  <Button 
-                    mode="contained" 
-                    onPress={() => handleCheckIns(classItem)}
-                    style={styles.checkInsButton}
-                    icon="check"
-                    compact
-                  >
-                    Check-ins
-                  </Button>
-
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => handleManageStudents(classItem)}
-                    style={styles.studentsButtonInstructor}
-                    icon="account-group"
-                    compact
-                  >
-                    {classItem.currentStudents} Alunos
-                  </Button>
-                </View>
-
-                {/* Lista rápida de alunos */}
-                {classItem.students && classItem.students.length > 0 && (
-                  <View style={styles.studentsPreview}>
-                    <Text style={styles.studentsTitle}>Alunos da turma:</Text>
-                    {classItem.students.slice(0, 3).map((student, idx) => (
-                      <Text key={idx} style={styles.studentName}>
-                        • {student.name}
-                      </Text>
-                    ))}
-                    {classItem.students.length > 3 && (
-                      <Text style={styles.moreStudents}>
-                        +{classItem.students.length - 3} mais...
-                      </Text>
-                    )}
-                  </View>
-                )}
-              </Card.Content>
-            </Card>
-          ))
+        {filteredClasses.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="school-outline" size={64} color="#ccc" />
+            <Text style={styles.emptyText}>
+              {searchQuery ? 'Nenhuma turma encontrada' : 'Nenhuma turma cadastrada'}
+            </Text>
+            {!searchQuery && (
+              <Text style={styles.emptySubtext}>
+                Entre em contato com o administrador para criar turmas
+              </Text>
+            )}
+          </View>
         ) : (
-          <Card style={styles.emptyCard}>
-            <Card.Content style={styles.emptyContent}>
-              <Ionicons name="school-outline" size={48} color="#ccc" />
-              <Title style={styles.emptyTitle}>Nenhuma turma encontrada</Title>
-              <Paragraph style={styles.emptyText}>
-                {searchQuery ? 
-                  'Nenhuma turma corresponde à sua busca' : 
-                  'Você ainda não possui turmas atribuídas'
-                }
-              </Paragraph>
-            </Card.Content>
-          </Card>
-        )}
-
-        {/* Estatísticas gerais */}
-        {classes.length > 0 && (
-          <Card style={styles.statsCard}>
-            <Card.Content>
-              <Title style={styles.statsTitle}>Resumo das Turmas</Title>
-              
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{classes.length}</Text>
-                  <Text style={styles.statLabel}>Total de Turmas</Text>
-                </View>
-                
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>
-                    {classes.reduce((sum, c) => sum + (c.currentStudents || 0), 0)}
-                  </Text>
-                  <Text style={styles.statLabel}>Total de Alunos</Text>
-                </View>
-                
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>
-                    {[...new Set(classes.map(c => c.modality))].length}
-                  </Text>
-                  <Text style={styles.statLabel}>Modalidades</Text>
-                </View>
-              </View>
-            </Card.Content>
-          </Card>
+          filteredClasses.map(renderClassCard)
         )}
       </ScrollView>
 
@@ -311,7 +236,7 @@ const InstructorClasses = ({ navigation }) => {
         style={styles.fab}
         icon="plus"
         label="Nova Turma"
-        onPress={() => Alert.alert('Info', 'Funcionalidade disponível apenas para administradores')}
+        onPress={() => navigation.navigate('AddClass')}
       />
     </SafeAreaView>
   );
@@ -322,135 +247,83 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  header: {
-    padding: 16,
-    backgroundColor: '#fff',
-    elevation: 2,
-  },
   searchbar: {
-    elevation: 0,
-    backgroundColor: '#f5f5f5',
+    margin: 16,
+    marginBottom: 8,
   },
   scrollView: {
     flex: 1,
   },
-  classCard: {
-    margin: 16,
-    marginBottom: 8,
-    elevation: 2,
+  scrollContent: {
+    padding: 16,
+    paddingTop: 8,
+    paddingBottom: 100,
   },
-  classHeader: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  card: {
+    marginBottom: 16,
+    elevation: 4,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  className: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  statusChip: {
+    height: 28,
+  },
+  modalityText: {
+    fontSize: 16,
+    color: '#666',
     marginBottom: 12,
   },
   classInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  className: {
-    fontSize: 18,
-    flex: 1,
-  },
-  modalityChip: {
-    marginLeft: 8,
-  },
-  classDetails: {
     marginBottom: 12,
   },
-  detailRow: {
+  infoItem: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
   },
-  detailText: {
-    marginLeft: 8,
-    color: '#666',
-    flex: 1,
-  },
-  divider: {
-    marginVertical: 12,
-  },
-  classActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    gap: 6,
-  },
-  detailsButton: {
-    flex: 0.7,
-    minWidth: 50,
-  },
-  checkInsButton: {
-    flex: 1,
-    minWidth: 80,
-  },
-  studentsButtonInstructor: {
-    flex: 1.1,
-    minWidth: 85,
-    borderColor: '#4CAF50',
-  },
-  studentsPreview: {
-    marginTop: 12,
-    padding: 8,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 4,
-  },
-  studentsTitle: {
+  description: {
     fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  studentName: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
-  },
-  moreStudents: {
-    fontSize: 12,
-    color: '#2196F3',
+    color: '#777',
     fontStyle: 'italic',
   },
-  emptyCard: {
-    margin: 16,
-    elevation: 2,
+  cardActions: {
+    justifyContent: 'flex-end',
   },
-  emptyContent: {
+  actionButton: {
+    marginLeft: 8,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
-  },
-  emptyTitle: {
-    marginTop: 16,
-    textAlign: 'center',
+    paddingVertical: 60,
   },
   emptyText: {
-    textAlign: 'center',
+    fontSize: 18,
     color: '#666',
-  },
-  statsCard: {
-    margin: 16,
-    marginTop: 8,
-    elevation: 2,
-    backgroundColor: '#E8F5E8',
-  },
-  statsTitle: {
     textAlign: 'center',
-    marginBottom: 16,
+    marginTop: 16,
+    marginBottom: 8,
   },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
+  emptySubtext: {
+    fontSize: 14,
+    color: '#999',
     textAlign: 'center',
   },
   fab: {

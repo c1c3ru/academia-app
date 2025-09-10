@@ -75,7 +75,16 @@ const AddClassScreen = ({ navigation, route }) => {
   useEffect(() => {
     loadInstructors();
     loadModalities();
-  }, []);
+    
+    // Se for um instrutor, pré-selecionar ele mesmo como instrutor da turma
+    if (userProfile?.userType === 'instructor' || userProfile?.tipo === 'instrutor') {
+      setFormData(prev => ({
+        ...prev,
+        instructorId: user.uid,
+        instructorName: userProfile.name || user.displayName || user.email
+      }));
+    }
+  }, [user, userProfile]);
 
   const loadInstructors = async () => {
     let userInstructors = [];
@@ -197,23 +206,34 @@ const AddClassScreen = ({ navigation, route }) => {
         description: formData.description.trim(),
         maxStudents: parseInt(formData.maxStudents),
         currentStudents: 0,
-        instructorId: formData.instructorId,
-        instructorName: formData.instructorName,
+        instructorId: formData.instructorId || user.uid, // Garantir instrutor
+        instructorName: formData.instructorName || userProfile?.name || user.displayName || user.email,
         // Armazenar formato estruturado e manter texto para compatibilidade
         schedule: parseScheduleTextToArray(formData.schedule.trim()),
         scheduleText: formData.schedule.trim(),
         price: parseFloat(formData.price),
         status: formData.status,
         ageCategory: formData.ageCategory,
+        academiaId: userProfile?.academiaId, // Associar à academia do instrutor
         createdBy: user.uid,
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
-      await firestoreService.create('classes', classData);
-      setSnackbar({ visible: true, message: 'Turma criada com sucesso!', type: 'success' });
+      console.log('✅ Criando turma:', classData);
+      const newClassId = await firestoreService.create('classes', classData);
+      console.log('✅ Turma criada com ID:', newClassId);
+      
+      setSnackbar({ 
+        visible: true, 
+        message: `Turma "${formData.name.trim()}" criada com sucesso!`, 
+        type: 'success' 
+      });
+      
       // Voltar após pequeno atraso para permitir ver o feedback
-      setTimeout(() => navigation.goBack(), 800);
+      setTimeout(() => {
+        navigation.goBack();
+      }, 1500);
 
     } catch (error) {
       console.error('Erro ao criar turma:', error);

@@ -531,7 +531,7 @@ const InstructorStudents = ({ navigation }) => {
         style={styles.fab}
         icon="account-plus"
         label="Novo Aluno"
-        onPress={() => Alert.alert('Info', 'Funcionalidade disponível apenas para administradores')}
+        onPress={() => navigation.navigate('AddStudent')}
       />
     </SafeAreaView>
   );

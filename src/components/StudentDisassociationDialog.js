@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   Dialog, 
   Portal, 
@@ -17,6 +18,7 @@ import { firestoreService } from '../services/firestoreService';
 const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess }) => {
   const { user, userProfile, academia } = useAuth();
   const { showSuccess, showError } = useNotification();
+  const { getString } = useTheme();
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -177,13 +179,13 @@ const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess })
           <Divider style={styles.divider} />
 
           <TextInput
-            label="Motivo da desassociação *"
+            label={getString('disassociationReason')}
             value={reason}
             onChangeText={setReason}
             mode="outlined"
             multiline
             numberOfLines={3}
-            placeholder="Informe o motivo da desassociação (ex: inadimplência, solicitação do aluno, etc.)"
+            placeholder={getString('disassociationReasonPlaceholder')}
             style={styles.reasonInput}
           />
 
@@ -201,7 +203,7 @@ const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess })
             onPress={onDismiss}
             disabled={loading}
           >
-            Cancelar
+            {getString('cancel')}
           </Button>
           <Button 
             mode="contained"
@@ -210,7 +212,7 @@ const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess })
             disabled={loading || !reason.trim()}
             buttonColor="#F44336"
           >
-            Desassociar
+            {getString('delete')}
           </Button>
         </Dialog.Actions>
       </Dialog>

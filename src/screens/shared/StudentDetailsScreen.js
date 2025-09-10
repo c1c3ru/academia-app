@@ -11,10 +11,12 @@ import {
   Divider
 } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';
 
 const StudentDetailsScreen = ({ route, navigation }) => {
   const { studentId, studentData } = route.params || {};
+  const { getString } = useTheme();
   const [studentInfo, setStudentInfo] = useState(studentData || null);
   const [studentClasses, setStudentClasses] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -251,7 +253,7 @@ const StudentDetailsScreen = ({ route, navigation }) => {
             />
             
             <Button
-              title="Adicionar Graduação"
+              title={getString('addGraduation')}
               onPress={() => navigation.navigate('AddGraduation', { 
                 studentId, 
                 studentName: studentInfo?.name 
