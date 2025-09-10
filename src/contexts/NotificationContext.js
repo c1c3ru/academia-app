@@ -50,7 +50,7 @@ export const NotificationProvider = ({ children }) => {
     if (pushToken && user && userProfile?.academiaId) {
       try {
         await firestoreService.updateDocument(
-          `academias/${userProfile.academiaId}/usuarios`,
+          `academias/${userProfile.academiaId}/users`,
           user.uid,
           {
             pushToken,

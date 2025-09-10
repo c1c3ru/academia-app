@@ -51,7 +51,7 @@ const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess })
       setLoading(true);
 
       // Atualizar status do usuário para inativo
-      await firestoreService.update(`academias/${academia.id}/usuarios`, student.id, {
+      await firestoreService.update(`academias/${academia.id}/users`, student.id, {
         status: 'inactive',
         disassociatedAt: new Date(),
         disassociatedBy: user.uid,
@@ -115,7 +115,7 @@ const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess })
     try {
       // Buscar todos os administradores
       const admins = await firestoreService.getDocuments(
-        `academias/${academia.id}/usuarios`,
+        `academias/${academia.id}/users`,
         [{ field: 'role', operator: '==', value: 'admin' }]
       );
 

@@ -52,22 +52,14 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🔍 fetchUserProfile: Buscando perfil para userId:', userId);
       
-      // Primeiro tenta buscar na nova estrutura 'usuarios'
-      console.log('🔍 fetchUserProfile: Tentando buscar em usuarios...');
-      let userDoc = await getDoc(doc(db, 'usuarios', userId));
+      // Buscar na coleção 'users'
+      console.log('🔍 fetchUserProfile: Buscando em users...');
+      let userDoc = await getDoc(doc(db, 'users', userId));
       let foundIn = null;
       
       if (userDoc.exists()) {
-        foundIn = 'usuarios';
-        console.log('✅ fetchUserProfile: Encontrado em usuarios');
-      } else {
-        console.log('❌ fetchUserProfile: Não encontrado em usuarios, tentando users...');
-        // Se não encontrar, tenta na estrutura legacy 'users'
-        userDoc = await getDoc(doc(db, 'users', userId));
-        if (userDoc.exists()) {
-          foundIn = 'users';
-          console.log('✅ fetchUserProfile: Encontrado em users (legacy)');
-        }
+        foundIn = 'users';
+        console.log('✅ fetchUserProfile: Encontrado em users');
       }
       
       if (userDoc.exists()) {
@@ -145,8 +137,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
       
-      // Criar perfil do usuário na nova estrutura 'usuarios'
-      await setDoc(doc(db, 'usuarios', firebaseUser.uid), {
+      // Criar perfil do usuário na coleção 'users'
+      await setDoc(doc(db, 'users', firebaseUser.uid), {
         ...userData,
         email,
         tipo: userData.tipo || 'aluno', // Padrão para aluno
@@ -216,17 +208,12 @@ export const AuthProvider = ({ children }) => {
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
       
-      // Verificar se o usuário já existe no Firestore (nova estrutura)
-      let userDoc = await getDoc(doc(db, 'usuarios', firebaseUser.uid));
-      
-      // Se não existir na nova estrutura, verificar na legacy
-      if (!userDoc.exists()) {
-        userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-      }
+      // Verificar se o usuário já existe no Firestore
+      let userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       
       if (!userDoc.exists()) {
-        // Criar perfil básico para usuário do Google na nova estrutura
-        await setDoc(doc(db, 'usuarios', firebaseUser.uid), {
+        // Criar perfil básico para usuário do Google
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
           name: firebaseUser.displayName,
           email: firebaseUser.email,
           photoURL: firebaseUser.photoURL,
@@ -257,14 +244,10 @@ export const AuthProvider = ({ children }) => {
       const firebaseUser = result.user;
       
       // Verificar se o usuário já existe no Firestore
-      let userDoc = await getDoc(doc(db, 'usuarios', firebaseUser.uid));
+      let userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       
       if (!userDoc.exists()) {
-        userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-      }
-      
-      if (!userDoc.exists()) {
-        await setDoc(doc(db, 'usuarios', firebaseUser.uid), {
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
           name: firebaseUser.displayName,
           email: firebaseUser.email,
           photoURL: firebaseUser.photoURL,
@@ -294,14 +277,14 @@ export const AuthProvider = ({ children }) => {
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
       
-      let userDoc = await getDoc(doc(db, 'usuarios', firebaseUser.uid));
+      let userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       
       if (!userDoc.exists()) {
         userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       }
       
       if (!userDoc.exists()) {
-        await setDoc(doc(db, 'usuarios', firebaseUser.uid), {
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
           name: firebaseUser.displayName,
           email: firebaseUser.email,
           photoURL: firebaseUser.photoURL,
@@ -331,14 +314,14 @@ export const AuthProvider = ({ children }) => {
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
       
-      let userDoc = await getDoc(doc(db, 'usuarios', firebaseUser.uid));
+      let userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       
       if (!userDoc.exists()) {
         userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       }
       
       if (!userDoc.exists()) {
-        await setDoc(doc(db, 'usuarios', firebaseUser.uid), {
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
           name: firebaseUser.displayName || 'Usuário Apple',
           email: firebaseUser.email,
           photoURL: firebaseUser.photoURL,
@@ -410,10 +393,10 @@ export const AuthProvider = ({ children }) => {
           updatedAt: updateData.updatedAt
         });
         
-        // Atualizar na nova estrutura 'usuarios'
-        console.log('📝 updateUserProfile: Salvando em usuarios...');
-        await setDoc(doc(db, 'usuarios', user.uid), updateData, { merge: true });
-        console.log('✅ updateUserProfile: Salvo com sucesso em usuarios');
+        // Atualizar na coleção 'users'
+        console.log('📝 updateUserProfile: Salvando em users...');
+        await setDoc(doc(db, 'users', user.uid), updateData, { merge: true });
+        console.log('✅ updateUserProfile: Salvo com sucesso em users');
         
         console.log('📝 updateUserProfile: Recarregando perfil...');
         await fetchUserProfile(user.uid);

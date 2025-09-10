@@ -99,7 +99,7 @@ const PaymentDueDateEditor = ({ visible, onDismiss, currentPayment, onUpdate }) 
     try {
       // Buscar administradores da academia
       const admins = await firestoreService.getWhere(
-        `academias/${academia.id}/usuarios`,
+        `academias/${academia.id}/users`,
         'role',
         'admin'
       );
