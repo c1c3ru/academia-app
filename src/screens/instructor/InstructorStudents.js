@@ -58,12 +58,30 @@ const InstructorStudents = ({ navigation }) => {
       // Load students with error handling
       let instructorStudents = [];
       try {
+        // Primeiro tenta pelo service
         instructorStudents = await studentService.getStudentsByInstructor(user.uid);
-        console.log(`✅ ${instructorStudents.length} alunos encontrados`);
+        console.log(`✅ ${instructorStudents.length} alunos encontrados via service`);
+        
+        // Se não encontrou alunos, tenta buscar todos os alunos criados por este instrutor
+        if (instructorStudents.length === 0) {
+          console.log('🔍 Tentando buscar alunos criados por este instrutor...');
+          const allStudents = await firestoreService.getWhere('users', 'createdBy', '==', user.uid);
+          const students = allStudents.filter(user => user.userType === 'student');
+          instructorStudents = students;
+          console.log(`✅ ${instructorStudents.length} alunos encontrados via createdBy`);
+        }
       } catch (studentError) {
         console.warn('⚠️ Erro ao buscar alunos via service:', studentError);
-        // Fallback: definir array vazio
-        instructorStudents = [];
+        // Fallback: buscar diretamente por createdBy
+        try {
+          const allStudents = await firestoreService.getWhere('users', 'createdBy', '==', user.uid);
+          const students = allStudents.filter(user => user.userType === 'student');
+          instructorStudents = students;
+          console.log(`✅ Fallback: ${instructorStudents.length} alunos encontrados`);
+        } catch (fallbackError) {
+          console.error('❌ Erro no fallback:', fallbackError);
+          instructorStudents = [];
+        }
       }
       setStudents(instructorStudents);
       
