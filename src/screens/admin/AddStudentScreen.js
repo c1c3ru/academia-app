@@ -292,29 +292,32 @@ const AddStudentScreen = ({ navigation, route }) => {
               multiline
               numberOfLines={2}
               style={styles.input}
+              left={<TextInput.Icon icon="home" />}
             />
 
             {/* Contato de Emergência */}
             <Text style={styles.sectionTitle}>Contato de Emergência</Text>
 
             <TextInput
-              label="Nome do Contato"
+              label="Nome do Contato *"
               value={formData.emergencyContact}
               onChangeText={(value) => updateFormData('emergencyContact', value)}
               mode="outlined"
               style={styles.input}
               error={!!errors.emergencyContact}
+              left={<TextInput.Icon icon="account-heart" />}
             />
             {errors.emergencyContact && <HelperText type="error">{errors.emergencyContact}</HelperText>}
 
             <TextInput
-              label="Telefone de Emergência"
+              label="Telefone de Emergência *"
               value={formData.emergencyPhone}
               onChangeText={(value) => updateFormData('emergencyPhone', value)}
               mode="outlined"
               keyboardType="phone-pad"
               style={styles.input}
               error={!!errors.emergencyPhone}
+              left={<TextInput.Icon icon="phone-alert" />}
             />
             {errors.emergencyPhone && <HelperText type="error">{errors.emergencyPhone}</HelperText>}
 
@@ -330,6 +333,7 @@ const AddStudentScreen = ({ navigation, route }) => {
               numberOfLines={3}
               placeholder="Informe alergias, lesões, medicamentos, etc."
               style={styles.input}
+              left={<TextInput.Icon icon="medical-bag" />}
             />
 
             <TextInput
@@ -341,6 +345,7 @@ const AddStudentScreen = ({ navigation, route }) => {
               numberOfLines={2}
               placeholder="Perda de peso, ganho de massa, condicionamento..."
               style={styles.input}
+              left={<TextInput.Icon icon="target" />}
             />
 
             {/* Status */}
@@ -384,6 +389,24 @@ const AddStudentScreen = ({ navigation, route }) => {
           </Card.Content>
         </Card>
       </ScrollView>
+      
+      {/* Snackbar para feedback */}
+      <Snackbar
+        visible={snackbar.visible}
+        onDismiss={hideSnackbar}
+        duration={snackbar.type === 'success' ? 2000 : 4000}
+        style={[
+          styles.snackbar,
+          snackbar.type === 'success' && styles.snackbarSuccess,
+          snackbar.type === 'error' && styles.snackbarError
+        ]}
+        action={{
+          label: 'Fechar',
+          onPress: hideSnackbar,
+        }}
+      >
+        {snackbar.message}
+      </Snackbar>
     </SafeAreaView>
   );
 };
@@ -446,6 +469,35 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     marginHorizontal: 8,
+  },
+  validationBanner: {
+    backgroundColor: '#ffebee',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '500',
+  },
+  snackbar: {
+    marginBottom: 16,
+  },
+  snackbarSuccess: {
+    backgroundColor: '#4caf50',
+  },
+  snackbarError: {
+    backgroundColor: '#f44336',
   },
 });
 
