@@ -18,7 +18,7 @@ const db = getFirestore(app);
 async function checkExistingData() {
   console.log('🔍 Verificando dados existentes no Firestore...\n');
 
-  const collections = ['users', 'students', 'classes', 'instructors', 'payments', 'checkins', 'academias', 'usuarios'];
+  const collections = ['users', 'students', 'classes', 'instructors', 'payments', 'checkins', 'academias'];
   
   for (const collectionName of collections) {
     try {
@@ -56,29 +56,21 @@ async function checkExistingData() {
   
   try {
     const usersRef = collection(db, 'users');
-    const usuariosRef = collection(db, 'usuarios');
     const academiasRef = collection(db, 'academias');
     
     const usersSnapshot = await getDocs(usersRef);
-    const usuariosSnapshot = await getDocs(usuariosRef);
     const academiasSnapshot = await getDocs(academiasRef);
     
-    console.log(`👥 Usuários na estrutura legacy (users): ${usersSnapshot.size}`);
-    console.log(`👥 Usuários na nova estrutura (usuarios): ${usuariosSnapshot.size}`);
+    console.log(`👥 Usuários em 'users': ${usersSnapshot.size}`);
     console.log(`🏢 Academias criadas: ${academiasSnapshot.size}`);
     
-    if (usersSnapshot.size > 0 && usuariosSnapshot.size === 0) {
-      console.log('\n⚠️  MIGRAÇÃO NECESSÁRIA:');
-      console.log('   - Existem usuários na estrutura legacy que precisam ser migrados');
-      console.log('   - Será necessário criar script de migração');
-    } else if (usersSnapshot.size === 0 && usuariosSnapshot.size === 0) {
+    if (usersSnapshot.size === 0) {
       console.log('\n✅ PROJETO NOVO:');
       console.log('   - Não há dados para migrar');
-      console.log('   - Sistema multi-tenant pode ser usado diretamente');
+      console.log('   - Estrutura padronizada com a coleção users');
     } else {
-      console.log('\n🔄 MIGRAÇÃO PARCIAL:');
-      console.log('   - Alguns dados já estão na nova estrutura');
-      console.log('   - Verificar se migração adicional é necessária');
+      console.log('\n📌 Estrutura atual:');
+      console.log('   - Coleção users em uso.');
     }
     
   } catch (error) {

@@ -11,7 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { firestoreService, classService } from '../../services/firestoreService';
 
 const AddClassScreen = ({ navigation, route }) => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [instructors, setInstructors] = useState([]);
   const [modalities, setModalities] = useState([]);
@@ -78,13 +78,58 @@ const AddClassScreen = ({ navigation, route }) => {
   }, []);
 
   const loadInstructors = async () => {
+    let userInstructors = [];
+    let subInstructors = [];
+
+    // 1) Tentar buscar instrutores na coleção principal 'users'
     try {
       const users = await firestoreService.getAll('users');
-      const instructorsList = users.filter(user => user.userType === 'instructor');
-      setInstructors(instructorsList);
+      userInstructors = users
+        .filter(u => (
+          u?.userType === 'instructor' ||
+          u?.tipo === 'instrutor' ||
+          u?.tipo === 'instructor'
+        ))
+        .filter(u => {
+          if (!userProfile?.academiaId) return true;
+          return !u?.academiaId || u.academiaId === userProfile.academiaId;
+        })
+        .map(u => ({
+          id: u.id,
+          name: u.name || u.displayName || u.fullName || u.email || 'Instrutor',
+          email: u.email || null,
+          academiaId: u.academiaId || null
+        }));
     } catch (error) {
-      console.error('Erro ao carregar instrutores:', error);
+      console.warn('Aviso: falha ao buscar instrutores em users (permissões?):', error?.message || error);
     }
+
+    // 2) Tentar buscar em subcoleção 'academias/{academiaId}/instrutores' se houver academia
+    if (userProfile?.academiaId) {
+      try {
+        const sub = await firestoreService.getAll(`academias/${userProfile.academiaId}/instrutores`);
+        subInstructors = (sub || []).map(i => ({
+          id: i.id || i.uid,
+          name: i.name || i.displayName || i.fullName || i.email || 'Instrutor',
+          email: i.email || null,
+          academiaId: userProfile.academiaId
+        }));
+      } catch (e) {
+        console.warn('Aviso: falha ao buscar instrutores na subcoleção da academia:', e?.message || e);
+      }
+    }
+
+    // 3) Mesclar e remover duplicados por id
+    const map = new Map();
+    [...userInstructors, ...subInstructors].forEach((inst) => {
+      if (!inst?.id) return;
+      if (!map.has(inst.id)) {
+        map.set(inst.id, inst);
+      }
+    });
+    const merged = Array.from(map.values()).sort((a, b) => (a?.name || '').localeCompare(b?.name || ''));
+
+    setInstructors(merged);
   };
 
   const loadModalities = async () => {
@@ -118,8 +163,8 @@ const AddClassScreen = ({ navigation, route }) => {
       newErrors.maxStudents = 'Número máximo de alunos deve ser um número positivo';
     }
 
-    if (!formData.instructorId) {
-      newErrors.instructorId = 'Instrutor é obrigatório';
+    if (!formData.instructorId && !formData.instructorName?.trim()) {
+      newErrors.instructorId = 'Instrutor é obrigatório (selecione da lista ou informe o nome)';
     }
 
     if (!formData.schedule.trim()) {
@@ -306,6 +351,16 @@ const AddClassScreen = ({ navigation, route }) => {
                 ))}
               </View>
               {errors.instructorId && <HelperText type="error">{errors.instructorId}</HelperText>}
+
+              {/* Entrada manual do nome do instrutor como fallback */}
+              <TextInput
+                label="Nome do Instrutor (manual)"
+                value={formData.instructorName}
+                onChangeText={(value) => updateFormData('instructorName', value)}
+                mode="outlined"
+                placeholder={instructors.length === 0 ? 'Ex: Cícero Silva' : 'Opcional se já selecionou acima'}
+                style={styles.input}
+              />
             </View>
 
             {/* Horário */}

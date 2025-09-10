@@ -47,10 +47,11 @@ export const NotificationProvider = ({ children }) => {
   };
 
   const savePushTokenToFirestore = async () => {
-    if (pushToken && user && userProfile?.academiaId) {
+    if (pushToken && user) {
       try {
-        await firestoreService.updateDocument(
-          `academias/${userProfile.academiaId}/users`,
+        // Salvar o token no documento do usuário na coleção 'users'
+        await firestoreService.update(
+          'users',
           user.uid,
           {
             pushToken,
@@ -103,7 +104,7 @@ export const NotificationProvider = ({ children }) => {
     if (!userProfile?.academiaId) return;
 
     try {
-      await firestoreService.updateDocument(
+      await firestoreService.update(
         `academias/${userProfile.academiaId}/notifications`,
         notificationId,
         { isRead: true, readAt: new Date() }
@@ -119,17 +120,15 @@ export const NotificationProvider = ({ children }) => {
     if (!userProfile?.academiaId || unreadNotifications.length === 0) return;
 
     try {
-      const batch = firestoreService.getBatch();
-      
-      unreadNotifications.forEach(notification => {
-        const notificationRef = firestoreService.getDocumentRef(
-          `academias/${userProfile.academiaId}/notifications`,
-          notification.id
-        );
-        batch.update(notificationRef, { isRead: true, readAt: new Date() });
-      });
-
-      await batch.commit();
+      await Promise.all(
+        unreadNotifications.map(notification =>
+          firestoreService.update(
+            `academias/${userProfile.academiaId}/notifications`,
+            notification.id,
+            { isRead: true, readAt: new Date() }
+          )
+        )
+      );
       setUnreadNotifications([]);
     } catch (error) {
       console.error('❌ Erro ao marcar todas as notificações como lidas:', error);

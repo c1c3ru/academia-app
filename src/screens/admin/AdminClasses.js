@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { 
   Card, 
@@ -33,6 +34,13 @@ const AdminClasses = ({ navigation }) => {
   useEffect(() => {
     loadClasses();
   }, []);
+
+  // Recarregar sempre que a tela ganhar foco (ex.: após excluir turma e voltar)
+  useFocusEffect(
+    React.useCallback(() => {
+      loadClasses();
+    }, [])
+  );
 
   useEffect(() => {
     filterClasses();
@@ -129,6 +137,24 @@ const AdminClasses = ({ navigation }) => {
   };
 
   const handleAddClass = () => {
+    // Tenta navegar através do navigator do Stack pai, usando o ID definido
+    const adminStackNav = navigation.getParent && navigation.getParent('AdminStack');
+    if (adminStackNav && typeof adminStackNav.navigate === 'function') {
+      adminStackNav.navigate('AddClass');
+      return;
+    }
+    // Fallback 1: subir um nível (Tab) e depois tentar o Stack acima
+    const parentNav = navigation.getParent && navigation.getParent();
+    const grandParentNav = parentNav && parentNav.getParent ? parentNav.getParent() : null;
+    if (grandParentNav && typeof grandParentNav.navigate === 'function') {
+      grandParentNav.navigate('AddClass');
+      return;
+    }
+    if (parentNav && typeof parentNav.navigate === 'function') {
+      parentNav.navigate('AddClass');
+      return;
+    }
+    // Fallback final
     navigation.navigate('AddClass');
   };
 
@@ -147,10 +173,16 @@ const AdminClasses = ({ navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
+              // Remoção otimista da UI
+              setClasses(prev => prev.filter(c => c.id !== classItem.id));
+              setFilteredClasses(prev => prev.filter(c => c.id !== classItem.id));
               await firestoreService.delete('classes', classItem.id);
+              // Garantir sincronização com servidor
               loadClasses();
               Alert.alert('Sucesso', 'Turma excluída com sucesso');
             } catch (error) {
+              // Em caso de erro, recarregar lista para reverter remoção otimista
+              loadClasses();
               Alert.alert('Erro', 'Não foi possível excluir a turma');
             }
           }

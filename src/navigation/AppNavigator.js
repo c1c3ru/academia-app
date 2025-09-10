@@ -62,7 +62,7 @@ const Stack = createStackNavigator();
 const AdminStack = createStackNavigator();
 
 const AdminStackNavigator = () => (
-  <AdminStack.Navigator screenOptions={{ headerShown: false }}>
+  <AdminStack.Navigator id="AdminStack" screenOptions={{ headerShown: false }}>
     <AdminStack.Screen name="AdminTabs" component={AdminTabNavigator} />
     <AdminStack.Screen 
       name="AddClass" 

@@ -27,32 +27,25 @@ async function createTestUser() {
       console.log(`📧 Email verificado: ${existingUser.user.emailVerified}`);
       
       // Verificar perfil no Firestore
-      const userDoc = await getDoc(doc(db, 'usuarios', existingUser.user.uid));
+      const userDoc = await getDoc(doc(db, 'users', existingUser.user.uid));
       if (userDoc.exists()) {
-        console.log('✅ Perfil encontrado na coleção "usuarios"');
+        console.log('✅ Perfil encontrado na coleção "users"');
         console.log('📋 Dados do perfil:', userDoc.data());
       } else {
-        // Verificar na coleção legacy
-        const legacyDoc = await getDoc(doc(db, 'users', existingUser.user.uid));
-        if (legacyDoc.exists()) {
-          console.log('✅ Perfil encontrado na coleção "users" (legacy)');
-          console.log('📋 Dados do perfil:', legacyDoc.data());
-        } else {
-          console.log('⚠️ Usuário existe no Auth mas não tem perfil no Firestore');
-          console.log('💡 Criando perfil...');
-          
-          await setDoc(doc(db, 'usuarios', existingUser.user.uid), {
-            name: userName,
-            email: testEmail,
-            tipo: 'admin', // Tipo de usuário
-            userType: 'admin', // Para compatibilidade
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          });
-          
-          console.log('✅ Perfil criado com sucesso!');
-        }
+        console.log('⚠️ Usuário existe no Auth mas não tem perfil no Firestore');
+        console.log('💡 Criando perfil...');
+        
+        await setDoc(doc(db, 'users', existingUser.user.uid), {
+          name: userName,
+          email: testEmail,
+          tipo: 'admin', // Tipo de usuário
+          userType: 'admin', // Para compatibilidade
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        
+        console.log('✅ Perfil criado com sucesso!');
       }
       
       return;
@@ -77,7 +70,7 @@ async function createTestUser() {
     
     // Criar perfil no Firestore (nova estrutura)
     console.log('📝 Criando perfil no Firestore...');
-    await setDoc(doc(db, 'usuarios', newUser.uid), {
+    await setDoc(doc(db, 'users', newUser.uid), {
       name: userName,
       email: testEmail,
       tipo: 'admin', // Tipo de usuário - pode ser 'admin', 'instructor', 'student'
@@ -94,7 +87,7 @@ async function createTestUser() {
     
     // Verificar se tudo foi criado corretamente
     console.log('\n🔍 Verificando criação...');
-    const userDoc = await getDoc(doc(db, 'usuarios', newUser.uid));
+    const userDoc = await getDoc(doc(db, 'users', newUser.uid));
     if (userDoc.exists()) {
       console.log('✅ Verificação bem-sucedida!');
       console.log('📋 Dados do perfil:', userDoc.data());

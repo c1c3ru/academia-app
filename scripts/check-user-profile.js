@@ -21,10 +21,10 @@ async function checkUserProfile(email) {
   try {
     // 1. Buscar por UID (se o email for o UID)
     console.log('\n1. Buscando por UID direto...');
-    let userDoc = await getDoc(doc(db, 'usuarios', email));
+    let userDoc = await getDoc(doc(db, 'users', email));
     if (userDoc.exists()) {
       const data = userDoc.data();
-      console.log('✅ Encontrado em usuarios (por UID):', {
+      console.log('✅ Encontrado em users (por UID):', {
         email: data.email,
         academiaId: data.academiaId,
         tipo: data.tipo,
@@ -34,50 +34,17 @@ async function checkUserProfile(email) {
       return data;
     }
     
-    // Tentar na coleção legacy
-    userDoc = await getDoc(doc(db, 'users', email));
-    if (userDoc.exists()) {
-      const data = userDoc.data();
-      console.log('✅ Encontrado em users legacy (por UID):', {
-        email: data.email,
-        academiaId: data.academiaId,
-        tipo: data.tipo,
-        userType: data.userType,
-        nome: data.nome
-      });
-      return data;
-    }
-    
-    // 2. Buscar por email em todas as coleções
+    // 2. Buscar por email
     console.log('\n2. Buscando por email...');
     
-    // Buscar em usuarios
-    const usuariosQuery = query(collection(db, 'usuarios'), where('email', '==', email));
-    const usuariosSnapshot = await getDocs(usuariosQuery);
-    
-    if (!usuariosSnapshot.empty) {
-      usuariosSnapshot.forEach(doc => {
-        const data = doc.data();
-        console.log('✅ Encontrado em usuarios (por email):', {
-          id: doc.id,
-          email: data.email,
-          academiaId: data.academiaId,
-          tipo: data.tipo,
-          userType: data.userType,
-          nome: data.nome
-        });
-      });
-      return usuariosSnapshot.docs[0].data();
-    }
-    
-    // Buscar em users legacy
+    // Buscar em users
     const usersQuery = query(collection(db, 'users'), where('email', '==', email));
     const usersSnapshot = await getDocs(usersQuery);
     
     if (!usersSnapshot.empty) {
       usersSnapshot.forEach(doc => {
         const data = doc.data();
-        console.log('✅ Encontrado em users legacy (por email):', {
+        console.log('✅ Encontrado em users (por email):', {
           id: doc.id,
           email: data.email,
           academiaId: data.academiaId,

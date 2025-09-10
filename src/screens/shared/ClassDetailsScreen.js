@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Platform, Alert } from 'react-native';
 import { 
   Card, 
   Text, 
@@ -54,6 +54,32 @@ const ClassDetailsScreen = ({ route, navigation }) => {
   const onRefresh = () => {
     setRefreshing(true);
     loadClassDetails();
+  };
+
+  const handleDeleteClass = () => {
+    if (!classId) return;
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Tem certeza que deseja excluir esta turma? Esta ação não pode ser desfeita.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await firestoreService.delete('classes', classId);
+              console.log('✅ Turma excluída:', classId);
+              // Volta para a tela anterior
+              navigation.goBack();
+            } catch (error) {
+              console.error('❌ Erro ao excluir turma:', error);
+              Alert.alert('Erro', 'Não foi possível excluir a turma. Verifique suas permissões.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const formatSchedule = (schedule) => {
@@ -183,6 +209,13 @@ const ClassDetailsScreen = ({ route, navigation }) => {
               onPress={() => navigation.navigate('ClassStudents', { classId: classId })}
               buttonStyle={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
               icon={<Icon name="group-add" type="material" size={20} color="white" />}
+            />
+            
+            <Button
+              title="Excluir Turma"
+              onPress={handleDeleteClass}
+              buttonStyle={[styles.actionButton, { backgroundColor: '#F44336' }]}
+              icon={<Icon name="delete" type="material" size={20} color="white" />}
             />
           </View>
         </Card>

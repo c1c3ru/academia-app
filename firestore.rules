@@ -106,10 +106,7 @@ service cloud.firestore {
       allow write: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
     }
     
-    // Coleção legacy 'usuarios' - manter compatibilidade temporária  
-    match /usuarios/{userId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
-    }
+    // Removido: coleção legacy 'usuarios'. O projeto agora usa apenas 'users'.
     
     // Coleção legacy 'classes' - compatibilidade temporária
     match /classes/{classId} {
