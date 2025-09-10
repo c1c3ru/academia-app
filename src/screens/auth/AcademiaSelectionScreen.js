@@ -23,8 +23,9 @@ import CountryStatePicker from '../../components/CountryStatePicker';
 import PhonePicker from '../../components/PhonePicker';
 import ModalityPicker from '../../components/ModalityPicker';
 
-export default function AcademiaSelectionScreen({ navigation }) {
+export default function AcademiaSelectionScreen({ navigation, route }) {
   const { user, userProfile, updateAcademiaAssociation, logout } = useAuth();
+  const forceCreate = route?.params?.forceCreate || false;
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [academias, setAcademias] = useState([]);
@@ -83,7 +84,13 @@ export default function AcademiaSelectionScreen({ navigation }) {
     // O AppNavigator irá gerenciar o redirecionamento automaticamente
     // quando o usuário tiver academiaId
     console.log('🏢 AcademiaSelection: userProfile.academiaId:', userProfile?.academiaId);
-  }, [userProfile]);
+    
+    // Se forceCreate é true (admin), abrir automaticamente o formulário de criação
+    if (forceCreate) {
+      console.log('🏢 AcademiaSelection: Admin deve criar academia, abrindo formulário');
+      setShowCreateForm(true);
+    }
+  }, [userProfile, forceCreate]);
 
   const searchAcademiaByCode = async () => {
     if (!searchCode.trim()) {
@@ -420,24 +427,28 @@ export default function AcademiaSelectionScreen({ navigation }) {
           </Button>
           <View style={styles.headerTextContainer}>
             <Text variant="headlineMedium" style={styles.title}>
-              Selecionar Academia
+              {forceCreate ? 'Criar Academia' : 'Selecionar Academia'}
             </Text>
             <Text variant="bodyMedium" style={styles.subtitle}>
-              Para continuar, você precisa se associar a uma academia
+              {forceCreate 
+                ? 'Como administrador, você precisa criar uma nova academia' 
+                : 'Para continuar, você precisa se associar a uma academia'
+              }
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Opções de Associação */}
-      <Card style={styles.optionsCard}>
-        <Card.Content>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            Como você quer se associar?
-          </Text>
-          <Text variant="bodySmall" style={styles.sectionDescription}>
-            Escolha uma das opções abaixo
-          </Text>
+      {/* Opções de Associação - ocultar para admins */}
+      {!forceCreate && (
+        <Card style={styles.optionsCard}>
+          <Card.Content>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Como você quer se associar?
+            </Text>
+            <Text variant="bodySmall" style={styles.sectionDescription}>
+              Escolha uma das opções abaixo
+            </Text>
           
           <View style={styles.optionButtons}>
             <Button 
@@ -460,8 +471,10 @@ export default function AcademiaSelectionScreen({ navigation }) {
           </View>
         </Card.Content>
       </Card>
+      )}
 
-      {/* Buscar Academia por Código */}
+      {/* Buscar Academia por Código - ocultar para admins */}
+      {!forceCreate && (
       <Card style={styles.searchCard}>
         <Card.Content>
           <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -492,9 +505,10 @@ export default function AcademiaSelectionScreen({ navigation }) {
           </Button>
         </Card.Content>
       </Card>
+      )}
 
-      {/* Resultados da Busca */}
-      {academias.length > 0 && (
+      {/* Resultados da Busca - ocultar para admins */}
+      {!forceCreate && academias.length > 0 && (
         <View style={styles.resultsContainer}>
           <Text variant="titleMedium" style={styles.resultsTitle}>
             Academia Encontrada
@@ -503,10 +517,10 @@ export default function AcademiaSelectionScreen({ navigation }) {
         </View>
       )}
 
-      <Divider style={styles.divider} />
+      {!forceCreate && <Divider style={styles.divider} />}
 
-      {/* Criar Nova Academia - Apenas para Admins */}
-      {(userProfile?.tipo === 'admin' || userProfile?.userType === 'admin') && (
+      {/* Criar Nova Academia - Sempre visível para admins, ou quando solicitado */}
+      {(userProfile?.tipo === 'admin' || userProfile?.userType === 'admin' || forceCreate) && (
         <Card style={styles.createCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>

@@ -20,6 +20,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import AnimatedCard from '../components/AnimatedCard';
 import AnimatedButton from '../components/AnimatedButton';
+import DebugUserFix from '../components/DebugUserFix';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -348,6 +349,9 @@ export default function LoginScreen({ navigation }) {
               </Card.Content>
             </AnimatedCard>
           </View>
+          
+          {/* Componente temporário para corrigir usuários */}
+          <DebugUserFix />
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>

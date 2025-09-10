@@ -656,17 +656,38 @@ const AppNavigator = () => {
     );
   }
 
-  // Se usuário não tem academia associada, mostrar tela de seleção
-  // Administradores também precisam criar/associar academia no primeiro login
+  // Se usuário não tem academia associada
   if (!userProfile.academiaId) {
-    console.log('🧭 AppNavigator: Usuário sem academia, mostrando seleção');
-    return (
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="AcademiaSelection" component={AcademiaSelectionScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    );
+    // Determinar tipo de usuário para decidir o fluxo
+    const currentUserType = userProfile.userType || userProfile.tipo || 'student';
+    const mappedUserType = currentUserType === 'administrador' ? 'admin' : 
+                          currentUserType === 'instrutor' ? 'instructor' : 
+                          currentUserType === 'aluno' ? 'student' : currentUserType;
+    
+    // Admins devem criar academia, outros usuários devem se associar
+    if (mappedUserType === 'admin') {
+      console.log('🧭 AppNavigator: Admin sem academia, redirecionando para criação');
+      return (
+        <NavigationContainer>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen 
+              name="AcademiaSelection" 
+              component={AcademiaSelectionScreen}
+              initialParams={{ forceCreate: true }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      );
+    } else {
+      console.log('🧭 AppNavigator: Usuário sem academia, mostrando seleção');
+      return (
+        <NavigationContainer>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="AcademiaSelection" component={AcademiaSelectionScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      );
+    }
   }
 
   // Se tem academia mas dados não carregaram ainda, mostrar loading
