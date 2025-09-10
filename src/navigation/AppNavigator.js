@@ -80,6 +80,36 @@ const AdminStackNavigator = () => (
       }}
     />
     <AdminStack.Screen 
+      name="ClassStudents" 
+      component={AdminStudents}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Alunos da Turma"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#FF9800"
+          />
+        ),
+      }}
+    />
+    <AdminStack.Screen 
+      name="CheckIns" 
+      component={CheckIn}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Check-ins"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#FF9800"
+          />
+        ),
+      }}
+    />
+    <AdminStack.Screen 
       name="EditClass" 
       component={EditClassScreen}
       options={{
