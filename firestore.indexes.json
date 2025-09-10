@@ -39,10 +39,6 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "isRead",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
         }

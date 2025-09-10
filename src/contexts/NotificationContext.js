@@ -71,15 +71,14 @@ export const NotificationProvider = ({ children }) => {
     try {
       console.log('📬 Carregando notificações para usuário:', user.uid);
       
-      // Estratégia: usar apenas filtro por userId para evitar erro de índice
-      // Filtrar por data em memória é mais eficiente para volumes pequenos
+      // Usar consulta simples com índice existente
       const userNotifications = await firestoreService.getDocuments(
         `academias/${userProfile.academiaId}/notifications`,
         [
           { field: 'userId', operator: '==', value: user.uid }
         ],
         { field: 'createdAt', direction: 'desc' },
-        100 // Buscar mais documentos para filtrar em memória
+        50 // Limitar quantidade para evitar problemas de performance
       );
 
       // Filtrar últimos 30 dias em memória
