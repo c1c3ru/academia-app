@@ -59,16 +59,33 @@ const StudentProfileScreen = ({ route, navigation }) => {
       ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setPayments(userPayments);
       
-      // Buscar graduações
-      const allGraduations = await firestoreService.getAll('graduations');
-      const userGraduations = allGraduations.filter(graduation => 
-        graduation.studentId === studentId
-      ).sort((a, b) => new Date(b.date) - new Date(a.date));
-      setGraduations(userGraduations);
+      // Buscar graduações com tratamento robusto de erros
+      try {
+        const allGraduations = await firestoreService.getAll('graduations');
+        const userGraduations = allGraduations.filter(graduation => 
+          graduation.studentId === studentId
+        ).sort((a, b) => new Date(b.date) - new Date(a.date));
+        setGraduations(userGraduations);
+      } catch (graduationError) {
+        console.warn('Não foi possível carregar graduações:', graduationError.message);
+        // Se for erro de permissão, não mostrar erro ao usuário, apenas log
+        if (graduationError.code !== 'permission-denied') {
+          console.error('Erro inesperado ao carregar graduações:', graduationError);
+        }
+        setGraduations([]);
+      }
       
     } catch (error) {
       console.error('Erro ao carregar detalhes do aluno:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os detalhes do aluno');
+      let errorMessage = 'Não foi possível carregar os detalhes do aluno';
+      
+      if (error.code === 'permission-denied') {
+        errorMessage = 'Você não tem permissão para visualizar este perfil.';
+      } else if (error.code === 'unavailable') {
+        errorMessage = 'Serviço temporariamente indisponível. Tente novamente.';
+      }
+      
+      Alert.alert('Erro', errorMessage);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -285,10 +302,7 @@ const StudentProfileScreen = ({ route, navigation }) => {
             
             <Button
               mode="contained"
-              onPress={() => navigation.navigate('AddGraduation', { 
-                studentId, 
-                studentName: studentInfo?.name 
-              })}
+              onPress={handleAddGraduation}
               style={styles.addButton}
               icon="plus"
             >

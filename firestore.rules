@@ -126,5 +126,17 @@ service cloud.firestore {
       allow read: if isSignedIn(); // Permitir leitura para usuários autenticados
       allow write: if isSignedIn() && (isAdmin() || isInstructor());
     }
+    
+    // Coleção de graduações - permite admins e instrutores gerenciar
+    match /graduations/{graduationId} {
+      allow read: if isSignedIn(); // Permitir leitura para usuários autenticados
+      allow write: if isSignedIn() && (isAdmin() || isInstructor());
+    }
+    
+    // Coleção de níveis de graduação - leitura pública, escrita para admins
+    match /graduation_levels/{levelId} {
+      allow read: if isSignedIn(); // Permitir leitura para usuários autenticados
+      allow write: if isSignedIn() && isAdmin(); // Apenas admins podem modificar níveis
+    }
   }
 }

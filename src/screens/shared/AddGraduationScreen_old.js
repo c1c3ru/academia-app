@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { 
   Card, 
+  Title, 
   Button, 
   TextInput,
   Chip,
@@ -9,6 +10,7 @@ import {
   Portal,
   Dialog,
   RadioButton,
+  Divider,
   Snackbar
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -41,8 +43,9 @@ const AddGraduationScreen = ({ route, navigation }) => {
   const [loading, setLoading] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarType, setSnackbarType] = useState('success');
+  const [snackbarType, setSnackbarType] = useState('success'); // 'success' | 'error'
 
+  // Níveis de graduação comuns para artes marciais
   const defaultGraduationLevels = [
     { id: 'white', name: 'Faixa Branca', color: '#FFFFFF', order: 1 },
     { id: 'yellow', name: 'Faixa Amarela', color: '#FFEB3B', order: 2 },
@@ -64,11 +67,14 @@ const AddGraduationScreen = ({ route, navigation }) => {
 
   const loadInitialData = async () => {
     try {
+      // Carregar modalidades do Firebase (que já contêm graduationLevels)
       const modalitiesData = await firestoreService.getAll('modalities');
       setModalities(modalitiesData || []);
       
+      // Inicializar com graduações padrão até que uma modalidade seja selecionada
       setGraduationLevels(defaultGraduationLevels);
       
+      // Carregar graduação atual do aluno para referência
       try {
         const studentData = await firestoreService.getById('users', studentId);
         if (studentData?.currentGraduation) {
@@ -102,6 +108,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
     try {
       setLoading(true);
 
+      // Criar registro de graduação
       const graduationData = {
         ...formData,
         studentId,
@@ -113,6 +120,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
 
       await firestoreService.create('graduations', graduationData);
 
+      // Atualizar graduação atual do aluno
       await firestoreService.update('users', studentId, {
         currentGraduation: formData.graduation,
         lastGraduationDate: formData.date,
@@ -121,6 +129,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
 
       showSnackbar('Graduação adicionada com sucesso!', 'success');
       
+      // Voltar para tela anterior após 2 segundos
       setTimeout(() => {
         navigation.goBack();
       }, 2000);
@@ -141,17 +150,20 @@ const AddGraduationScreen = ({ route, navigation }) => {
     }
   };
 
+
   const selectModality = (modality) => {
     setFormData(prev => ({
       ...prev,
       modality: modality.name,
       modalityId: modality.id,
-      graduation: ''
+      graduation: '' // Limpar graduação quando mudar modalidade
     }));
     
+    // Usar os graduationLevels específicos da modalidade selecionada
     if (modality.graduationLevels && modality.graduationLevels.length > 0) {
       setGraduationLevels(modality.graduationLevels);
     } else {
+      // Fallback para graduações padrão se a modalidade não tiver níveis específicos
       setGraduationLevels(defaultGraduationLevels);
     }
     
@@ -170,33 +182,35 @@ const AddGraduationScreen = ({ route, navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
+        {/* Header */}
         <Card style={styles.headerCard}>
           <Card.Content>
             <View style={styles.header}>
               <MaterialCommunityIcons name="trophy" size={32} color="#FFD700" />
               <View style={styles.headerText}>
-                <Text style={styles.title}>Nova Graduação</Text>
-                <Text style={styles.subtitle}>
-                  {`Aluno: ${studentName}`}
-                </Text>
+                <Title style={styles.title}>Nova Graduação</Title>
+                <Text style={styles.subtitle}>Aluno: {studentName}</Text>
               </View>
             </View>
           </Card.Content>
         </Card>
 
+        {/* Formulário */}
         <Card style={styles.card}>
           <Card.Content>
-            <Text style={styles.sectionTitle}>Informações da Graduação</Text>
+            <Title style={styles.sectionTitle}>Informações da Graduação</Title>
 
+            {/* Graduação Anterior */}
             {formData.previousGraduation && (
               <View style={styles.previousGraduation}>
                 <Text style={styles.label}>Graduação Atual:</Text>
-                <View style={styles.chipContainer}>
-                  <Text style={styles.chipText}>{formData.previousGraduation}</Text>
-                </View>
+                <Chip mode="outlined" style={styles.previousChip}>
+                  {formData.previousGraduation}
+                </Chip>
               </View>
             )}
 
+            {/* Modalidade */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Modalidade *</Text>
               <Button
@@ -205,10 +219,11 @@ const AddGraduationScreen = ({ route, navigation }) => {
                 style={styles.selectButton}
                 contentStyle={styles.selectButtonContent}
               >
-                <Text>{formData.modality || 'Selecionar modalidade'}</Text>
+                {formData.modality || 'Selecionar modalidade'}
               </Button>
             </View>
 
+            {/* Graduação */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Nova Graduação *</Text>
               <Button
@@ -218,18 +233,20 @@ const AddGraduationScreen = ({ route, navigation }) => {
                 contentStyle={styles.selectButtonContent}
                 disabled={!formData.modalityId}
               >
-                <Text>{formData.graduation || (formData.modalityId ? 'Selecionar graduação' : 'Primeiro selecione uma modalidade')}</Text>
+                {formData.graduation || (formData.modalityId ? 'Selecionar graduação' : 'Primeiro selecione uma modalidade')}
               </Button>
             </View>
 
+            {/* Data */}
             <TextInput
               label="Data da Graduação (DD/MM/AAAA)"
               value={formData.date.toLocaleDateString('pt-BR')}
               onChangeText={(text) => {
+                // Parse date from DD/MM/YYYY format
                 const parts = text.split('/');
                 if (parts.length === 3) {
                   const day = parseInt(parts[0], 10);
-                  const month = parseInt(parts[1], 10) - 1;
+                  const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
                   const year = parseInt(parts[2], 10);
                   if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
                     const newDate = new Date(year, month, day);
@@ -245,6 +262,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
               left={<TextInput.Icon icon="calendar" />}
             />
 
+            {/* Instrutor */}
             <TextInput
               label="Instrutor Responsável"
               value={formData.instructor}
@@ -253,6 +271,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
               style={styles.input}
             />
 
+            {/* Certificado */}
             <TextInput
               label="Número do Certificado (opcional)"
               value={formData.certificate}
@@ -261,6 +280,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
               style={styles.input}
             />
 
+            {/* Observações */}
             <TextInput
               label="Observações (opcional)"
               value={formData.notes}
@@ -273,13 +293,14 @@ const AddGraduationScreen = ({ route, navigation }) => {
           </Card.Content>
         </Card>
 
+        {/* Botões */}
         <View style={styles.buttonContainer}>
           <Button
             mode="outlined"
             onPress={() => navigation.goBack()}
             style={styles.button}
           >
-            <Text>Cancelar</Text>
+            Cancelar
           </Button>
           
           <Button
@@ -289,16 +310,15 @@ const AddGraduationScreen = ({ route, navigation }) => {
             disabled={loading}
             style={[styles.button, styles.submitButton]}
           >
-            <Text>Salvar Graduação</Text>
+            Salvar Graduação
           </Button>
         </View>
       </ScrollView>
 
+      {/* Dialog Modalidade */}
       <Portal>
         <Dialog visible={modalityDialogVisible} onDismiss={() => setModalityDialogVisible(false)}>
-          <View style={styles.dialogTitleContainer}>
-            <Text style={styles.dialogTitle}>Selecionar Modalidade</Text>
-          </View>
+          <Dialog.Title>Selecionar Modalidade</Dialog.Title>
           <Dialog.ScrollArea>
             <ScrollView style={styles.dialogScroll}>
               {modalities.map((modality) => (
@@ -314,18 +334,15 @@ const AddGraduationScreen = ({ route, navigation }) => {
             </ScrollView>
           </Dialog.ScrollArea>
           <Dialog.Actions>
-            <Button onPress={() => setModalityDialogVisible(false)}>
-              <Text>Cancelar</Text>
-            </Button>
+            <Button onPress={() => setModalityDialogVisible(false)}>Cancelar</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
 
+      {/* Dialog Graduação */}
       <Portal>
         <Dialog visible={graduationDialogVisible} onDismiss={() => setGraduationDialogVisible(false)}>
-          <View style={styles.dialogTitleContainer}>
-            <Text style={styles.dialogTitle}>Selecionar Graduação</Text>
-          </View>
+          <Dialog.Title>Selecionar Graduação</Dialog.Title>
           <Dialog.ScrollArea>
             <ScrollView style={styles.dialogScroll}>
               {graduationLevels.map((graduation, index) => (
@@ -341,13 +358,12 @@ const AddGraduationScreen = ({ route, navigation }) => {
             </ScrollView>
           </Dialog.ScrollArea>
           <Dialog.Actions>
-            <Button onPress={() => setGraduationDialogVisible(false)}>
-              <Text>Cancelar</Text>
-            </Button>
+            <Button onPress={() => setGraduationDialogVisible(false)}>Cancelar</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
 
+      {/* Snackbar para feedbacks */}
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
@@ -367,29 +383,91 @@ const AddGraduationScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  scrollView: { flex: 1 },
-  headerCard: { margin: 16, marginBottom: 8, elevation: 4 },
-  card: { margin: 16, marginTop: 8, elevation: 2 },
-  header: { flexDirection: 'row', alignItems: 'center' },
-  headerText: { marginLeft: 16, flex: 1 },
-  title: { fontSize: 20, fontWeight: 'bold', color: '#333' },
-  subtitle: { fontSize: 14, color: '#666', marginTop: 4 },
-  sectionTitle: { fontSize: 18, marginBottom: 16, color: '#333' },
-  previousGraduation: { marginBottom: 16, padding: 12, backgroundColor: '#f8f9fa', borderRadius: 8 },
-  label: { fontSize: 14, fontWeight: '500', color: '#333', marginBottom: 8 },
-  chipContainer: { alignSelf: 'flex-start', backgroundColor: '#E8F5E8', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#ddd' },
-  chipText: { fontSize: 14, color: '#333' },
-  inputGroup: { marginBottom: 16 },
-  selectButton: { justifyContent: 'flex-start', borderColor: '#ddd' },
-  selectButtonContent: { justifyContent: 'flex-start', paddingVertical: 8 },
-  input: { marginBottom: 16 },
-  buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', margin: 16, gap: 12 },
-  button: { flex: 1 },
-  submitButton: { backgroundColor: '#4CAF50' },
-  dialogScroll: { maxHeight: 300 },
-  dialogTitleContainer: { padding: 24, paddingBottom: 0 },
-  dialogTitle: { fontSize: 20, fontWeight: 'bold', color: '#333' },
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  headerCard: {
+    margin: 16,
+    marginBottom: 8,
+    elevation: 4,
+  },
+  card: {
+    margin: 16,
+    marginTop: 8,
+    elevation: 2,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerText: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    marginBottom: 16,
+    color: '#333',
+  },
+  previousGraduation: {
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 8,
+  },
+  previousChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#E8F5E8',
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  selectButton: {
+    justifyContent: 'flex-start',
+    borderColor: '#ddd',
+  },
+  selectButtonContent: {
+    justifyContent: 'flex-start',
+    paddingVertical: 8,
+  },
+  input: {
+    marginBottom: 16,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    margin: 16,
+    gap: 12,
+  },
+  button: {
+    flex: 1,
+  },
+  submitButton: {
+    backgroundColor: '#4CAF50',
+  },
+  dialogScroll: {
+    maxHeight: 300,
+  },
 });
 
 export default AddGraduationScreen;

@@ -19,10 +19,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { studentService, firestoreService } from '../../services/firestoreService';
 
 const InstructorStudents = ({ navigation }) => {
   const { user } = useAuth();
+  const { getString } = useTheme();
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,7 +55,7 @@ const InstructorStudents = ({ navigation }) => {
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      console.log('👥 Carregando dados do instrutor:', user.uid);
+      console.log(getString('loadingStudentsInstructor'), user.uid);
       
       // Load students with error handling
       let instructorStudents = [];
@@ -64,22 +66,22 @@ const InstructorStudents = ({ navigation }) => {
         
         // Se não encontrou alunos, tenta buscar todos os alunos criados por este instrutor
         if (instructorStudents.length === 0) {
-          console.log('🔍 Tentando buscar alunos criados por este instrutor...');
+          console.log(getString('searchingStudentsCreatedBy'));
           const allStudents = await firestoreService.getWhere('users', 'createdBy', '==', user.uid);
           const students = allStudents.filter(user => user.userType === 'student');
           instructorStudents = students;
-          console.log(`✅ ${instructorStudents.length} alunos encontrados via createdBy`);
+          console.log(getString('studentsFoundCreatedBy').replace('{count}', instructorStudents.length));
         }
       } catch (studentError) {
-        console.warn('⚠️ Erro ao buscar alunos via service:', studentError);
+        console.warn(getString('errorSearchingStudentsService'), studentError);
         // Fallback: buscar diretamente por createdBy
         try {
           const allStudents = await firestoreService.getWhere('users', 'createdBy', '==', user.uid);
           const students = allStudents.filter(user => user.userType === 'student');
           instructorStudents = students;
-          console.log(`✅ Fallback: ${instructorStudents.length} alunos encontrados`);
+          console.log(getString('fallbackStudentsFound').replace('{count}', instructorStudents.length));
         } catch (fallbackError) {
-          console.error('❌ Erro no fallback:', fallbackError);
+          console.error(getString('errorFallback'), fallbackError);
           instructorStudents = [];
         }
       }
@@ -89,9 +91,9 @@ const InstructorStudents = ({ navigation }) => {
       let instructorClasses = [];
       try {
         instructorClasses = await firestoreService.getWhere('classes', 'instructorId', '==', user.uid);
-        console.log(`✅ ${instructorClasses.length} turmas encontradas`);
+        console.log(getString('classesFound').replace('{count}', instructorClasses.length));
       } catch (classError) {
-        console.warn('⚠️ Erro ao buscar turmas:', classError);
+        console.warn(getString('errorSearchingClasses'), classError);
         instructorClasses = [];
       }
       setClasses(instructorClasses || []);
@@ -100,21 +102,21 @@ const InstructorStudents = ({ navigation }) => {
       let allModalities = [];
       try {
         allModalities = await firestoreService.getAll('modalities');
-        console.log(`✅ ${allModalities.length} modalidades carregadas`);
+        console.log(getString('modalitiesLoaded').replace('{count}', allModalities.length));
       } catch (modalityError) {
-        console.warn('⚠️ Erro ao buscar modalidades:', modalityError);
+        console.warn(getString('errorSearchingModalities'), modalityError);
         allModalities = [];
       }
       setModalities(allModalities || []);
       
-      console.log('✅ Dados do instrutor carregados com sucesso');
+      console.log(getString('instructorDataLoaded'));
     } catch (error) {
-      console.error('Erro geral ao carregar dados do instrutor:', error);
+      console.error(getString('generalErrorLoadingInstructorData'), error);
       // Em caso de erro total, definir arrays vazios para evitar crash
       setStudents([]);
       setClasses([]);
       setModalities([]);
-      Alert.alert('Aviso', 'Algumas informações podem estar limitadas. Tente novamente mais tarde.');
+      Alert.alert(getString('warning'), getString('limitedInfoWarning'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -252,35 +254,52 @@ const InstructorStudents = ({ navigation }) => {
 
   const getPaymentStatusText = (status) => {
     switch (status) {
-      case 'paid': return 'Em dia';
-      case 'pending': return 'Pendente';
-      case 'overdue': return 'Atrasado';
-      default: return 'N/A';
+      case 'paid': return getString('paymentUpToDate');
+      case 'pending': return getString('paymentPending');
+      case 'overdue': return getString('paymentOverdue');
+      default: return getString('paymentNA');
     }
   };
 
   const getFilterText = (filter) => {
     switch (filter) {
-      case 'all': return 'Todos';
-      case 'active': return 'Ativos';
-      case 'inactive': return 'Inativos';
-      case 'payment_pending': return 'Pagamento Pendente';
-      default: return 'Todos';
+      case 'all': return getString('allStudents');
+      case 'active': return getString('activeStudents');
+      case 'inactive': return getString('inactiveStudents');
+      case 'payment_pending': return getString('paymentPendingStudents');
+      default: return getString('allStudents');
     }
   };
 
   const genderLabel = (g) => {
-    if (!g) return 'Todos os sexos';
-    if (g === 'male') return 'Masculino';
-    if (g === 'female') return 'Feminino';
-    return 'Outro';
+    if (!g) return getString('allGenders');
+    if (g === 'male') return getString('male');
+    if (g === 'female') return getString('female');
+    return getString('other');
+  };
+
+  const clearFilters = () => {
+    setSelectedFilter('all');
+    setSelectedGender('');
+    setSelectedModalityId('');
+    setAgeMin('');
+    setAgeMax('');
+    setEnrollmentStart('');
+    setEnrollmentEnd('');
+  };
+
+  const applyFilters = () => {
+    // Os filtros são aplicados automaticamente via useEffect
+    // Esta função pode ser usada para fechar menus ou mostrar feedback
+    setGenderMenuVisible(false);
+    setModalityMenuVisible(false);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Searchbar
-          placeholder="Buscar alunos..."
+          placeholder={getString('searchStudents')}
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchbar}
@@ -301,10 +320,10 @@ const InstructorStudents = ({ navigation }) => {
               </Button>
             }
           >
-            <Menu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title="Todos" />
-            <Menu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title="Ativos" />
-            <Menu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title="Inativos" />
-            <Menu.Item onPress={() => { setSelectedFilter('payment_pending'); setFilterVisible(false); }} title="Pagamento Pendente" />
+            <Menu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title={getString('allStudents')} />
+            <Menu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title={getString('activeStudents')} />
+            <Menu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title={getString('inactiveStudents')} />
+            <Menu.Item onPress={() => { setSelectedFilter('payment_pending'); setFilterVisible(false); }} title={getString('paymentPendingStudents')} />
           </Menu>
 
           <Menu
@@ -321,9 +340,9 @@ const InstructorStudents = ({ navigation }) => {
               </Button>
             }
           >
-            <Menu.Item onPress={() => { setSelectedGender(''); setGenderMenuVisible(false); }} title="Todos os sexos" />
-            <Menu.Item onPress={() => { setSelectedGender('male'); setGenderMenuVisible(false); }} title="Masculino" />
-            <Menu.Item onPress={() => { setSelectedGender('female'); setGenderMenuVisible(false); }} title="Feminino" />
+            <Menu.Item onPress={() => { setSelectedGender(''); setGenderMenuVisible(false); }} title={getString('allGenders')} />
+            <Menu.Item onPress={() => { setSelectedGender('male'); setGenderMenuVisible(false); }} title={getString('male')} />
+            <Menu.Item onPress={() => { setSelectedGender('female'); setGenderMenuVisible(false); }} title={getString('female')} />
           </Menu>
 
           <Menu
@@ -336,21 +355,29 @@ const InstructorStudents = ({ navigation }) => {
                 icon="dumbbell"
                 style={styles.filterButton}
               >
-                {selectedModalityId ? (modalities.find(m => m.id === selectedModalityId)?.name || 'Modalidade') : 'Todas modalidades'}
+                {getModalityNameById(selectedModalityId) || getString('modality')}
               </Button>
             }
           >
-            <Menu.Item onPress={() => { setSelectedModalityId(''); setModalityMenuVisible(false); }} title="Todas modalidades" />
+            <Menu.Item onPress={() => { setSelectedModalityId(''); setModalityMenuVisible(false); }} title={getString('allModalities')} />
             {modalities.map(m => (
               <Menu.Item key={m.id} onPress={() => { setSelectedModalityId(m.id); setModalityMenuVisible(false); }} title={m.name} />
             ))}
           </Menu>
         </View>
 
-        {/* Linha de filtros por idade e datas */}
+        <View style={styles.filterActionsRow}>
+          <Button mode="outlined" onPress={clearFilters} style={styles.clearButton}>
+            {getString('clearFilters')}
+          </Button>
+          <Button mode="contained" onPress={applyFilters} style={styles.applyButton}>
+            {getString('applyFilters')}
+          </Button>
+        </View>
+
         <View style={styles.advancedFiltersRow}>
           <TextInput
-            label="Idade mín."
+            placeholder={getString('minAge')}
             value={ageMin}
             onChangeText={setAgeMin}
             mode="outlined"
@@ -358,7 +385,7 @@ const InstructorStudents = ({ navigation }) => {
             style={styles.advancedFilterInput}
           />
           <TextInput
-            label="Idade máx."
+            placeholder={getString('maxAge')}
             value={ageMax}
             onChangeText={setAgeMax}
             mode="outlined"
@@ -373,7 +400,7 @@ const InstructorStudents = ({ navigation }) => {
             style={styles.advancedFilterLong}
           />
           <TextInput
-            label="Até (AAAA-MM-DD)"
+            placeholder={getString('enrollmentEnd')}
             value={enrollmentEnd}
             onChangeText={setEnrollmentEnd}
             mode="outlined"
@@ -475,18 +502,16 @@ const InstructorStudents = ({ navigation }) => {
                     mode="outlined" 
                     onPress={() => handleStudentPress(student)}
                     style={styles.actionButton}
-                    icon="eye"
                   >
-                    Ver Perfil
+                    {getString('viewProfile')}
                   </Button>
 
                   <Button 
                     mode="contained" 
                     onPress={() => handleAddGraduation(student)}
                     style={styles.actionButton}
-                    icon="trophy"
                   >
-                    Graduação
+                    {getString('graduation')}
                   </Button>
                 </View>
               </Card.Content>
@@ -496,13 +521,10 @@ const InstructorStudents = ({ navigation }) => {
           <Card style={styles.emptyCard}>
             <Card.Content style={styles.emptyContent}>
               <Ionicons name="people-outline" size={48} color="#ccc" />
-              <Title style={styles.emptyTitle}>Nenhum aluno encontrado</Title>
-              <Paragraph style={styles.emptyText}>
-                {searchQuery ? 
-                  'Nenhum aluno corresponde à sua busca' : 
-                  'Você ainda não possui alunos atribuídos'
-                }
-              </Paragraph>
+              <Text style={styles.noStudentsText}>{getString('noStudentsFound')}</Text>
+              <Text style={styles.noStudentsSubtext}>
+                {getString('noStudentsMessage')}
+              </Text>
             </Card.Content>
           </Card>
         )}
@@ -577,11 +599,16 @@ const styles = StyleSheet.create({
   filterButton: {
     borderColor: '#4CAF50',
   },
-  advancedFiltersRow: {
+  advancedFilterRow: {
     flexDirection: 'row',
+    marginBottom: 8,
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 8,
+  },
+  filterActionsRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+    gap: 8,
   },
   advancedFilterInput: {
     flexGrow: 1,
