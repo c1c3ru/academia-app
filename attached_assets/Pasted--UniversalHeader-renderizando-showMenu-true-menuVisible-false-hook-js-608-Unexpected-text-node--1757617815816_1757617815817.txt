@@ -1,0 +1,502 @@
+ UniversalHeader renderizando - showMenu: true menuVisible: false
+hook.js:608 Unexpected text node: . A text node cannot be a child of a <View>. Error Component Stack
+    at View (index.js:35:25)
+    at CardContent (CardContent.js:25:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Surface.js:149:3
+    at Card (Card.js:45:14)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at ScrollViewBase.js:57:24
+    at ScrollView (index.js:33:5)
+    at ScrollView (<anonymous>)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at SafeAreaView.web.js:23:3
+    at AddGraduationScreen (AddGraduationScreen.js:20:32)
+    at StaticContainer (StaticContainer.js:9:16)
+    at EnsureSingleNavigator (EnsureSingleNavigator.js:12:3)
+    at SceneView (SceneView.js:15:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardContent (CardContent.js:11:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Dummy (GestureHandler.js:7:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Card (Card.js:31:8)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardA11yWrapper (CardA11yWrapper.js:7:3)
+    at CardContainerInner (CardContainer.js:14:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at NativeScreen (Screen.web.js:12:8)
+    at createAnimatedComponent.js:25:45
+    at MaybeScreen (Screens.js:27:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at MaybeScreenContainer (Screens.js:13:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardStack (CardStack.js:210:5)
+    at FrameSizeProvider (useFrameSize.js:25:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at SafeAreaProviderCompat (SafeAreaProviderCompat.js:31:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at StackView (StackView.js:20:8)
+    at PreventRemoveProvider (PreventRemoveProvider.js:31:3)
+    at NavigationStateListenerProvider (useNavigationState.js:23:3)
+    at NavigationContent (useComponent.js:6:3)
+    at useComponent.js:22:5
+    at StackNavigator (createStackNavigator.js:8:3)
+    at InstructorStackNavigator (AppNavigator.js:318:33)
+    at StaticContainer (StaticContainer.js:9:16)
+    at EnsureSingleNavigator (EnsureSingleNavigator.js:12:3)
+    at SceneView (SceneView.js:15:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardContent (CardContent.js:11:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Dummy (GestureHandler.js:7:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Card (Card.js:31:8)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardA11yWrapper (CardA11yWrapper.js:7:3)
+    at CardContainerInner (CardContainer.js:14:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at NativeScreen (Screen.web.js:12:8)
+    at createAnimatedComponent.js:25:45
+    at MaybeScreen (Screens.js:27:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at MaybeScreenContainer (Screens.js:13:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardStack (CardStack.js:210:5)
+    at FrameSizeProviderInner (useFrameSize.js:39:3)
+    at FrameSizeProvider (useFrameSize.js:25:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at SafeAreaProviderCompat (SafeAreaProviderCompat.js:31:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at StackView (StackView.js:20:8)
+    at PreventRemoveProvider (PreventRemoveProvider.js:31:3)
+    at NavigationStateListenerProvider (useNavigationState.js:23:3)
+    at NavigationContent (useComponent.js:6:3)
+    at useComponent.js:22:5
+    at StackNavigator (createStackNavigator.js:8:3)
+    at MainNavigator (AppNavigator.js:593:26)
+    at ThemeProvider (ThemeProvider.js:7:3)
+    at EnsureSingleNavigator (EnsureSingleNavigator.js:12:3)
+    at BaseNavigationContainer (BaseNavigationContainer.js:72:3)
+    at NavigationContainerInner (NavigationContainer.js:34:3)
+    at AppNavigator (AppNavigator.js:785:59)
+    at NotificationProvider (NotificationContext.js:10:40)
+    at AuthProvider (AuthContext.js:26:32)
+    at ThemeProvider (createThemeProvider.js:23:31)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at PortalHost (PortalHost.js:28:16)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at SafeAreaProviderCompat (SafeAreaProviderCompat.js:30:3)
+    at PaperProvider (PaperProvider.js:10:38)
+    at ThemedApp (App.js:36:31)
+    at ThemeProvider (ThemeContext.js:7:33)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at NativeSafeAreaProvider (NativeSafeAreaProvider.web.js:21:3)
+    at SafeAreaProvider (SafeAreaContext.js:15:3)
+    at FirebaseInitializer (FirebaseInitializer.js:5:32)
+    at ErrorBoundary (ErrorBoundary.js:8:5)
+    at AppContent (<anonymous>)
+    at WebCompatibility (WebCompatibility.js:5:29)
+    at App (App.js:19:12)
+    at withDevTools(:8081/App) (<anonymous>)
+    at AppContainer (AppContainer.js:4:25)
+overrideMethod @ hook.js:608
+(anonymous) @ index.js:57
+View @ index.js:55
+react-stack-bottom-frame @ react-dom-client.development.js:22428
+renderWithHooks @ react-dom-client.development.js:5757
+updateForwardRef @ react-dom-client.development.js:7762
+beginWork @ react-dom-client.development.js:10014
+runWithFiberInDEV @ react-dom-client.development.js:543
+performUnitOfWork @ react-dom-client.development.js:15044
+workLoopSync @ react-dom-client.development.js:14870
+renderRootSync @ react-dom-client.development.js:14850
+performWorkOnRoot @ react-dom-client.development.js:14334
+performSyncWorkOnRoot @ react-dom-client.development.js:15946
+flushSyncWorkAcrossRoots_impl @ react-dom-client.development.js:15807
+processRootScheduleInMicrotask @ react-dom-client.development.js:15841
+(anonymous) @ react-dom-client.development.js:15962Understand this error
+(index):1 Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.
+Element with focus: <button.css-view-g5y9jx r-touchAction-1otgn73 r-cursor-1loqt21 r-position-bnwqim r-transition-ctqt5z r-overflow-1udh08x>
+Ancestor with aria-hidden: <div.css-view-g5y9jx r-bottom-1p0dtai r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-pointerEvents-633pao> <div class=​"css-view-g5y9jx r-bottom-1p0dtai r-left-1d2f490 r-position-u8s1d r-right-zchlnj r-top-ipm5af r-pointerEvents-633pao" style=​"display:​ flex;​ visibility:​ visible;​" aria-hidden=​"true">​…​</div>​flexUnderstand this warning
+2UniversalHeader.js:126 🔐 UniversalHeader renderizando - showMenu: true menuVisible: false
+hook.js:608 Unexpected text node: . A text node cannot be a child of a <View>. Error Component Stack
+    at View (index.js:35:25)
+    at CardContent (CardContent.js:25:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Surface.js:149:3
+    at Card (Card.js:45:14)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at ScrollViewBase.js:57:24
+    at ScrollView (index.js:33:5)
+    at ScrollView (<anonymous>)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at SafeAreaView.web.js:23:3
+    at AddGraduationScreen (AddGraduationScreen.js:20:32)
+    at StaticContainer (StaticContainer.js:9:16)
+    at EnsureSingleNavigator (EnsureSingleNavigator.js:12:3)
+    at SceneView (SceneView.js:15:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardContent (CardContent.js:11:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Dummy (GestureHandler.js:7:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Card (Card.js:31:8)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardA11yWrapper (CardA11yWrapper.js:7:3)
+    at CardContainerInner (CardContainer.js:14:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at NativeScreen (Screen.web.js:12:8)
+    at createAnimatedComponent.js:25:45
+    at MaybeScreen (Screens.js:27:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at MaybeScreenContainer (Screens.js:13:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardStack (CardStack.js:210:5)
+    at FrameSizeProvider (useFrameSize.js:25:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at SafeAreaProviderCompat (SafeAreaProviderCompat.js:31:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at StackView (StackView.js:20:8)
+    at PreventRemoveProvider (PreventRemoveProvider.js:31:3)
+    at NavigationStateListenerProvider (useNavigationState.js:23:3)
+    at NavigationContent (useComponent.js:6:3)
+    at useComponent.js:22:5
+    at StackNavigator (createStackNavigator.js:8:3)
+    at InstructorStackNavigator (AppNavigator.js:318:33)
+    at StaticContainer (StaticContainer.js:9:16)
+    at EnsureSingleNavigator (EnsureSingleNavigator.js:12:3)
+    at SceneView (SceneView.js:15:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardContent (CardContent.js:11:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Dummy (GestureHandler.js:7:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Card (Card.js:31:8)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardA11yWrapper (CardA11yWrapper.js:7:3)
+    at CardContainerInner (CardContainer.js:14:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at NativeScreen (Screen.web.js:12:8)
+    at createAnimatedComponent.js:25:45
+    at MaybeScreen (Screens.js:27:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at MaybeScreenContainer (Screens.js:13:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardStack (CardStack.js:210:5)
+    at FrameSizeProviderInner (useFrameSize.js:39:3)
+    at FrameSizeProvider (useFrameSize.js:25:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at SafeAreaProviderCompat (SafeAreaProviderCompat.js:31:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at StackView (StackView.js:20:8)
+    at PreventRemoveProvider (PreventRemoveProvider.js:31:3)
+    at NavigationStateListenerProvider (useNavigationState.js:23:3)
+    at NavigationContent (useComponent.js:6:3)
+    at useComponent.js:22:5
+    at StackNavigator (createStackNavigator.js:8:3)
+    at MainNavigator (AppNavigator.js:593:26)
+    at ThemeProvider (ThemeProvider.js:7:3)
+    at EnsureSingleNavigator (EnsureSingleNavigator.js:12:3)
+    at BaseNavigationContainer (BaseNavigationContainer.js:72:3)
+    at NavigationContainerInner (NavigationContainer.js:34:3)
+    at AppNavigator (AppNavigator.js:785:59)
+    at NotificationProvider (NotificationContext.js:10:40)
+    at AuthProvider (AuthContext.js:26:32)
+    at ThemeProvider (createThemeProvider.js:23:31)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at PortalHost (PortalHost.js:28:16)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at SafeAreaProviderCompat (SafeAreaProviderCompat.js:30:3)
+    at PaperProvider (PaperProvider.js:10:38)
+    at ThemedApp (App.js:36:31)
+    at ThemeProvider (ThemeContext.js:7:33)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at NativeSafeAreaProvider (NativeSafeAreaProvider.web.js:21:3)
+    at SafeAreaProvider (SafeAreaContext.js:15:3)
+    at FirebaseInitializer (FirebaseInitializer.js:5:32)
+    at ErrorBoundary (ErrorBoundary.js:8:5)
+    at AppContent (<anonymous>)
+    at WebCompatibility (WebCompatibility.js:5:29)
+    at App (App.js:19:12)
+    at withDevTools(:8081/App) (<anonymous>)
+    at AppContainer (AppContainer.js:4:25)
+overrideMethod @ hook.js:608
+(anonymous) @ index.js:57
+View @ index.js:55
+react-stack-bottom-frame @ react-dom-client.development.js:22428
+renderWithHooks @ react-dom-client.development.js:5757
+updateForwardRef @ react-dom-client.development.js:7762
+beginWork @ react-dom-client.development.js:10014
+runWithFiberInDEV @ react-dom-client.development.js:543
+performUnitOfWork @ react-dom-client.development.js:15044
+workLoopSync @ react-dom-client.development.js:14870
+renderRootSync @ react-dom-client.development.js:14850
+performWorkOnRoot @ react-dom-client.development.js:14334
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:15931
+performWorkUntilDeadline @ scheduler.development.js:44Understand this error
+2UniversalHeader.js:126 🔐 UniversalHeader renderizando - showMenu: true menuVisible: false
+UniversalHeader.js:126 🔐 UniversalHeader renderizando - showMenu: true menuVisible: false
+UniversalHeader.js:126 🔐 UniversalHeader renderizando - showMenu: true menuVisible: false
+hook.js:608 ReferenceError: handleAddGraduation is not defined
+    at StudentProfileScreen (StudentProfileScreen.js:305:24)
+    at react-stack-bottom-frame (react-dom-client.development.js:22428:20)
+    at renderWithHooks (react-dom-client.development.js:5757:22)
+    at updateFunctionComponent (react-dom-client.development.js:8018:19)
+    at beginWork (react-dom-client.development.js:9683:18)
+    at runWithFiberInDEV (react-dom-client.development.js:543:16)
+    at performUnitOfWork (react-dom-client.development.js:15044:22)
+    at workLoopSync (react-dom-client.development.js:14870:41)
+    at renderRootSync (react-dom-client.development.js:14850:11)
+    at performWorkOnRoot (react-dom-client.development.js:14384:44)
+
+The above error occurred in the <StudentProfileScreen> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+ Error Component Stack
+    at StudentProfileScreen (StudentProfileScreen.js:21:33)
+    at StaticContainer (StaticContainer.js:9:16)
+    at EnsureSingleNavigator (EnsureSingleNavigator.js:12:3)
+    at SceneView (SceneView.js:15:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardContent (CardContent.js:11:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Dummy (GestureHandler.js:7:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Card (Card.js:31:8)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardA11yWrapper (CardA11yWrapper.js:7:3)
+    at CardContainerInner (CardContainer.js:14:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at NativeScreen (Screen.web.js:12:8)
+    at createAnimatedComponent.js:25:45
+    at MaybeScreen (Screens.js:27:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at MaybeScreenContainer (Screens.js:13:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardStack (CardStack.js:210:5)
+    at FrameSizeProvider (useFrameSize.js:25:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at SafeAreaProviderCompat (SafeAreaProviderCompat.js:31:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at StackView (StackView.js:20:8)
+    at PreventRemoveProvider (PreventRemoveProvider.js:31:3)
+    at NavigationStateListenerProvider (useNavigationState.js:23:3)
+    at NavigationContent (useComponent.js:6:3)
+    at useComponent.js:22:5
+    at StackNavigator (createStackNavigator.js:8:3)
+    at InstructorStackNavigator (AppNavigator.js:318:33)
+    at StaticContainer (StaticContainer.js:9:16)
+    at EnsureSingleNavigator (EnsureSingleNavigator.js:12:3)
+    at SceneView (SceneView.js:15:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardContent (CardContent.js:11:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Dummy (GestureHandler.js:7:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at createAnimatedComponent.js:25:45
+    at Card (Card.js:31:8)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardA11yWrapper (CardA11yWrapper.js:7:3)
+    at CardContainerInner (CardContainer.js:14:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at NativeScreen (Screen.web.js:12:8)
+    at createAnimatedComponent.js:25:45
+    at MaybeScreen (Screens.js:27:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at MaybeScreenContainer (Screens.js:13:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at CardStack (CardStack.js:210:5)
+    at FrameSizeProviderInner (useFrameSize.js:39:3)
+    at FrameSizeProvider (useFrameSize.js:25:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at SafeAreaProviderCompat (SafeAreaProviderCompat.js:31:3)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at StackView (StackView.js:20:8)
+    at PreventRemoveProvider (PreventRemoveProvider.js:31:3)
+    at NavigationStateListenerProvider (useNavigationState.js:23:3)
+    at NavigationContent (useComponent.js:6:3)
+    at useComponent.js:22:5
+    at StackNavigator (createStackNavigator.js:8:3)
+    at MainNavigator (AppNavigator.js:593:26)
+    at ThemeProvider (ThemeProvider.js:7:3)
+    at EnsureSingleNavigator (EnsureSingleNavigator.js:12:3)
+    at BaseNavigationContainer (BaseNavigationContainer.js:72:3)
+    at NavigationContainerInner (NavigationContainer.js:34:3)
+    at AppNavigator (AppNavigator.js:785:59)
+    at NotificationProvider (NotificationContext.js:10:40)
+    at AuthProvider (AuthContext.js:26:32)
+    at ThemeProvider (createThemeProvider.js:23:31)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at PortalHost (PortalHost.js:28:16)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at SafeAreaProviderCompat (SafeAreaProviderCompat.js:30:3)
+    at PaperProvider (PaperProvider.js:10:38)
+    at ThemedApp (App.js:36:31)
+    at ThemeProvider (ThemeContext.js:7:33)
+    at div (<anonymous>)
+    at View (index.js:35:25)
+    at NativeSafeAreaProvider (NativeSafeAreaProvider.web.js:21:3)
+    at SafeAreaProvider (SafeAreaContext.js:15:3)
+    at FirebaseInitializer (FirebaseInitializer.js:5:32)
+overrideMethod @ hook.js:608
+defaultOnCaughtError @ react-dom-client.development.js:7445
+logCaughtError @ react-dom-client.development.js:7484
+runWithFiberInDEV @ react-dom-client.development.js:543
+inst.componentDidCatch.update.callback @ react-dom-client.development.js:7531
+callCallback @ react-dom-client.development.js:10680
+commitCallbacks @ react-dom-client.development.js:10700
+runWithFiberInDEV @ react-dom-client.development.js:543
+commitClassCallbacks @ react-dom-client.development.js:10919
+commitLayoutEffectOnFiber @ react-dom-client.development.js:11490
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:12412
+commitLayoutEffectOnFiber @ react-dom-client.development.js:11413
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:12412
+commitLayoutEffectOnFiber @ react-dom-client.development.js:11413
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:12412
+commitLayoutEffectOnFiber @ react-dom-client.development.js:11413
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:12412
+commitLayoutEffectOnFiber @ react-dom-client.development.js:11413
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:12412
+commitLayoutEffectOnFiber @ react-dom-client.development.js:11413
+recursivelyTraverseLayoutEffects @ react-dom-client.development.js:12412
+commitLayoutEffectOnFiber @ react-dom-client.development.js:11495
+commitLayoutEffects @ react-dom-client.development.js:12406
+commitRootImpl @ react-dom-client.development.js:15352
+commitRoot @ react-dom-client.development.js:15251
+commitRootWhenReady @ react-dom-client.development.js:14570
+performWorkOnRoot @ react-dom-client.development.js:14494
+performSyncWorkOnRoot @ react-dom-client.development.js:15946
+flushSyncWorkAcrossRoots_impl @ react-dom-client.development.js:15807
+processRootScheduleInMicrotask @ react-dom-client.development.js:15841
+(anonymous) @ react-dom-client.development.js:15962Understand this error
+ErrorBoundary.js:17 ErrorBoundary caught an error: ReferenceError: handleAddGraduation is not defined
+    at StudentProfileScreen (StudentProfileScreen.js:305:24)
+    at react-stack-bottom-frame (react-dom-client.development.js:22428:20)
+    at renderWithHooks (react-dom-client.development.js:5757:22)
+    at updateFunctionComponent (react-dom-client.development.js:8018:19)
+    at beginWork (react-dom-client.development.js:9683:18)
+    at runWithFiberInDEV (react-dom-client.development.js:543:16)
+    at performUnitOfWork (react-dom-client.development.js:15044:22)
+    at workLoopSync (react-dom-client.development.js:14870:41)
+    at renderRootSync (react-dom-client.development.js:14850:11)
+    at performWorkOnRoot (react-dom-client.development.js:14384:44) {componentStack: '\n    at StudentProfileScreen (http://localhost:808…p&unstable_transformProfile=hermes-stable:1272:5)'} Error Component Stack
+    at ErrorBoundary (ErrorBoundary.js:8:5)
+    at AppContent (<anonymous>)
+    at WebCompatibility (WebCompatibility.js:5:29)
+    at App (App.js:19:12)
+    at withDevTools(:8081/App) (<anonymous>)
+    at AppContainer (AppContainer.js:4:25)

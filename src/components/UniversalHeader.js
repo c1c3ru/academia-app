@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
 import { Appbar, Avatar, Menu, Divider, Modal, Portal, Button, Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ResponsiveUtils } from '../utils/animations';
 import NotificationBell from './NotificationBell';
 import { useTheme } from '../contexts/ThemeContext';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const UniversalHeader = ({ 
   title, 
@@ -16,9 +17,16 @@ const UniversalHeader = ({
   backgroundColor = '#4CAF50'
 }) => {
   const { user, userProfile, logout } = useAuth();
-  const { getString } = useTheme();
+  const { getString, theme, updateUserTheme } = useTheme();
   const [menuVisible, setMenuVisible] = React.useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = React.useState(false);
+
+  // Update theme when user type changes
+  useEffect(() => {
+    if (userProfile?.userType) {
+      updateUserTheme(userProfile.userType);
+    }
+  }, [userProfile?.userType, updateUserTheme]);
 
   const openMenu = () => {
     console.log('🔐 Avatar clicado - abrindo menu');
@@ -98,15 +106,39 @@ const UniversalHeader = ({
   };
 
   const getUserTypeColor = () => {
+    // Use professional colors from the theme system
+    if (theme?.palette) {
+      return theme.palette.primary;
+    }
+    
+    // Fallback to professional colors based on user type
     switch (userProfile?.userType) {
       case 'admin':
-        return '#FF9800';
+        return '#6A1B9A';  // Professional Purple
       case 'instructor':
-        return '#4CAF50';
+        return '#2E7D32'; // Professional Green
       case 'student':
-        return '#2196F3';
+        return '#1976D2'; // Professional Blue
       default:
-        return '#4CAF50';
+        return '#1976D2';
+    }
+  };
+
+  const getHeaderGradient = () => {
+    if (theme?.palette?.gradient) {
+      return theme.palette.gradient;
+    }
+    
+    // Fallback gradients
+    switch (userProfile?.userType) {
+      case 'admin':
+        return ['#6A1B9A', '#8E24AA'];
+      case 'instructor':
+        return ['#2E7D32', '#388E3C'];
+      case 'student':
+        return ['#1976D2', '#1565C0'];
+      default:
+        return ['#1976D2', '#1565C0'];
     }
   };
 
@@ -127,7 +159,13 @@ const UniversalHeader = ({
 
   return (
     <>
-      <Appbar.Header style={[styles.header, { backgroundColor: getUserTypeColor() }]}>
+      <LinearGradient
+        colors={getHeaderGradient()}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.gradientHeader}
+      >
+        <Appbar.Header style={[styles.header, styles.transparentHeader]}>
         {showBack && (
           <Appbar.BackAction 
             onPress={() => navigation?.goBack()} 
@@ -136,7 +174,7 @@ const UniversalHeader = ({
         )}
         
         <Appbar.Content 
-          title="🥋 Academia App"
+          title={title || "🥋 Academia App"}
           subtitle={subtitle}
           titleStyle={styles.appName}
           subtitleStyle={styles.subtitle}
@@ -223,7 +261,8 @@ const UniversalHeader = ({
               />
             </Menu>
         )}
-      </Appbar.Header>
+        </Appbar.Header>
+      </LinearGradient>
       
       {/* Modal de confirmação de logout para web */}
       <Portal>
@@ -384,6 +423,21 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: '#F44336',
+  },
+  gradientHeader: {
+    elevation: ResponsiveUtils?.elevation?.small || 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.23,
+    shadowRadius: 2.62,
+  },
+  transparentHeader: {
+    backgroundColor: 'transparent',
+    elevation: 0,
+    shadowOpacity: 0,
   },
 });
 

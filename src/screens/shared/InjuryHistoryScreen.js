@@ -450,7 +450,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F8E9',
     padding: 16,
     borderRadius: 8,
-    borderLeft: '4px solid #4CAF50',
+    borderLeftWidth: 4,
+    borderStyle: 'solid',
+    borderLeftColor: '#4CAF50',
   },
   tipText: {
     fontSize: 14,

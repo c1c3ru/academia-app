@@ -1,17 +1,118 @@
 
 import { MD3LightTheme, MD3DarkTheme } from 'react-native-paper';
 
+// Professional Color Palettes for User Types
+export const USER_PALETTES = {
+  student: {
+    light: {
+      primary: '#1976D2',        // Professional Blue
+      primaryVariant: '#0D47A1',  
+      secondary: '#1565C0',
+      accent: '#42A5F5',
+      surface: '#F8FAFF',
+      background: '#FFFFFF',
+      card: '#FFFFFF',
+      gradient: ['#1976D2', '#1565C0'],
+      text: {
+        primary: '#1A1A1A',
+        secondary: '#424242',
+        disabled: '#9E9E9E'
+      }
+    },
+    dark: {
+      primary: '#64B5F6',
+      primaryVariant: '#42A5F5',
+      secondary: '#90CAF9',
+      accent: '#BBDEFB',
+      surface: '#1A1A2E',
+      background: '#0F0F23',
+      card: '#16213E',
+      gradient: ['#64B5F6', '#42A5F5'],
+      text: {
+        primary: '#FFFFFF',
+        secondary: '#E0E0E0',
+        disabled: '#757575'
+      }
+    }
+  },
+  instructor: {
+    light: {
+      primary: '#2E7D32',        // Professional Green
+      primaryVariant: '#1B5E20',
+      secondary: '#388E3C',
+      accent: '#66BB6A',
+      surface: '#F1F8E9',
+      background: '#FFFFFF',
+      card: '#FFFFFF',
+      gradient: ['#2E7D32', '#388E3C'],
+      text: {
+        primary: '#1A1A1A',
+        secondary: '#424242',
+        disabled: '#9E9E9E'
+      }
+    },
+    dark: {
+      primary: '#81C784',
+      primaryVariant: '#66BB6A',
+      secondary: '#A5D6A7',
+      accent: '#C8E6C9',
+      surface: '#1A2E1A',
+      background: '#0F230F',
+      card: '#163E16',
+      gradient: ['#81C784', '#66BB6A'],
+      text: {
+        primary: '#FFFFFF',
+        secondary: '#E0E0E0',
+        disabled: '#757575'
+      }
+    }
+  },
+  admin: {
+    light: {
+      primary: '#6A1B9A',        // Professional Purple
+      primaryVariant: '#4A148C',
+      secondary: '#8E24AA',
+      accent: '#AB47BC',
+      surface: '#F3E5F5',
+      background: '#FFFFFF',
+      card: '#FFFFFF',
+      gradient: ['#6A1B9A', '#8E24AA'],
+      text: {
+        primary: '#1A1A1A',
+        secondary: '#424242',
+        disabled: '#9E9E9E'
+      }
+    },
+    dark: {
+      primary: '#CE93D8',
+      primaryVariant: '#BA68C8',
+      secondary: '#E1BEE7',
+      accent: '#F8BBD9',
+      surface: '#2E1A2E',
+      background: '#230F23',
+      card: '#3E163E',
+      gradient: ['#CE93D8', '#BA68C8'],
+      text: {
+        primary: '#FFFFFF',
+        secondary: '#E0E0E0',
+        disabled: '#757575'
+      }
+    }
+  }
+};
+
+// Default themes (fallback)
 const lightTheme = {
   ...MD3LightTheme,
   colors: {
     ...MD3LightTheme.colors,
-    primary: '#2196F3',
-    secondary: '#FF9800',
+    primary: '#1976D2',
+    secondary: '#388E3C',
     background: '#FFFFFF',
     surface: '#F5F5F5',
-    error: '#F44336',
-    success: '#4CAF50',
-    warning: '#FF9800',
+    error: '#D32F2F',
+    success: '#2E7D32',
+    warning: '#F57C00',
     text: '#212121',
     disabled: '#BDBDBD',
   },
@@ -23,7 +124,7 @@ const darkTheme = {
   colors: {
     ...MD3DarkTheme.colors,
     primary: '#64B5F6',
-    secondary: '#FFB74D',
+    secondary: '#81C784',
     background: '#121212',
     surface: '#1E1E1E',
     error: '#CF6679',
@@ -34,6 +135,37 @@ const darkTheme = {
   },
   roundness: 8,
 };
+
+// Function to get theme for specific user type
+export const getThemeForUserType = (userType, isDarkMode = false) => {
+  const palette = USER_PALETTES[userType] || USER_PALETTES.student;
+  const colorScheme = isDarkMode ? palette.dark : palette.light;
+  
+  const baseTheme = isDarkMode ? darkTheme : lightTheme;
+  
+  return {
+    ...baseTheme,
+    colors: {
+      ...baseTheme.colors,
+      primary: colorScheme.primary,
+      primaryVariant: colorScheme.primaryVariant,
+      secondary: colorScheme.secondary,
+      background: colorScheme.background,
+      surface: colorScheme.surface,
+      card: colorScheme.card,
+      text: colorScheme.text.primary,
+      // Custom colors for our app
+      accent: colorScheme.accent,
+      gradient: colorScheme.gradient,
+      textSecondary: colorScheme.text.secondary,
+      textDisabled: colorScheme.text.disabled,
+    },
+    userType,
+    palette: colorScheme
+  };
+};
+
+// Export themes for backward compatibility
 
 // Languages configuration
 export const languages = {
@@ -1998,5 +2130,3 @@ export const languages = {
   }
 };
 
-export { lightTheme, darkTheme };
-export default lightTheme;

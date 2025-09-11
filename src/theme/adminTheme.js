@@ -1,15 +1,21 @@
-// Centralized colors and icons for Admin screens
+// Professional color palettes for Admin screens - Updated to use new professional colors
 export const ADMIN_COLORS = {
-  headerGradient: ['#FF9800', '#FB8C00', '#F57C00'],
-  blue: ['#2196F3', '#1976D2'],
-  green: ['#4CAF50', '#45A049'],
-  orange: ['#FF9800', '#F57C00'],
-  purple: ['#9C27B0', '#7B1FA2'],
-  grayLight: '#f5f5f5',
+  headerGradient: ['#6A1B9A', '#8E24AA', '#AB47BC'], // Professional Purple gradient
+  primary: '#6A1B9A',                                  // Professional Purple
+  secondary: '#8E24AA',
+  accent: '#AB47BC',
+  blue: ['#1976D2', '#1565C0'],                       // Professional Blue
+  green: ['#2E7D32', '#388E3C'],                      // Professional Green
+  purple: ['#6A1B9A', '#8E24AA'],                     // Professional Purple
+  grayLight: '#f3f3f3',
   white: '#FFFFFF',
-  textDark: '#333',
-  textMuted: '#666',
-  accentWarning: '#FF9800',
+  textDark: '#1A1A1A',                                // Darker, more professional text
+  textMuted: '#424242',                               // Better contrast
+  textDisabled: '#9E9E9E',
+  surface: '#F3E5F5',                                 // Light purple surface
+  card: '#FFFFFF',
+  background: '#FAFAFA',
+  accentWarning: '#F57C00',
 };
 
 export const ADMIN_ICONS = {

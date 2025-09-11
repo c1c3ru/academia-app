@@ -1,23 +1,29 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { lightTheme, darkTheme, languages } from '../utils/theme';
+import { lightTheme, darkTheme, languages, getThemeForUserType } from '../utils/theme';
 
 const ThemeContext = createContext({});
 
 export const ThemeProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState('pt');
-  const [theme, setTheme] = useState(lightTheme);
+  const [theme, setTheme] = useState(() => getThemeForUserType('student', false));
 
   // Load saved preferences on app start
   useEffect(() => {
     loadPreferences();
   }, []);
 
-  // Update theme when dark mode changes
+  // Update theme when dark mode or user type changes
   useEffect(() => {
-    setTheme(isDarkMode ? darkTheme : lightTheme);
+    updateThemeForCurrentUser();
   }, [isDarkMode]);
+
+  const updateThemeForCurrentUser = () => {
+    // Use getThemeForUserType with 'student' as default to ensure all properties are available
+    const defaultTheme = getThemeForUserType('student', isDarkMode);
+    setTheme(defaultTheme);
+  };
 
   const loadPreferences = async () => {
     try {
@@ -61,6 +67,12 @@ export const ThemeProvider = ({ children }) => {
     return languages[currentLanguage]?.strings[key] || languages.pt.strings[key] || key;
   };
 
+  // Function to manually update theme (called when user type changes)
+  const updateUserTheme = (userType) => {
+    const newTheme = getThemeForUserType(userType, isDarkMode);
+    setTheme(newTheme);
+  };
+
   const value = {
     isDarkMode,
     currentLanguage,
@@ -68,7 +80,8 @@ export const ThemeProvider = ({ children }) => {
     languages,
     toggleDarkMode,
     changeLanguage,
-    getString
+    getString,
+    updateUserTheme
   };
 
   return (
