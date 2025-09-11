@@ -18,10 +18,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';
 
 const AdminModalities = ({ navigation }) => {
   const { user } = useAuth();
+  const { getString } = useTheme();
   const [modalities, setModalities] = useState([]);
   const [plans, setPlans] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
@@ -65,8 +67,8 @@ const AdminModalities = ({ navigation }) => {
       setAnnouncements(announcementsData);
       
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os dados');
+      console.error(getString('logoutError'), error);
+      Alert.alert(getString('error'), getString('errorLoadingData'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -81,7 +83,7 @@ const AdminModalities = ({ navigation }) => {
   // Funções para modalidades
   const handleAddModality = async () => {
     if (!newModality.name.trim()) {
-      Alert.alert('Erro', 'Nome da modalidade é obrigatório');
+      Alert.alert(getString('error'), getString('modalityNameRequired'));
       return;
     }
 
@@ -90,20 +92,20 @@ const AdminModalities = ({ navigation }) => {
       setNewModality({ name: '', description: '' });
       setModalityDialogVisible(false);
       loadData();
-      Alert.alert('Sucesso', 'Modalidade criada com sucesso');
+      Alert.alert(getString('success'), getString('modalityCreatedSuccess'));
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível criar a modalidade');
+      Alert.alert(getString('error'), getString('errorCreatingModality'));
     }
   };
 
   const handleDeleteModality = (modality) => {
     Alert.alert(
-      'Confirmar Exclusão',
-      `Tem certeza que deseja excluir a modalidade ${modality.name}?\n\nEsta ação não pode ser desfeita.`,
+      getString('confirmDeletion'),
+      getString('confirmDeleteModality').replace('{modalityName}', modality.name),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: getString('cancel'), style: 'cancel' },
         { 
-          text: 'Excluir', 
+          text: getString('delete'), 
           style: 'destructive',
           onPress: async () => {
             try {
@@ -113,10 +115,10 @@ const AdminModalities = ({ navigation }) => {
               // Atualizar lista local imediatamente
               setModalities(prev => prev.filter(m => m.id !== modality.id));
               
-              Alert.alert('Sucesso', 'Modalidade excluída com sucesso!');
+              Alert.alert(getString('success'), getString('modalityDeletedSuccess'));
             } catch (error) {
               console.error('Erro detalhado ao excluir modalidade:', error);
-              Alert.alert('Erro', `Não foi possível excluir a modalidade.\n\nMotivo: ${error.message || 'Erro desconhecido'}`);
+              Alert.alert(getString('error'), getString('errorDeletingModality').replace('{error}', error.message || getString('unknownError')));
             }
           }
         }
@@ -127,7 +129,7 @@ const AdminModalities = ({ navigation }) => {
   // Funções para planos
   const handleAddPlan = async () => {
     if (!newPlan.name.trim() || !newPlan.value.trim()) {
-      Alert.alert('Erro', 'Nome e valor do plano são obrigatórios');
+      Alert.alert(getString('error'), getString('planNameAndValueRequired'));
       return;
     }
 
@@ -142,20 +144,20 @@ const AdminModalities = ({ navigation }) => {
       setNewPlan({ name: '', value: '', duration: '', description: '' });
       setPlanDialogVisible(false);
       loadData();
-      Alert.alert('Sucesso', 'Plano criado com sucesso');
+      Alert.alert(getString('success'), getString('planCreatedSuccess'));
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível criar o plano');
+      Alert.alert(getString('error'), getString('errorCreatingPlan'));
     }
   };
 
   const handleDeletePlan = (plan) => {
     Alert.alert(
-      'Confirmar Exclusão',
-      `Tem certeza que deseja excluir o plano ${plan.name}?\n\nEsta ação não pode ser desfeita.`,
+      getString('confirmDeletion'),
+      getString('confirmDeletePlan').replace('{planName}', plan.name),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: getString('cancel'), style: 'cancel' },
         { 
-          text: 'Excluir', 
+          text: getString('delete'), 
           style: 'destructive',
           onPress: async () => {
             try {
@@ -165,10 +167,10 @@ const AdminModalities = ({ navigation }) => {
               // Atualizar lista local imediatamente
               setPlans(prev => prev.filter(p => p.id !== plan.id));
               
-              Alert.alert('Sucesso', 'Plano excluído com sucesso!');
+              Alert.alert(getString('success'), getString('planDeletedSuccess'));
             } catch (error) {
               console.error('Erro detalhado ao excluir plano:', error);
-              Alert.alert('Erro', `Não foi possível excluir o plano.\n\nMotivo: ${error.message || 'Erro desconhecido'}`);
+              Alert.alert(getString('error'), getString('errorDeletingPlan').replace('{error}', error.message || getString('unknownError')));
             }
           }
         }
@@ -179,7 +181,7 @@ const AdminModalities = ({ navigation }) => {
   // Funções para avisos
   const handleAddAnnouncement = async () => {
     if (!newAnnouncement.title.trim() || !newAnnouncement.content.trim()) {
-      Alert.alert('Erro', 'Título e conteúdo do aviso são obrigatórios');
+      Alert.alert(getString('error'), getString('announcementTitleAndContentRequired'));
       return;
     }
 
@@ -196,20 +198,20 @@ const AdminModalities = ({ navigation }) => {
       setNewAnnouncement({ title: '', content: '', expirationDate: '', targetAudience: 'all' });
       setAnnouncementDialogVisible(false);
       loadData();
-      Alert.alert('Sucesso', 'Aviso publicado com sucesso');
+      Alert.alert(getString('success'), getString('announcementPublishedSuccess'));
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível publicar o aviso');
+      Alert.alert(getString('error'), getString('errorPublishingAnnouncement'));
     }
   };
 
   const handleDeleteAnnouncement = (announcement) => {
     Alert.alert(
-      'Confirmar Exclusão',
-      `Tem certeza que deseja excluir o aviso "${announcement.title}"?\n\nEsta ação não pode ser desfeita.`,
+      getString('confirmDeletion'),
+      getString('confirmDeleteAnnouncement').replace('{announcementTitle}', announcement.title),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: getString('cancel'), style: 'cancel' },
         { 
-          text: 'Excluir', 
+          text: getString('delete'), 
           style: 'destructive',
           onPress: async () => {
             try {
@@ -219,10 +221,10 @@ const AdminModalities = ({ navigation }) => {
               // Atualizar lista local imediatamente
               setAnnouncements(prev => prev.filter(a => a.id !== announcement.id));
               
-              Alert.alert('Sucesso', 'Aviso excluído com sucesso!');
+              Alert.alert(getString('success'), getString('announcementDeletedSuccess'));
             } catch (error) {
               console.error('Erro detalhado ao excluir anuncio:', error);
-              Alert.alert('Erro', `Não foi possível excluir o aviso.\n\nMotivo: ${error.message || 'Erro desconhecido'}`);
+              Alert.alert(getString('error'), getString('errorDeletingAnnouncement').replace('{error}', error.message || getString('unknownError')));
             }
           }
         }
@@ -238,7 +240,7 @@ const AdminModalities = ({ navigation }) => {
   };
 
   const formatDate = (date) => {
-    if (!date) return 'Sem data de expiração';
+    if (!date) return getString('noExpirationDate');
     return new Date(date.seconds ? date.seconds * 1000 : date).toLocaleDateString('pt-BR');
   };
 
@@ -255,14 +257,14 @@ const AdminModalities = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="fitness-outline" size={24} color="#4CAF50" />
-              <Title style={styles.cardTitle}>Modalidades de Luta</Title>
+              <Title style={styles.cardTitle}>{getString('fightModalities')}</Title>
               <Button 
                 mode="contained" 
                 onPress={() => setModalityDialogVisible(true)}
                 icon="plus"
                 style={styles.addButton}
               >
-                Adicionar
+                {getString('add')}
               </Button>
             </View>
             
@@ -271,7 +273,7 @@ const AdminModalities = ({ navigation }) => {
                 <View key={modality.id || index}>
                   <List.Item
                     title={modality.name}
-                    description={modality.description || 'Sem descrição'}
+                    description={modality.description || getString('noDescription')}
                     left={() => <List.Icon icon="dumbbell" color="#4CAF50" />}
                     right={() => (
                       <Button 
@@ -279,7 +281,7 @@ const AdminModalities = ({ navigation }) => {
                         onPress={() => handleDeleteModality(modality)}
                         textColor="#F44336"
                       >
-                        Excluir
+                        {getString('delete')}
                       </Button>
                     )}
                   />
@@ -288,7 +290,7 @@ const AdminModalities = ({ navigation }) => {
               ))
             ) : (
               <Paragraph style={styles.emptyText}>
-                Nenhuma modalidade cadastrada
+                {getString('noModalitiesRegistered')}
               </Paragraph>
             )}
           </Card.Content>
@@ -299,14 +301,14 @@ const AdminModalities = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="card-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Planos de Pagamento</Title>
+              <Title style={styles.cardTitle}>{getString('paymentPlans')}</Title>
               <Button 
                 mode="contained" 
                 onPress={() => setPlanDialogVisible(true)}
                 icon="plus"
                 style={styles.addButton}
               >
-                Adicionar
+                {getString('add')}
               </Button>
             </View>
             
@@ -315,7 +317,7 @@ const AdminModalities = ({ navigation }) => {
                 <View key={plan.id || index}>
                   <List.Item
                     title={`${plan.name} - ${formatCurrency(plan.value)}`}
-                    description={`${plan.duration || 1} mês(es) • ${plan.description || 'Sem descrição'}`}
+                    description={`${plan.duration || 1} ${getString('months')} • ${plan.description || getString('noDescription')}`}
                     left={() => <List.Icon icon="cash" color="#2196F3" />}
                     right={() => (
                       <Button 
@@ -323,7 +325,7 @@ const AdminModalities = ({ navigation }) => {
                         onPress={() => handleDeletePlan(plan)}
                         textColor="#F44336"
                       >
-                        Excluir
+                        {getString('delete')}
                       </Button>
                     )}
                   />
@@ -332,7 +334,7 @@ const AdminModalities = ({ navigation }) => {
               ))
             ) : (
               <Paragraph style={styles.emptyText}>
-                Nenhum plano cadastrado
+                {getString('noPlansRegistered')}
               </Paragraph>
             )}
           </Card.Content>
@@ -343,14 +345,14 @@ const AdminModalities = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="megaphone-outline" size={24} color="#FF9800" />
-              <Title style={styles.cardTitle}>Mural de Avisos</Title>
+              <Title style={styles.cardTitle}>{getString('announcementBoard')}</Title>
               <Button 
                 mode="contained" 
                 onPress={() => setAnnouncementDialogVisible(true)}
                 icon="plus"
                 style={styles.addButton}
               >
-                Publicar
+                {getString('publish')}
               </Button>
             </View>
             
@@ -367,19 +369,19 @@ const AdminModalities = ({ navigation }) => {
                         onPress={() => handleDeleteAnnouncement(announcement)}
                         textColor="#F44336"
                       >
-                        Excluir
+                        {getString('delete')}
                       </Button>
                     )}
                   />
                   <Text style={styles.announcementDate}>
-                    Expira em: {formatDate(announcement.expirationDate)}
+                    {getString('expiresOn')} {formatDate(announcement.expirationDate)}
                   </Text>
                   {index < announcements.length - 1 && <Divider />}
                 </View>
               ))
             ) : (
               <Paragraph style={styles.emptyText}>
-                Nenhum aviso publicado
+                {getString('noAnnouncementsPublished')}
               </Paragraph>
             )}
           </Card.Content>
@@ -388,22 +390,22 @@ const AdminModalities = ({ navigation }) => {
         {/* Estatísticas */}
         <Card style={styles.statsCard}>
           <Card.Content>
-            <Title style={styles.statsTitle}>Resumo</Title>
+            <Title style={styles.statsTitle}>{getString('summary')}</Title>
             
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <Text style={styles.statNumber}>{modalities.length}</Text>
-                <Text style={styles.statLabel}>Modalidades</Text>
+                <Text style={styles.statLabel}>{getString('modalities')}</Text>
               </View>
               
               <View style={styles.statItem}>
                 <Text style={styles.statNumber}>{plans.length}</Text>
-                <Text style={styles.statLabel}>Planos</Text>
+                <Text style={styles.statLabel}>{getString('plans')}</Text>
               </View>
               
               <View style={styles.statItem}>
                 <Text style={styles.statNumber}>{announcements.length}</Text>
-                <Text style={styles.statLabel}>Avisos Ativos</Text>
+                <Text style={styles.statLabel}>{getString('activeAnnouncements')}</Text>
               </View>
             </View>
           </Card.Content>
@@ -414,17 +416,17 @@ const AdminModalities = ({ navigation }) => {
       <Portal>
         {/* Diálogo para adicionar modalidade */}
         <Dialog visible={modalityDialogVisible} onDismiss={() => setModalityDialogVisible(false)}>
-          <Dialog.Title>Nova Modalidade</Dialog.Title>
+          <Dialog.Title>{getString('newModality')}</Dialog.Title>
           <Dialog.Content>
             <TextInput
-              label="Nome da Modalidade"
+              label={getString('modalityName')}
               value={newModality.name}
               onChangeText={(text) => setNewModality({...newModality, name: text})}
               mode="outlined"
               style={styles.dialogInput}
             />
             <TextInput
-              label="Descrição (opcional)"
+              label={getString('optionalDescription')}
               value={newModality.description}
               onChangeText={(text) => setNewModality({...newModality, description: text})}
               mode="outlined"
@@ -434,24 +436,24 @@ const AdminModalities = ({ navigation }) => {
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setModalityDialogVisible(false)}>Cancelar</Button>
-            <Button onPress={handleAddModality}>Criar</Button>
+            <Button onPress={() => setModalityDialogVisible(false)}>{getString('cancel')}</Button>
+            <Button onPress={handleAddModality}>{getString('create')}</Button>
           </Dialog.Actions>
         </Dialog>
 
         {/* Diálogo para adicionar plano */}
         <Dialog visible={planDialogVisible} onDismiss={() => setPlanDialogVisible(false)}>
-          <Dialog.Title>Novo Plano</Dialog.Title>
+          <Dialog.Title>{getString('newPlan')}</Dialog.Title>
           <Dialog.Content>
             <TextInput
-              label="Nome do Plano"
+              label={getString('planName')}
               value={newPlan.name}
               onChangeText={(text) => setNewPlan({...newPlan, name: text})}
               mode="outlined"
               style={styles.dialogInput}
             />
             <TextInput
-              label="Valor (R$)"
+              label={getString('valueInReais')}
               value={newPlan.value}
               onChangeText={(text) => setNewPlan({...newPlan, value: text})}
               mode="outlined"
@@ -459,7 +461,7 @@ const AdminModalities = ({ navigation }) => {
               style={styles.dialogInput}
             />
             <TextInput
-              label="Duração (meses)"
+              label={getString('durationMonths')}
               value={newPlan.duration}
               onChangeText={(text) => setNewPlan({...newPlan, duration: text})}
               mode="outlined"
@@ -467,7 +469,7 @@ const AdminModalities = ({ navigation }) => {
               style={styles.dialogInput}
             />
             <TextInput
-              label="Descrição (opcional)"
+              label={getString('optionalDescription')}
               value={newPlan.description}
               onChangeText={(text) => setNewPlan({...newPlan, description: text})}
               mode="outlined"
@@ -477,24 +479,24 @@ const AdminModalities = ({ navigation }) => {
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setPlanDialogVisible(false)}>Cancelar</Button>
-            <Button onPress={handleAddPlan}>Criar</Button>
+            <Button onPress={() => setPlanDialogVisible(false)}>{getString('cancel')}</Button>
+            <Button onPress={handleAddPlan}>{getString('create')}</Button>
           </Dialog.Actions>
         </Dialog>
 
         {/* Diálogo para adicionar aviso */}
         <Dialog visible={announcementDialogVisible} onDismiss={() => setAnnouncementDialogVisible(false)}>
-          <Dialog.Title>Novo Aviso</Dialog.Title>
+          <Dialog.Title>{getString('newAnnouncement')}</Dialog.Title>
           <Dialog.Content>
             <TextInput
-              label="Título do Aviso"
+              label={getString('announcementTitle')}
               value={newAnnouncement.title}
               onChangeText={(text) => setNewAnnouncement({...newAnnouncement, title: text})}
               mode="outlined"
               style={styles.dialogInput}
             />
             <TextInput
-              label="Conteúdo"
+              label={getString('content')}
               value={newAnnouncement.content}
               onChangeText={(text) => setNewAnnouncement({...newAnnouncement, content: text})}
               mode="outlined"
@@ -503,7 +505,7 @@ const AdminModalities = ({ navigation }) => {
               style={styles.dialogInput}
             />
             <TextInput
-              label="Data de Expiração (opcional)"
+              label={getString('optionalExpirationDate')}
               value={newAnnouncement.expirationDate}
               onChangeText={(text) => setNewAnnouncement({...newAnnouncement, expirationDate: text})}
               mode="outlined"
@@ -511,34 +513,34 @@ const AdminModalities = ({ navigation }) => {
               style={styles.dialogInput}
             />
             
-            <Text style={styles.sectionLabel}>Público-alvo:</Text>
+            <Text style={styles.sectionLabel}>{getString('targetAudience')}</Text>
             <View style={styles.audienceContainer}>
               <Chip 
                 selected={newAnnouncement.targetAudience === 'all'}
                 onPress={() => setNewAnnouncement({...newAnnouncement, targetAudience: 'all'})}
                 style={styles.audienceChip}
               >
-                Todos
+                {getString('all')}
               </Chip>
               <Chip 
                 selected={newAnnouncement.targetAudience === 'students'}
                 onPress={() => setNewAnnouncement({...newAnnouncement, targetAudience: 'students'})}
                 style={styles.audienceChip}
               >
-                Alunos
+                {getString('students')}
               </Chip>
               <Chip 
                 selected={newAnnouncement.targetAudience === 'instructors'}
                 onPress={() => setNewAnnouncement({...newAnnouncement, targetAudience: 'instructors'})}
                 style={styles.audienceChip}
               >
-                Instrutores
+                {getString('instructors')}
               </Chip>
             </View>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setAnnouncementDialogVisible(false)}>Cancelar</Button>
-            <Button onPress={handleAddAnnouncement}>Publicar</Button>
+            <Button onPress={() => setAnnouncementDialogVisible(false)}>{getString('cancel')}</Button>
+            <Button onPress={handleAddAnnouncement}>{getString('publish')}</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>

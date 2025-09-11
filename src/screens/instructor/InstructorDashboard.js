@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService, classService, studentService, announcementService } from '../../services/firestoreService';
 import AnimatedCard from '../../components/AnimatedCard';
 import AnimatedButton from '../../components/AnimatedButton';
@@ -24,6 +25,7 @@ import { useAnimation, ResponsiveUtils } from '../../utils/animations';
 
 const InstructorDashboard = ({ navigation }) => {
   const { user, userProfile } = useAuth();
+  const { getString } = useTheme();
   const { animations, startEntryAnimation } = useAnimation();
   const scrollY = new Animated.Value(0);
   
@@ -63,13 +65,13 @@ const InstructorDashboard = ({ navigation }) => {
       
       setAnnouncements(formattedAnnouncements);
     } catch (error) {
-      console.error('Erro ao carregar anúncios:', error);
+      console.error(getString('errorLoadingAnnouncements'), error);
       // Em caso de erro, exibe uma mensagem genérica
       setAnnouncements([{
         id: 'error',
-        title: 'Erro ao carregar',
-        message: 'Não foi possível carregar os avisos. Tente novamente mais tarde.',
-        date: 'Agora',
+        title: getString('errorLoadingData'),
+        message: getString('couldNotLoadAnnouncements'),
+        date: getString('now'),
         isError: true
       }]);
     } finally {
@@ -79,7 +81,7 @@ const InstructorDashboard = ({ navigation }) => {
 
   // Função para formatar a data do anúncio
   const formatDate = (date) => {
-    if (!date) return 'Data desconhecida';
+    if (!date) return getString('unknownDate');
     
     try {
       const now = new Date();
@@ -87,34 +89,34 @@ const InstructorDashboard = ({ navigation }) => {
       const diffTime = Math.abs(now - announcementDate);
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       
-      if (diffDays === 0) return 'Hoje';
-      if (diffDays === 1) return 'Ontem';
-      if (diffDays < 7) return `Há ${diffDays} dias`;
+      if (diffDays === 0) return getString('today');
+      if (diffDays === 1) return getString('yesterday');
+      if (diffDays < 7) return getString('daysAgo').replace('{days}', diffDays);
       
       return announcementDate.toLocaleDateString('pt-BR');
     } catch (error) {
-      console.error('Erro ao formatar data:', error);
-      return 'Data desconhecida';
+      console.error(getString('errorFormattingDate'), error);
+      return getString('unknownDate');
     }
   };
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      console.log('📊 Carregando dashboard do instrutor:', user.uid);
+      console.log(getString('loadingInstructorDashboard'), user.uid);
       
       // Buscar turmas do professor com tratamento de erro
       let instructorClasses = [];
       try {
         instructorClasses = await classService.getClassesByInstructor(user.uid, user?.email);
-        console.log(`✅ ${instructorClasses.length} turmas carregadas`);
+        console.log(getString('classesLoaded').replace('{count}', instructorClasses.length));
       } catch (classError) {
-        console.warn('⚠️ Erro ao buscar turmas via service:', classError);
+        console.warn(getString('errorSearchingClasses'), classError);
         try {
           instructorClasses = await firestoreService.getWhere('classes', 'instructorId', '==', user.uid);
-          console.log(`✅ Fallback: ${instructorClasses.length} turmas encontradas`);
+          console.log(getString('fallbackClasses').replace('{count}', instructorClasses.length));
         } catch (fallbackError) {
-          console.error('❌ Falha no fallback para turmas:', fallbackError);
+          console.error(getString('fallbackClassesError'), fallbackError);
           instructorClasses = [];
         }
       }
@@ -123,9 +125,9 @@ const InstructorDashboard = ({ navigation }) => {
       let instructorStudents = [];
       try {
         instructorStudents = await studentService.getStudentsByInstructor(user.uid);
-        console.log(`✅ ${instructorStudents.length} alunos carregados`);
+        console.log(getString('studentsLoaded').replace('{count}', instructorStudents.length));
       } catch (studentError) {
-        console.warn('⚠️ Erro ao buscar alunos via service:', studentError);
+        console.warn(getString('errorSearchingStudents'), studentError);
         instructorStudents = [];
       }
       
@@ -160,9 +162,9 @@ const InstructorDashboard = ({ navigation }) => {
         upcomingClasses
       });
       
-      console.log('✅ Dashboard do instrutor carregado com sucesso');
+      console.log(getString('instructorDashboardLoaded'));
     } catch (error) {
-      console.error('Erro geral ao carregar dashboard do professor:', error);
+      console.error(getString('generalErrorLoadingDashboard'), error);
       // Em caso de erro total, definir dados vazios para evitar crash
       setDashboardData({
         myClasses: [],
@@ -245,14 +247,14 @@ const InstructorDashboard = ({ navigation }) => {
                 </Animated.View>
                 <View style={styles.headerText}>
                   <Text style={styles.welcomeText}>
-                    Olá, {userProfile?.name?.split(' ')[0] || 'Professor'}! 👋
+                    {getString('hello')}, {userProfile?.name?.split(' ')[0] || 'Professor'}! 👋
                   </Text>
                   <Text style={styles.roleText}>
-                    {userProfile?.specialties?.join(' • ') || 'Instrutor de Artes Marciais'}
+                    {userProfile?.specialties?.join(' • ') || getString('martialArtsInstructor')}
                   </Text>
                   <View style={styles.statusBadge}>
                     <MaterialCommunityIcons name="circle" size={8} color="#4CAF50" />
-                    <Text style={styles.statusText}>Online</Text>
+                    <Text style={styles.statusText}>{getString('online')}</Text>
                   </View>
                 </View>
                 <Animated.View style={{ opacity: animations.fadeAnim }}>
@@ -276,7 +278,7 @@ const InstructorDashboard = ({ navigation }) => {
             >
               <MaterialCommunityIcons name="school-outline" size={32} color="white" />
               <Text style={styles.statNumber}>{dashboardData.myClasses.length}</Text>
-              <Text style={styles.statLabel}>Minhas Turmas</Text>
+              <Text style={styles.statLabel}>{getString('myClasses')}</Text>
             </LinearGradient>
           </Animated.View>
 
@@ -287,7 +289,7 @@ const InstructorDashboard = ({ navigation }) => {
             >
               <MaterialCommunityIcons name="account-group" size={32} color="white" />
               <Text style={styles.statNumber}>{dashboardData.totalStudents}</Text>
-              <Text style={styles.statLabel}>Total Alunos</Text>
+              <Text style={styles.statLabel}>{getString('totalStudents')}</Text>
             </LinearGradient>
           </Animated.View>
 
@@ -298,7 +300,7 @@ const InstructorDashboard = ({ navigation }) => {
             >
               <MaterialCommunityIcons name="calendar-today" size={32} color="white" />
               <Text style={styles.statNumber}>{dashboardData.todayClasses.length}</Text>
-              <Text style={styles.statLabel}>Aulas Hoje</Text>
+              <Text style={styles.statLabel}>{getString('classesToday')}</Text>
             </LinearGradient>
           </Animated.View>
 
@@ -309,7 +311,7 @@ const InstructorDashboard = ({ navigation }) => {
             >
               <MaterialCommunityIcons name="check-circle" size={32} color="white" />
               <Text style={styles.statNumber}>{dashboardData.activeCheckIns}</Text>
-              <Text style={styles.statLabel}>Check-ins</Text>
+              <Text style={styles.statLabel}>{getString('checkIns')}</Text>
             </LinearGradient>
           </Animated.View>
         </View>
@@ -322,9 +324,9 @@ const InstructorDashboard = ({ navigation }) => {
                 <MaterialCommunityIcons name="clock-time-four" size={24} color="#2196F3" />
               </View>
               <View>
-                <Title style={styles.modernCardTitle}>Agenda de Hoje</Title>
+                <Title style={styles.modernCardTitle}>{getString('todaySchedule')}</Title>
                 <Text style={styles.modernCardSubtitle}>
-                  {dashboardData.todayClasses.length} aula(s) programada(s)
+                  {dashboardData.todayClasses.length} {getString('classesScheduled')}
                 </Text>
               </View>
             </View>
@@ -365,7 +367,7 @@ const InstructorDashboard = ({ navigation }) => {
                         <View style={styles.timelineInfo}>
                           <MaterialCommunityIcons name="account-multiple" size={16} color="#666" />
                           <Text style={styles.timelineText}>
-                            {classItem.currentStudents || 0}/{classItem.maxCapacity || 'N/A'} alunos
+                            {classItem.currentStudents || 0}/{classItem.maxCapacity || 'N/A'} {getString('students')}
                           </Text>
                         </View>
                       </View>
@@ -376,7 +378,7 @@ const InstructorDashboard = ({ navigation }) => {
                         style={styles.timelineButton}
                         compact
                       >
-                        Gerenciar Aula
+                        {getString('manageClass')}
                       </AnimatedButton>
                     </View>
                     {index < dashboardData.todayClasses.length - 1 && (
@@ -388,8 +390,8 @@ const InstructorDashboard = ({ navigation }) => {
             ) : (
               <View style={styles.emptyState}>
                 <MaterialCommunityIcons name="calendar-blank" size={48} color="#ccc" />
-                <Text style={styles.emptyStateText}>Nenhuma aula hoje</Text>
-                <Text style={styles.emptyStateSubtext}>Aproveite para planejar suas próximas aulas</Text>
+                <Text style={styles.emptyStateText}>{getString('noClassesToday')}</Text>
+                <Text style={styles.emptyStateSubtext}>{getString('planNextClasses')}</Text>
               </View>
             )}
           </Card.Content>
@@ -403,8 +405,8 @@ const InstructorDashboard = ({ navigation }) => {
                 <MaterialCommunityIcons name="lightning-bolt" size={24} color="#FF9800" />
               </View>
               <View>
-                <Title style={styles.modernCardTitle}>Ações Rápidas</Title>
-                <Text style={styles.modernCardSubtitle}>Acesso direto às principais funcionalidades</Text>
+                <Title style={styles.modernCardTitle}>{getString('quickActions')}</Title>
+                <Text style={styles.modernCardSubtitle}>{getString('directAccessFunctionalities')}</Text>
               </View>
             </View>
             
@@ -415,8 +417,8 @@ const InstructorDashboard = ({ navigation }) => {
                   style={styles.actionGradient}
                 >
                   <MaterialCommunityIcons name="plus-circle" size={28} color="white" />
-                  <Text style={styles.actionTitle}>Nova Aula</Text>
-                  <Text style={styles.actionSubtitle}>Criar nova turma</Text>
+                  <Text style={styles.actionTitle}>{getString('newClass')}</Text>
+                  <Text style={styles.actionSubtitle}>{getString('createNewClass')}</Text>
                   <AnimatedButton
                     mode="contained"
                     onPress={() => navigation.navigate('NovaAula')}
@@ -425,7 +427,7 @@ const InstructorDashboard = ({ navigation }) => {
                     textColor="white"
                     compact
                   >
-                    Criar
+                    {getString('create')}
                   </AnimatedButton>
                 </LinearGradient>
               </Animated.View>
@@ -436,8 +438,8 @@ const InstructorDashboard = ({ navigation }) => {
                   style={styles.actionGradient}
                 >
                   <MaterialCommunityIcons name="qrcode-scan" size={28} color="white" />
-                  <Text style={styles.actionTitle}>Check-in</Text>
-                  <Text style={styles.actionSubtitle}>Presença digital</Text>
+                  <Text style={styles.actionTitle}>{getString('checkIn')}</Text>
+                  <Text style={styles.actionSubtitle}>{getString('digitalAttendance')}</Text>
                   <AnimatedButton
                     mode="contained"
                     onPress={() => navigation.navigate('CheckIn')}
@@ -446,7 +448,7 @@ const InstructorDashboard = ({ navigation }) => {
                     textColor="white"
                     compact
                   >
-                    Abrir
+                    {getString('open')}
                   </AnimatedButton>
                 </LinearGradient>
               </Animated.View>
@@ -457,8 +459,8 @@ const InstructorDashboard = ({ navigation }) => {
                   style={styles.actionGradient}
                 >
                   <MaterialCommunityIcons name="chart-line" size={28} color="white" />
-                  <Text style={styles.actionTitle}>Relatórios</Text>
-                  <Text style={styles.actionSubtitle}>Análise de dados</Text>
+                  <Text style={styles.actionTitle}>{getString('reports')}</Text>
+                  <Text style={styles.actionSubtitle}>{getString('dataAnalysis')}</Text>
                   <AnimatedButton
                     mode="contained"
                     onPress={() => navigation.navigate('Relatorios')}
@@ -467,7 +469,7 @@ const InstructorDashboard = ({ navigation }) => {
                     textColor="white"
                     compact
                   >
-                    Ver
+                    {getString('view')}
                   </AnimatedButton>
                 </LinearGradient>
               </Animated.View>
@@ -483,8 +485,8 @@ const InstructorDashboard = ({ navigation }) => {
                 <MaterialCommunityIcons name="bullhorn" size={24} color="#FF5722" />
               </View>
               <View style={styles.headerTitleContainer}>
-                <Title style={styles.modernCardTitle}>Avisos</Title>
-                <Text style={styles.modernCardSubtitle}>Comunicados importantes</Text>
+                <Title style={styles.modernCardTitle}>{getString('announcements')}</Title>
+                <Text style={styles.modernCardSubtitle}>{getString('importantCommunications')}</Text>
               </View>
               <AnimatedButton
                 icon="refresh"
@@ -494,14 +496,14 @@ const InstructorDashboard = ({ navigation }) => {
                 compact
                 style={styles.refreshButton}
               >
-                {loadingAnnouncements ? '' : 'Atualizar'}
+                {loadingAnnouncements ? '' : getString('update')}
               </AnimatedButton>
             </View>
             
             {loadingAnnouncements ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="small" color="#4CAF50" />
-                <Text style={styles.loadingText}>Carregando avisos...</Text>
+                <Text style={styles.loadingText}>{getString('loadingAnnouncements')}</Text>
               </View>
             ) : announcements.length > 0 ? (
               <View style={styles.announcementsContainer}>
@@ -516,7 +518,7 @@ const InstructorDashboard = ({ navigation }) => {
                     {announcement.priority > 0 && (
                       <View style={styles.priorityBadge}>
                         <MaterialCommunityIcons name="alert-circle" size={16} color="#FFC107" />
-                        <Text style={styles.priorityText}>Importante</Text>
+                        <Text style={styles.priorityText}>{getString('important')}</Text>
                       </View>
                     )}
                     <Text style={styles.announcementTitle}>
@@ -540,8 +542,8 @@ const InstructorDashboard = ({ navigation }) => {
             ) : (
               <View style={styles.emptyState}>
                 <MaterialCommunityIcons name="bell-off-outline" size={48} color="#BDBDBD" />
-                <Text style={styles.emptyStateText}>Nenhum aviso no momento</Text>
-                <Text style={styles.emptyStateSubtext}>Você será notificado quando houver novos comunicados</Text>
+                <Text style={styles.emptyStateText}>{getString('noAnnouncementsNow')}</Text>
+                <Text style={styles.emptyStateSubtext}>{getString('notifyNewCommunications')}</Text>
               </View>
             )}
           </Card.Content>
@@ -553,7 +555,7 @@ const InstructorDashboard = ({ navigation }) => {
             <View style={styles.cardHeader}>
               <Ionicons name="trophy-outline" size={24} color="#FFD700" />
               <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
-                Graduações Recentes
+                {getString('recentGraduations')}
               </Title>
             </View>
             
@@ -582,7 +584,7 @@ const InstructorDashboard = ({ navigation }) => {
               ))
             ) : (
               <Paragraph style={[styles.emptyText, { fontSize: ResponsiveUtils.fontSize.small }]}>
-                Nenhuma graduação recente
+                {getString('noRecentGraduations')}
               </Paragraph>
             )}
             
@@ -591,7 +593,7 @@ const InstructorDashboard = ({ navigation }) => {
               onPress={() => {/* Implementar histórico completo */}}
               style={styles.viewAllButton}
             >
-              Ver Todas as Graduações
+              {getString('viewAllGraduations')}
             </AnimatedButton>
           </Card.Content>
         </AnimatedCard>
@@ -602,7 +604,7 @@ const InstructorDashboard = ({ navigation }) => {
             <View style={styles.cardHeader}>
               <Ionicons name="calendar-outline" size={24} color="#FF9800" />
               <Title style={[styles.cardTitle, { fontSize: ResponsiveUtils.fontSize.medium }]}>
-                Próximas Aulas
+                {getString('upcomingClasses')}
               </Title>
             </View>
             
@@ -629,7 +631,7 @@ const InstructorDashboard = ({ navigation }) => {
                   <Text style={[styles.upcomingClassInfo, { fontSize: ResponsiveUtils.fontSize.small }]}>
                     {classItem.modality} • {classItem.schedule?.[0] ? 
                       `${getDayName(classItem.schedule[0].dayOfWeek)} ${formatTime(classItem.schedule[0].hour)}` 
-                      : 'Horário não definido'}
+                      : getString('scheduleNotDefined')}
                   </Text>
                   {index < dashboardData.upcomingClasses.length - 1 && (
                     <Divider style={styles.divider} />
@@ -638,7 +640,7 @@ const InstructorDashboard = ({ navigation }) => {
               ))
             ) : (
               <Paragraph style={[styles.emptyText, { fontSize: ResponsiveUtils.fontSize.small }]}>
-                Nenhuma aula próxima
+                {getString('noUpcomingClasses')}
               </Paragraph>
             )}
             
@@ -647,7 +649,7 @@ const InstructorDashboard = ({ navigation }) => {
               onPress={() => navigation.navigate('Turmas')}
               style={styles.viewAllButton}
             >
-              Ver Todas as Turmas
+              {getString('viewAllClasses')}
             </AnimatedButton>
           </Card.Content>
         </AnimatedCard>

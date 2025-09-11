@@ -8,6 +8,8 @@ import {
   Paragraph,
   Button,
   ActivityIndicator,
+  Snackbar,
+  HelperText
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,48 +19,93 @@ import { auth } from '../../services/firebase';
 import AnimatedCard from '../../components/AnimatedCard';
 import AnimatedButton from '../../components/AnimatedButton';
 import { ResponsiveUtils } from '../../utils/animations';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function ForgotPasswordScreen({ navigation }) {
+  const { getString } = useTheme();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  
+  // Feedback states
+  const [snackbar, setSnackbar] = useState({
+    visible: false,
+    message: '',
+    type: 'info' // 'success', 'error', 'info'
+  });
+  const [errors, setErrors] = useState({});
 
-  const handleResetPassword = async () => {
+  const showSnackbar = (message, type = 'info') => {
+    setSnackbar({
+      visible: true,
+      message,
+      type
+    });
+  };
+
+  const hideSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, visible: false }));
+  };
+
+  const validateEmail = () => {
+    const newErrors = {};
+
     if (!email.trim()) {
-      Alert.alert('Erro', 'Por favor, digite seu email');
-      return;
+      newErrors.email = getString('emailRequired');
+    } else if (!/\S+@\S+\.\S+/.test(email.trim())) {
+      newErrors.email = getString('invalidEmail');
     }
 
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      Alert.alert('Erro', 'Por favor, digite um email válido');
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleResetPassword = async () => {
+    if (!validateEmail()) {
+      showSnackbar(getString('pleaseValidEmail'), 'error');
       return;
     }
 
     setLoading(true);
+    console.log('🔄 Iniciando processo de recuperação de senha...');
+    console.log('📧 Email:', email.trim());
+    console.log('🔥 Auth object:', auth);
+    
     try {
+      console.log('📤 Enviando email de recuperação...');
       await sendPasswordResetEmail(auth, email.trim());
+      console.log('✅ Email de recuperação enviado com sucesso!');
+      
       setEmailSent(true);
-      Alert.alert(
-        'Email Enviado!',
-        'Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack()
-          }
-        ]
-      );
+      showSnackbar(getString('emailSentSuccess'), 'success');
+      
+      // Auto-voltar após 5 segundos para dar tempo de ler
+      setTimeout(() => {
+        navigation.goBack();
+      }, 5000);
     } catch (error) {
-      console.error('Erro ao enviar email:', error);
-      let errorMessage = 'Erro ao enviar email de recuperação';
+      console.error('❌ Erro detalhado ao enviar email:', error);
+      console.error('❌ Error code:', error.code);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error stack:', error.stack);
+      
+      let errorMessage = getString('resetPasswordError');
       
       if (error.code === 'auth/user-not-found') {
-        errorMessage = 'Email não encontrado';
+        errorMessage = getString('emailNotFound');
       } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Email inválido';
+        errorMessage = getString('invalidEmailFormat');
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = getString('tooManyRequests');
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = getString('networkError');
+      } else if (error.code === 'auth/configuration-not-found') {
+        errorMessage = getString('configurationNotFound');
+      } else if (error.message) {
+        errorMessage = `${getString('error')}: ${error.message}`;
       }
       
-      Alert.alert('Erro', errorMessage);
+      showSnackbar(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -87,9 +134,9 @@ export default function ForgotPasswordScreen({ navigation }) {
                 color="white" 
                 style={styles.headerIcon}
               />
-              <Title style={styles.headerTitle}>Recuperar Senha</Title>
+              <Title style={styles.headerTitle}>{getString('recoverPassword')}</Title>
               <Paragraph style={styles.headerSubtitle}>
-                Digite seu email para receber instruções
+                {getString('enterEmailForInstructions')}
               </Paragraph>
             </View>
 
@@ -99,16 +146,23 @@ export default function ForgotPasswordScreen({ navigation }) {
               {!emailSent ? (
                 <>
                   <TextInput
-                    label="Email"
+                    label={getString('email')}
                     value={email}
-                    onChangeText={setEmail}
+                    onChangeText={(text) => {
+                      setEmail(text);
+                      if (errors.email) {
+                        setErrors(prev => ({ ...prev, email: null }));
+                      }
+                    }}
                     mode="outlined"
                     style={styles.input}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     disabled={loading}
                     left={<TextInput.Icon icon="email" />}
+                    error={!!errors.email}
                   />
+                  {errors.email && <HelperText type="error" style={styles.errorText}>{errors.email}</HelperText>}
 
                   <AnimatedButton
                     mode="contained"
@@ -118,7 +172,7 @@ export default function ForgotPasswordScreen({ navigation }) {
                     disabled={loading}
                     icon="email-send"
                   >
-                    Enviar Email
+                    {getString('sendEmail')}
                   </AnimatedButton>
                 </>
               ) : (
@@ -129,9 +183,12 @@ export default function ForgotPasswordScreen({ navigation }) {
                     color="#4CAF50" 
                     style={styles.successIcon}
                   />
-                  <Title style={styles.successTitle}>Email Enviado!</Title>
+                  <Title style={styles.successTitle}>{getString('emailSent')}</Title>
                   <Paragraph style={styles.successText}>
-                    Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.
+                    {getString('checkInboxInstructions')}
+                  </Paragraph>
+                  <Paragraph style={styles.spamWarning}>
+                    {getString('spamFolderWarning')}
                   </Paragraph>
                 </View>
               )}
@@ -143,7 +200,7 @@ export default function ForgotPasswordScreen({ navigation }) {
                   disabled={loading}
                   icon="arrow-left"
                 >
-                  Voltar ao Login
+                  {getString('backToLogin')}
                 </Button>
               </View>
             </Card.Content>
@@ -151,6 +208,25 @@ export default function ForgotPasswordScreen({ navigation }) {
         </View>
           </ScrollView>
         </KeyboardAvoidingView>
+        
+        {/* Snackbar para feedback */}
+        <Snackbar
+          visible={snackbar.visible}
+          onDismiss={hideSnackbar}
+          duration={snackbar.type === 'success' ? 4000 : 6000}
+          style={[
+            styles.snackbar,
+            snackbar.type === 'success' && styles.snackbarSuccess,
+            snackbar.type === 'error' && styles.snackbarError
+          ]}
+          action={{
+            label: getString('close'),
+            onPress: hideSnackbar,
+            textColor: 'white'
+          }}
+        >
+          {snackbar.message}
+        </Snackbar>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -232,5 +308,37 @@ const styles = StyleSheet.create({
   backContainer: {
     alignItems: 'center',
     marginTop: ResponsiveUtils?.spacing?.md || 16,
+  },
+  errorText: {
+    marginBottom: 8,
+    marginTop: -8,
+  },
+  snackbar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    margin: 16,
+  },
+  snackbarSuccess: {
+    backgroundColor: '#4caf50',
+  },
+  snackbarError: {
+    backgroundColor: '#f44336',
+  },
+  spamWarning: {
+    textAlign: 'center',
+    color: '#FF9800',
+    marginTop: 12,
+    fontSize: 14,
+    backgroundColor: '#FFF3E0',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF9800',
+  },
+  spamWarningBold: {
+    fontWeight: 'bold',
+    color: '#F57C00',
   },
 });

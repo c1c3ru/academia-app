@@ -18,11 +18,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService, classService, studentService } from '../../services/firestoreService';
 import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';
 
 const AdminClasses = ({ navigation }) => {
   const { user } = useAuth();
+  const { getString } = useTheme();
   const [classes, setClasses] = useState([]);
   const [filteredClasses, setFilteredClasses] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,14 +70,14 @@ const AdminClasses = ({ navigation }) => {
               ...classItem,
               currentStudents: students.length,
               students: students,
-              instructorName: instructor?.name || 'Não atribuído'
+              instructorName: instructor?.name || getString('notAssigned')
             };
           } catch (error) {
             return {
               ...classItem,
               currentStudents: 0,
               students: [],
-              instructorName: 'Não atribuído'
+              instructorName: getString('notAssigned')
             };
           }
         })
@@ -83,8 +85,8 @@ const AdminClasses = ({ navigation }) => {
       
       setClasses(classesWithDetails);
     } catch (error) {
-      console.error('Erro ao carregar turmas:', error);
-      Alert.alert('Erro', 'Não foi possível carregar as turmas');
+      console.error(getString('logoutError'), error);
+      Alert.alert(getString('error'), getString('errorLoadingClasses'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -190,12 +192,12 @@ const AdminClasses = ({ navigation }) => {
 
   const handleDeleteClass = (classItem) => {
     Alert.alert(
-      'Confirmar Exclusão',
-      `Tem certeza que deseja excluir a turma ${classItem.name}?`,
+      getString('confirmDeletion'),
+      getString('confirmDeleteClass').replace('{className}', classItem.name),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: getString('cancel'), style: 'cancel' },
         { 
-          text: 'Excluir', 
+          text: getString('delete'), 
           style: 'destructive',
           onPress: async () => {
             try {
@@ -205,11 +207,11 @@ const AdminClasses = ({ navigation }) => {
               await firestoreService.delete('classes', classItem.id);
               // Garantir sincronização com servidor
               loadClasses();
-              Alert.alert('Sucesso', 'Turma excluída com sucesso');
+              Alert.alert(getString('success'), getString('classDeletedSuccess'));
             } catch (error) {
               // Em caso de erro, recarregar lista para reverter remoção otimista
               loadClasses();
-              Alert.alert('Erro', 'Não foi possível excluir a turma');
+              Alert.alert(getString('error'), getString('errorDeletingClass'));
             }
           }
         }
@@ -236,9 +238,9 @@ const AdminClasses = ({ navigation }) => {
       if (typeof classItem?.scheduleText === 'string' && classItem.scheduleText.trim()) {
         return classItem.scheduleText.trim();
       }
-      return 'Horário não definido';
+      return getString('scheduleNotDefined');
     } catch (e) {
-      return 'Horário não definido';
+      return getString('scheduleNotDefined');
     }
   };
 
@@ -252,21 +254,21 @@ const AdminClasses = ({ navigation }) => {
 
   const getFilterText = (filter) => {
     const filters = {
-      'all': 'Todas',
-      'active': 'Ativas',
-      'inactive': 'Inativas',
-      'full': 'Lotadas',
-      'empty': 'Vazias',
-      'no_instructor': 'Sem Professor'
+      'all': getString('allClasses'),
+      'active': getString('activeClasses'),
+      'inactive': getString('inactiveClasses'),
+      'full': getString('fullClasses'),
+      'empty': getString('emptyClasses'),
+      'no_instructor': getString('noInstructor')
     };
-    return filters[filter] || 'Todas';
+    return filters[filter] || getString('allClasses');
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Searchbar
-          placeholder="Buscar turmas..."
+          placeholder={getString('searchClasses')}
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchbar}
@@ -287,13 +289,13 @@ const AdminClasses = ({ navigation }) => {
               </Button>
             }
           >
-            <Menu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title="Todas" />
-            <Menu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title="Ativas" />
-            <Menu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title="Inativas" />
+            <Menu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title={getString('allClasses')} />
+            <Menu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title={getString('activeClasses')} />
+            <Menu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title={getString('inactiveClasses')} />
             <Divider />
-            <Menu.Item onPress={() => { setSelectedFilter('full'); setFilterVisible(false); }} title="Lotadas" />
-            <Menu.Item onPress={() => { setSelectedFilter('empty'); setFilterVisible(false); }} title="Vazias" />
-            <Menu.Item onPress={() => { setSelectedFilter('no_instructor'); setFilterVisible(false); }} title="Sem Professor" />
+            <Menu.Item onPress={() => { setSelectedFilter('full'); setFilterVisible(false); }} title={getString('fullClasses')} />
+            <Menu.Item onPress={() => { setSelectedFilter('empty'); setFilterVisible(false); }} title={getString('emptyClasses')} />
+            <Menu.Item onPress={() => { setSelectedFilter('no_instructor'); setFilterVisible(false); }} title={getString('noInstructor')} />
           </Menu>
         </View>
       </View>
@@ -326,8 +328,8 @@ const AdminClasses = ({ navigation }) => {
                       />
                     }
                   >
-                    <Menu.Item onPress={() => handleEditClass(classItem)} title="Editar" />
-                    <Menu.Item onPress={() => handleDeleteClass(classItem)} title="Excluir" />
+                    <Menu.Item onPress={() => handleEditClass(classItem)} title={getString('edit')} />
+                    <Menu.Item onPress={() => handleDeleteClass(classItem)} title={getString('delete')} />
                   </Menu>
                 </View>
 
@@ -335,7 +337,7 @@ const AdminClasses = ({ navigation }) => {
                   <View style={styles.detailRow}>
                     <Ionicons name="person-outline" size={16} color="#666" />
                     <Text style={styles.detailText}>
-                      Professor: {classItem.instructorName}
+                      {getString('professor')}: {classItem.instructorName}
                     </Text>
                   </View>
 
@@ -352,7 +354,7 @@ const AdminClasses = ({ navigation }) => {
                       styles.detailText,
                       { color: getCapacityColor(classItem.currentStudents, classItem.maxCapacity) }
                     ]}>
-                      {classItem.currentStudents}/{classItem.maxCapacity || 'N/A'} alunos
+                      {classItem.currentStudents}/{classItem.maxCapacity || 'N/A'} {getString('students')}
                     </Text>
                   </View>
 
@@ -376,7 +378,7 @@ const AdminClasses = ({ navigation }) => {
                       fontSize: 12
                     }}
                   >
-                    {classItem.isActive !== false ? 'Ativa' : 'Inativa'}
+                    {classItem.isActive !== false ? getString('active') : getString('inactive')}
                   </Chip>
 
                   {classItem.currentStudents >= (classItem.maxCapacity || 999) && (
@@ -385,7 +387,7 @@ const AdminClasses = ({ navigation }) => {
                       style={[styles.statusChip, { borderColor: '#F44336' }]}
                       textStyle={{ color: '#F44336', fontSize: 12 }}
                     >
-                      Lotada
+                      {getString('full')}
                     </Chip>
                   )}
 
@@ -395,7 +397,7 @@ const AdminClasses = ({ navigation }) => {
                       style={[styles.statusChip, { borderColor: '#FF9800' }]}
                       textStyle={{ color: '#FF9800', fontSize: 12 }}
                     >
-                      Sem Professor
+                      {getString('withoutInstructor')}
                     </Chip>
                   )}
                 </View>
@@ -411,7 +413,7 @@ const AdminClasses = ({ navigation }) => {
                     variant="primary"
                     size="small"
                   >
-                    Ver Detalhes
+                    {getString('viewDetails')}
                   </ActionButton>
 
                   <ActionButton 
@@ -422,7 +424,7 @@ const AdminClasses = ({ navigation }) => {
                     variant="warning"
                     size="small"
                   >
-                    Editar
+                    {getString('edit')}
                   </ActionButton>
 
                   <ActionButton 
@@ -433,7 +435,7 @@ const AdminClasses = ({ navigation }) => {
                     variant="success"
                     size="small"
                   >
-                    Alunos
+                    {getString('studentsTab')}
                   </ActionButton>
                 </ActionButtonGroup>
               </Card.Content>
@@ -443,11 +445,11 @@ const AdminClasses = ({ navigation }) => {
           <Card style={styles.emptyCard}>
             <Card.Content style={styles.emptyContent}>
               <Ionicons name="school-outline" size={48} color="#ccc" />
-              <Title style={styles.emptyTitle}>Nenhuma turma encontrada</Title>
+              <Title style={styles.emptyTitle}>{getString('noClassesFound')}</Title>
               <Paragraph style={styles.emptyText}>
                 {searchQuery ? 
-                  'Nenhuma turma corresponde à sua busca' : 
-                  'Nenhuma turma cadastrada ainda'
+                  getString('noMatchingClasses') : 
+                  getString('noClassesRegistered')
                 }
               </Paragraph>
             </Card.Content>
@@ -458,33 +460,33 @@ const AdminClasses = ({ navigation }) => {
         {classes.length > 0 && (
           <Card style={styles.statsCard}>
             <Card.Content>
-              <Title style={styles.statsTitle}>Estatísticas das Turmas</Title>
+              <Title style={styles.statsTitle}>{getString('classStatistics')}</Title>
               
               <View style={styles.statsGrid}>
                 <View style={styles.statItem}>
                   <Text style={styles.statNumber}>{classes.length}</Text>
-                  <Text style={styles.statLabel}>Total</Text>
+                  <Text style={styles.statLabel}>{getString('total')}</Text>
                 </View>
                 
                 <View style={styles.statItem}>
                   <Text style={styles.statNumber}>
                     {classes.filter(c => c.isActive !== false).length}
                   </Text>
-                  <Text style={styles.statLabel}>Ativas</Text>
+                  <Text style={styles.statLabel}>{getString('activeClasses')}</Text>
                 </View>
                 
                 <View style={styles.statItem}>
                   <Text style={styles.statNumber}>
                     {classes.reduce((sum, c) => sum + (c.currentStudents || 0), 0)}
                   </Text>
-                  <Text style={styles.statLabel}>Total Alunos</Text>
+                  <Text style={styles.statLabel}>{getString('totalStudents')}</Text>
                 </View>
                 
                 <View style={styles.statItem}>
                   <Text style={styles.statNumber}>
                     {[...new Set(classes.map(c => c.modality))].length}
                   </Text>
-                  <Text style={styles.statLabel}>Modalidades</Text>
+                  <Text style={styles.statLabel}>{getString('modalities')}</Text>
                 </View>
               </View>
             </Card.Content>
@@ -495,7 +497,7 @@ const AdminClasses = ({ navigation }) => {
       <FAB
         style={styles.fab}
         icon="plus"
-        label="Nova Turma"
+        label={getString('newClass')}
         onPress={handleAddClass}
       />
     </SafeAreaView>

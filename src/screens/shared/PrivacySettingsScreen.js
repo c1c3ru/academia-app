@@ -14,10 +14,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';
 
 const PrivacySettingsScreen = ({ navigation }) => {
   const { user, userProfile, updateUserProfile } = useAuth();
+  const { getString } = useTheme();
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState({
     // Consentimentos LGPD
@@ -55,7 +57,7 @@ const PrivacySettingsScreen = ({ navigation }) => {
         });
       }
     } catch (error) {
-      console.error('Erro ao carregar configurações:', error);
+      console.error(getString('logoutError'), error);
     }
   };
 
@@ -85,12 +87,12 @@ const PrivacySettingsScreen = ({ navigation }) => {
         privacySettings: updatedSettings
       });
       
-      Alert.alert('Sucesso', 'Configurações de privacidade salvas com sucesso');
+      Alert.alert(getString('success'), getString('settingsSavedSuccess'));
       navigation.goBack();
       
     } catch (error) {
-      console.error('Erro ao salvar configurações:', error);
-      Alert.alert('Erro', 'Não foi possível salvar as configurações');
+      console.error(getString('logoutError'), error);
+      Alert.alert(getString('error'), getString('settingsSaveError'));
     } finally {
       setLoading(false);
     }
@@ -98,15 +100,15 @@ const PrivacySettingsScreen = ({ navigation }) => {
 
   const requestDataExport = () => {
     Alert.alert(
-      'Exportar Dados',
-      'Você receberá um arquivo com todos os seus dados pessoais em até 30 dias, conforme previsto na LGPD.',
+      getString('exportDataTitle'),
+      getString('exportDataMessage'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: getString('cancel'), style: 'cancel' },
         {
-          text: 'Solicitar',
+          text: getString('request'),
           onPress: () => {
             // Aqui seria implementada a lógica para solicitar exportação
-            Alert.alert('Solicitação Enviada', 'Sua solicitação foi registrada. Você receberá os dados por email em até 30 dias.');
+            Alert.alert(getString('requestSent'), getString('exportRequestMessage'));
           }
         }
       ]
@@ -115,25 +117,25 @@ const PrivacySettingsScreen = ({ navigation }) => {
 
   const requestDataDeletion = () => {
     Alert.alert(
-      'Excluir Dados',
-      'ATENÇÃO: Esta ação irá excluir permanentemente todos os seus dados pessoais. Esta ação não pode ser desfeita.',
+      getString('deleteDataTitle'),
+      getString('deleteDataWarning'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: getString('cancel'), style: 'cancel' },
         {
-          text: 'Excluir',
+          text: getString('delete'),
           style: 'destructive',
           onPress: () => {
             Alert.alert(
-              'Confirmação Final',
-              'Tem certeza absoluta que deseja excluir todos os seus dados? Você perderá acesso à sua conta.',
+              getString('finalConfirmation'),
+              getString('deleteConfirmMessage'),
               [
-                { text: 'Cancelar', style: 'cancel' },
+                { text: getString('cancel'), style: 'cancel' },
                 {
-                  text: 'Sim, excluir tudo',
+                  text: getString('deleteAll'),
                   style: 'destructive',
                   onPress: () => {
                     // Aqui seria implementada a lógica para exclusão
-                    Alert.alert('Solicitação Registrada', 'Sua solicitação de exclusão foi registrada. Os dados serão removidos em até 30 dias.');
+                    Alert.alert(getString('requestRegistered'), getString('deleteRequestMessage'));
                   }
                 }
               ]
@@ -148,16 +150,16 @@ const PrivacySettingsScreen = ({ navigation }) => {
     // Aqui você colocaria o link real da política de privacidade
     const privacyPolicyUrl = 'https://academia-app.com/privacy-policy';
     Linking.openURL(privacyPolicyUrl).catch(() => {
-      Alert.alert('Erro', 'Não foi possível abrir a política de privacidade');
+      Alert.alert(getString('error'), getString('privacyPolicyError'));
     });
   };
 
   const getVisibilityText = (visibility) => {
     switch (visibility) {
-      case 'public': return 'Público';
-      case 'academy': return 'Apenas Academia';
-      case 'private': return 'Privado';
-      default: return 'Privado';
+      case 'public': return getString('public');
+      case 'academy': return getString('academy');
+      case 'private': return getString('private');
+      default: return getString('private');
     }
   };
 
@@ -179,24 +181,23 @@ const PrivacySettingsScreen = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="shield-checkmark-outline" size={24} color="#4CAF50" />
-              <Title style={styles.cardTitle}>Status LGPD</Title>
+              <Title style={styles.cardTitle}>{getString('lgpdStatus')}</Title>
               <Chip 
                 mode="outlined"
                 style={styles.statusChip}
                 textStyle={{ fontSize: 12 }}
               >
-                {getConsentStatus()} Consentimentos
+                {getConsentStatus()} {getString('consents')}
               </Chip>
             </View>
 
             <Paragraph style={styles.lgpdInfo}>
-              A Lei Geral de Proteção de Dados (LGPD) garante seus direitos sobre seus dados pessoais. 
-              Configure abaixo como seus dados podem ser utilizados.
+              {getString('lgpdInfo')}
             </Paragraph>
 
             {settings.consentDate && (
               <Text style={styles.consentDate}>
-                Consentimento inicial dado em: {new Date(settings.consentDate).toLocaleDateString('pt-BR')}
+                {getString('consentGivenOn')} {new Date(settings.consentDate).toLocaleDateString('pt-BR')}
               </Text>
             )}
           </Card.Content>
@@ -207,12 +208,12 @@ const PrivacySettingsScreen = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="document-text-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Consentimentos</Title>
+              <Title style={styles.cardTitle}>{getString('consents')}</Title>
             </View>
 
             <List.Item
-              title="Processamento de Dados Pessoais"
-              description="Permitir o uso de dados para funcionamento básico do app"
+              title={getString('dataProcessingConsent')}
+              description={getString('dataProcessingDescription')}
               left={() => <List.Icon icon="database" />}
               right={() => (
                 <Switch
@@ -224,8 +225,8 @@ const PrivacySettingsScreen = ({ navigation }) => {
             <Divider />
 
             <List.Item
-              title="Comunicações de Marketing"
-              description="Receber ofertas, promoções e novidades"
+              title={getString('marketingConsent')}
+              description={getString('marketingDescription')}
               left={() => <List.Icon icon="bullhorn" />}
               right={() => (
                 <Switch
@@ -237,8 +238,8 @@ const PrivacySettingsScreen = ({ navigation }) => {
             <Divider />
 
             <List.Item
-              title="Análise e Melhorias"
-              description="Usar dados para melhorar o app e serviços"
+              title={getString('analyticsConsent')}
+              description={getString('analyticsDescription')}
               left={() => <List.Icon icon="chart-line" />}
               right={() => (
                 <Switch
@@ -250,8 +251,8 @@ const PrivacySettingsScreen = ({ navigation }) => {
             <Divider />
 
             <List.Item
-              title="Compartilhamento com Terceiros"
-              description="Permitir compartilhamento com parceiros (opcional)"
+              title={getString('thirdPartyConsent')}
+              description={getString('thirdPartyDescription')}
               left={() => <List.Icon icon="share-variant" />}
               right={() => (
                 <Switch
@@ -268,23 +269,23 @@ const PrivacySettingsScreen = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="eye-outline" size={24} color="#FF9800" />
-              <Title style={styles.cardTitle}>Visibilidade do Perfil</Title>
+              <Title style={styles.cardTitle}>{getString('profileVisibility')}</Title>
             </View>
 
             <List.Item
-              title="Visibilidade do Perfil"
-              description={`Atualmente: ${getVisibilityText(settings.profileVisibility)}`}
+              title={getString('profileVisibility')}
+              description={`${getString('profileVisibilityDescription')} ${getVisibilityText(settings.profileVisibility)}`}
               left={() => <List.Icon icon="account-circle" />}
               right={() => <List.Icon icon="chevron-right" />}
               onPress={() => {
                 Alert.alert(
-                  'Visibilidade do Perfil',
-                  'Quem pode ver suas informações básicas?',
+                  getString('profileVisibilityTitle'),
+                  getString('profileVisibilityQuestion'),
                   [
-                    { text: 'Público', onPress: () => updateSetting('profileVisibility', 'public') },
-                    { text: 'Apenas Academia', onPress: () => updateSetting('profileVisibility', 'academy') },
-                    { text: 'Privado', onPress: () => updateSetting('profileVisibility', 'private') },
-                    { text: 'Cancelar', style: 'cancel' }
+                    { text: getString('public'), onPress: () => updateSetting('profileVisibility', 'public') },
+                    { text: getString('onlyAcademy'), onPress: () => updateSetting('profileVisibility', 'academy') },
+                    { text: getString('private'), onPress: () => updateSetting('profileVisibility', 'private') },
+                    { text: getString('cancel'), style: 'cancel' }
                   ]
                 );
               }}
@@ -292,8 +293,8 @@ const PrivacySettingsScreen = ({ navigation }) => {
             <Divider />
 
             <List.Item
-              title="Compartilhar Dados de Treino"
-              description="Permitir que instrutores vejam seu progresso"
+              title={getString('shareTrainingData')}
+              description={getString('shareTrainingDescription')}
               left={() => <List.Icon icon="dumbbell" />}
               right={() => (
                 <Switch
@@ -305,8 +306,8 @@ const PrivacySettingsScreen = ({ navigation }) => {
             <Divider />
 
             <List.Item
-              title="Compartilhar Dados de Progresso"
-              description="Permitir comparações e estatísticas gerais"
+              title={getString('shareProgressData')}
+              description={getString('shareProgressDescription')}
               left={() => <List.Icon icon="trending-up" />}
               right={() => (
                 <Switch
@@ -323,12 +324,12 @@ const PrivacySettingsScreen = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="call-outline" size={24} color="#9C27B0" />
-              <Title style={styles.cardTitle}>Formas de Contato</Title>
+              <Title style={styles.cardTitle}>{getString('contactMethods')}</Title>
             </View>
 
             <List.Item
-              title="Contato via WhatsApp"
-              description="Permitir contato da academia via WhatsApp"
+              title={getString('whatsappContact')}
+              description={getString('whatsappDescription')}
               left={() => <List.Icon icon="whatsapp" />}
               right={() => (
                 <Switch
@@ -340,8 +341,8 @@ const PrivacySettingsScreen = ({ navigation }) => {
             <Divider />
 
             <List.Item
-              title="Contato via Email"
-              description="Permitir contato da academia via email"
+              title={getString('emailContact')}
+              description={getString('emailDescription')}
               left={() => <List.Icon icon="email" />}
               right={() => (
                 <Switch
@@ -353,8 +354,8 @@ const PrivacySettingsScreen = ({ navigation }) => {
             <Divider />
 
             <List.Item
-              title="Contato via Telefone"
-              description="Permitir ligações da academia"
+              title={getString('phoneContact')}
+              description={getString('phoneDescription')}
               left={() => <List.Icon icon="phone" />}
               right={() => (
                 <Switch
@@ -371,12 +372,12 @@ const PrivacySettingsScreen = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="person-outline" size={24} color="#F44336" />
-              <Title style={styles.cardTitle}>Seus Direitos</Title>
+              <Title style={styles.cardTitle}>{getString('yourRights')}</Title>
             </View>
 
             <List.Item
-              title="Exportar Meus Dados"
-              description="Baixar uma cópia de todos os seus dados"
+              title={getString('exportData')}
+              description={getString('exportDescription')}
               left={() => <List.Icon icon="download" />}
               right={() => <List.Icon icon="chevron-right" />}
               onPress={requestDataExport}
@@ -384,8 +385,8 @@ const PrivacySettingsScreen = ({ navigation }) => {
             <Divider />
 
             <List.Item
-              title="Política de Privacidade"
-              description="Ler nossa política de privacidade completa"
+              title={getString('privacyPolicy')}
+              description={getString('privacyPolicyDescription')}
               left={() => <List.Icon icon="file-document" />}
               right={() => <List.Icon icon="open-in-new" />}
               onPress={openPrivacyPolicy}
@@ -393,8 +394,8 @@ const PrivacySettingsScreen = ({ navigation }) => {
             <Divider />
 
             <List.Item
-              title="Excluir Meus Dados"
-              description="Solicitar exclusão permanente de todos os dados"
+              title={getString('deleteData')}
+              description={getString('deleteDescription')}
               left={() => <List.Icon icon="delete-forever" color="#F44336" />}
               right={() => <List.Icon icon="chevron-right" />}
               onPress={requestDataDeletion}
@@ -406,18 +407,18 @@ const PrivacySettingsScreen = ({ navigation }) => {
         {/* Informações Importantes */}
         <Card style={styles.card}>
           <Card.Content>
-            <Title style={styles.cardTitle}>Informações Importantes</Title>
+            <Title style={styles.cardTitle}>{getString('importantInfo')}</Title>
             <Text style={styles.infoText}>
-              • Você pode alterar seus consentimentos a qualquer momento
+              {getString('infoChangeConsents')}
             </Text>
             <Text style={styles.infoText}>
-              • Alguns consentimentos são necessários para o funcionamento básico do app
+              {getString('infoRequiredConsents')}
             </Text>
             <Text style={styles.infoText}>
-              • Solicitações de exportação e exclusão são processadas em até 30 dias
+              {getString('infoProcessingTime')}
             </Text>
             <Text style={styles.infoText}>
-              • Para dúvidas sobre privacidade, entre em contato conosco
+              {getString('infoContact')}
             </Text>
           </Card.Content>
         </Card>
@@ -431,7 +432,7 @@ const PrivacySettingsScreen = ({ navigation }) => {
             style={styles.saveButton}
             icon="check"
           >
-            Salvar Configurações
+            {getString('saveSettings')}
           </Button>
         </View>
       </ScrollView>

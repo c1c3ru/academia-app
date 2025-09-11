@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';
 import PaymentDueDateEditor from '../../components/PaymentDueDateEditor';
 
@@ -25,6 +26,7 @@ const { width } = Dimensions.get('window');
 
 const ProfileScreen = ({ navigation }) => {
   const { user, userProfile, updateUserProfile, logout, academia } = useAuth();
+  const { getString } = useTheme();
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -99,7 +101,7 @@ const ProfileScreen = ({ navigation }) => {
       setInjuries(userInjuries);
       
     } catch (error) {
-      console.error('Erro ao carregar dados do aluno:', error);
+      console.error(getString('loadingStudentData'), error);
     }
   };
   
@@ -134,7 +136,7 @@ const ProfileScreen = ({ navigation }) => {
       setCurrentPayment(current);
       
     } catch (error) {
-      console.error('Erro ao carregar pagamento atual:', error);
+      console.error(getString('loadingPaymentData'), error);
     }
   };
 
@@ -152,12 +154,12 @@ const ProfileScreen = ({ navigation }) => {
           daysUntilDue,
           dueDate: dueDate.toLocaleDateString('pt-BR'),
           amount: currentPayment.amount,
-          planName: currentPayment.planName || 'Mensalidade'
+          planName: currentPayment.planName || getString('monthlyPayment')
         });
       }
       
     } catch (error) {
-      console.error('Erro ao verificar vencimento:', error);
+      console.error(getString('checkingPaymentDue'), error);
     }
   };
 
@@ -165,20 +167,20 @@ const ProfileScreen = ({ navigation }) => {
     try {
       await updateUserProfile(formData);
       setEditing(false);
-      Alert.alert('Sucesso', 'Perfil atualizado com sucesso');
+      Alert.alert(getString('success'), getString('profileUpdatedSuccess'));
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível atualizar o perfil');
+      Alert.alert(getString('error'), getString('cannotUpdateProfile'));
     }
   };
 
   const handleLogout = () => {
     Alert.alert(
-      'Sair',
-      'Tem certeza que deseja sair da sua conta?',
+      getString('logout'),
+      getString('confirmLogout'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: getString('cancel'), style: 'cancel' },
         { 
-          text: 'Sair', 
+          text: getString('logout'), 
           style: 'destructive',
           onPress: logout
         }
@@ -188,10 +190,10 @@ const ProfileScreen = ({ navigation }) => {
 
   const getUserTypeText = (userType) => {
     switch (userType) {
-      case 'student': return 'Aluno';
-      case 'instructor': return 'Professor';
-      case 'admin': return 'Administrador';
-      default: return 'Usuário';
+      case 'student': return getString('student');
+      case 'instructor': return getString('instructor');
+      case 'admin': return getString('administrator');
+      default: return getString('user');
     }
   };
 
@@ -216,7 +218,7 @@ const ProfileScreen = ({ navigation }) => {
               style={[styles.avatar, { backgroundColor: getUserTypeColor(userProfile?.userType) }]}
             />
             <View style={styles.headerText}>
-              <Title style={styles.userName}>{userProfile?.name || 'Usuário'}</Title>
+              <Title style={styles.userName}>{userProfile?.name || getString('user')}</Title>
               <Text style={styles.userEmail}>{user?.email}</Text>
               <Chip 
                 mode="outlined"
@@ -235,20 +237,19 @@ const ProfileScreen = ({ navigation }) => {
             <Card.Content>
               <View style={styles.cardHeader}>
                 <Ionicons name="warning-outline" size={24} color="#FF9800" />
-                <Title style={[styles.cardTitle, { color: '#FF9800' }]}>Pagamento Próximo do Vencimento</Title>
+                <Title style={[styles.cardTitle, { color: '#FF9800' }]}>{getString('paymentNearDue')}</Title>
               </View>
               
               <View style={styles.paymentWarning}>
                 <Text style={styles.warningText}>
-                  Seu pagamento de {paymentDueNotification.planName} vence em{' '}
-                  <Text style={styles.warningDays}>
-                    {paymentDueNotification.daysUntilDue === 0 ? 'hoje' : 
-                     paymentDueNotification.daysUntilDue === 1 ? 'amanhã' : 
-                     `${paymentDueNotification.daysUntilDue} dias`}
-                  </Text>
+                  {getString('paymentDueText').replace('{planName}', paymentDueNotification.planName).replace('{days}', 
+                    paymentDueNotification.daysUntilDue === 0 ? getString('paymentDueToday') : 
+                    paymentDueNotification.daysUntilDue === 1 ? getString('paymentDueTomorrow') : 
+                    `${paymentDueNotification.daysUntilDue} ${getString('paymentDueInDays')}`
+                  )}
                 </Text>
                 <Text style={styles.warningDetails}>
-                  Data: {paymentDueNotification.dueDate} | Valor: R$ {paymentDueNotification.amount?.toFixed(2)}
+                  {getString('dateLabel')}: {paymentDueNotification.dueDate} | {getString('valueLabel')}: R$ {paymentDueNotification.amount?.toFixed(2)}
                 </Text>
                 
                 <View style={styles.warningButtons}>
@@ -258,7 +259,7 @@ const ProfileScreen = ({ navigation }) => {
                     style={styles.editDateButton}
                     icon="calendar-edit"
                   >
-                    Alterar Data
+                    {getString('changeDate')}
                   </Button>
                   <Button 
                     mode="contained" 
@@ -266,7 +267,7 @@ const ProfileScreen = ({ navigation }) => {
                     style={styles.payNowButton}
                     icon="credit-card"
                   >
-                    Pagar Agora
+                    {getString('payNow')}
                   </Button>
                 </View>
               </View>
@@ -279,20 +280,20 @@ const ProfileScreen = ({ navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <Ionicons name="person-outline" size={24} color="#2196F3" />
-              <Title style={styles.cardTitle}>Informações Pessoais</Title>
+              <Title style={styles.cardTitle}>{getString('personalInformation')}</Title>
               <Button 
                 mode="text" 
                 onPress={() => setEditing(!editing)}
                 icon={editing ? "close" : "pencil"}
               >
-                {editing ? 'Cancelar' : 'Editar'}
+                {editing ? getString('cancel') : getString('edit')}
               </Button>
             </View>
 
             {editing ? (
               <View>
                 <TextInput
-                  label="Nome Completo"
+                  label={getString('fullName')}
                   value={formData.name}
                   onChangeText={(text) => setFormData({...formData, name: text})}
                   mode="outlined"
@@ -300,7 +301,7 @@ const ProfileScreen = ({ navigation }) => {
                 />
                 
                 <TextInput
-                  label="Telefone/WhatsApp"
+                  label={getString('phoneWhatsApp')}
                   value={formData.phone}
                   onChangeText={(text) => setFormData({...formData, phone: text})}
                   mode="outlined"
@@ -309,7 +310,7 @@ const ProfileScreen = ({ navigation }) => {
                 />
                 
                 <TextInput
-                  label="Endereço"
+                  label={getString('address')}
                   value={formData.address}
                   onChangeText={(text) => setFormData({...formData, address: text})}
                   mode="outlined"
@@ -319,7 +320,7 @@ const ProfileScreen = ({ navigation }) => {
                 />
                 
                 <TextInput
-                  label="Contato de Emergência"
+                  label={getString('emergencyContact')}
                   value={formData.emergencyContact}
                   onChangeText={(text) => setFormData({...formData, emergencyContact: text})}
                   mode="outlined"
@@ -327,14 +328,14 @@ const ProfileScreen = ({ navigation }) => {
                 />
                 
                 <TextInput
-                  label="Informações Médicas"
+                  label={getString('medicalInformation')}
                   value={formData.medicalInfo}
                   onChangeText={(text) => setFormData({...formData, medicalInfo: text})}
                   mode="outlined"
                   multiline
                   numberOfLines={3}
                   style={styles.input}
-                  placeholder="Alergias, medicamentos, condições médicas..."
+                  placeholder={getString('allergiesMedicationsConditions')}
                 />
 
                 <Button 
@@ -343,42 +344,42 @@ const ProfileScreen = ({ navigation }) => {
                   style={styles.saveButton}
                   icon="check"
                 >
-                  Salvar Alterações
+                  {getString('saveChanges')}
                 </Button>
               </View>
             ) : (
               <View>
                 <List.Item
-                  title="Nome"
-                  description={userProfile?.name || 'Não informado'}
+                  title={getString('name')}
+                  description={userProfile?.name || getString('notInformed')}
                   left={() => <List.Icon icon="account" />}
                 />
                 <Divider />
                 
                 <List.Item
-                  title="Telefone"
-                  description={userProfile?.phone || 'Não informado'}
+                  title={getString('phone')}
+                  description={userProfile?.phone || getString('notInformed')}
                   left={() => <List.Icon icon="phone" />}
                 />
                 <Divider />
                 
                 <List.Item
-                  title="Endereço"
-                  description={userProfile?.address || 'Não informado'}
+                  title={getString('address')}
+                  description={userProfile?.address || getString('notInformed')}
                   left={() => <List.Icon icon="map-marker" />}
                 />
                 <Divider />
                 
                 <List.Item
-                  title="Contato de Emergência"
-                  description={userProfile?.emergencyContact || 'Não informado'}
+                  title={getString('emergencyContact')}
+                  description={userProfile?.emergencyContact || getString('notInformed')}
                   left={() => <List.Icon icon="phone-alert" />}
                 />
                 <Divider />
                 
                 <List.Item
-                  title="Informações Médicas"
-                  description={userProfile?.medicalInfo || 'Não informado'}
+                  title={getString('medicalInformation')}
+                  description={userProfile?.medicalInfo || getString('notInformed')}
                   left={() => <List.Icon icon="medical-bag" />}
                 />
               </View>
@@ -393,28 +394,28 @@ const ProfileScreen = ({ navigation }) => {
               <Card.Content>
                 <View style={styles.cardHeader}>
                   <Ionicons name="school-outline" size={24} color="#4CAF50" />
-                  <Title style={styles.cardTitle}>Informações da Academia</Title>
+                  <Title style={styles.cardTitle}>{getString('academyInformation')}</Title>
                 </View>
 
                 <List.Item
-                  title="Graduação Atual"
-                  description={userProfile?.currentGraduation || 'Iniciante'}
+                  title={getString('currentGraduation')}
+                  description={userProfile?.currentGraduation || getString('beginner')}
                   left={() => <List.Icon icon="trophy" color="#FFD700" />}
                 />
                 <Divider />
                 
                 <List.Item
-                  title="Plano Atual"
-                  description={userProfile?.currentPlan || 'Não definido'}
+                  title={getString('currentPlan')}
+                  description={userProfile?.currentPlan || getString('notDefined')}
                   left={() => <List.Icon icon="card" />}
                 />
                 <Divider />
                 
                 <List.Item
-                  title="Data de Início"
+                  title={getString('startDate')}
                   description={userProfile?.startDate ? 
                     new Date(userProfile.startDate).toLocaleDateString('pt-BR') : 
-                    'Não informado'
+                    getString('notInformed')
                   }
                   left={() => <List.Icon icon="calendar-start" />}
                 />
@@ -444,7 +445,7 @@ const ProfileScreen = ({ navigation }) => {
                   ))}
                 </View>
                 
-                <Text style={styles.noTrainingText}>Nenhum treino esta semana</Text>
+                <Text style={styles.noTrainingText}>{getString('noTrainingThisWeek')}</Text>
               </Card.Content>
             </Card>
             
@@ -452,8 +453,8 @@ const ProfileScreen = ({ navigation }) => {
             <Card style={styles.card}>
               <Card.Content>
                 <List.Item
-                  title="Contratos"
-                  description={`Próximo vencimento: ${checkInStats.nextPayment}`}
+                  title={getString('contracts')}
+                  description={`${getString('nextDueDate')}: ${checkInStats.nextPayment}`}
                   left={() => <List.Icon icon="file-document-outline" />}
                   right={() => <List.Icon icon="chevron-right" />}
                 />
@@ -464,8 +465,8 @@ const ProfileScreen = ({ navigation }) => {
             <Card style={styles.card}>
               <Card.Content>
                 <List.Item
-                  title="Check-ins"
-                  description={`Check-ins na semana: ${checkInStats.thisWeek}/${checkInStats.total}`}
+                  title={getString('checkIns')}
+                  description={`${getString('checkInsThisWeek')}: ${checkInStats.thisWeek}/${checkInStats.total}`}
                   left={() => <List.Icon icon="check-circle-outline" />}
                   right={() => <List.Icon icon="chevron-right" />}
                 />
@@ -476,10 +477,10 @@ const ProfileScreen = ({ navigation }) => {
             <Card style={styles.card}>
               <Card.Content>
                 <List.Item
-                  title="Avaliações físicas"
+                  title={getString('physicalEvaluations')}
                   description={physicalEvaluations.length > 0 ? 
-                    `${physicalEvaluations.length} avaliação(ões) registrada(s)` : 
-                    'Nenhuma avaliação registrada'
+                    `${physicalEvaluations.length} ${getString('evaluationsRegistered')}` : 
+                    getString('noEvaluationsRegistered')
                   }
                   left={() => <List.Icon icon="clipboard-pulse-outline" />}
                   right={() => <List.Icon icon="chevron-right" />}
@@ -492,8 +493,11 @@ const ProfileScreen = ({ navigation }) => {
             <Card style={styles.card}>
               <Card.Content>
                 <List.Item
-                  title="Minhas Lesões"
-                  description={injuries.length > 0 ? `${injuries.length} lesão(ões) registrada(s)` : 'Nenhuma lesão registrada'}
+                  title={getString('myInjuries')}
+                  description={injuries.length > 0 ? 
+                    `${injuries.length} ${getString('injuriesRegistered')}` : 
+                    getString('noInjuriesRegistered')
+                  }
                   left={() => <List.Icon icon="bandage" />}
                   right={() => <List.Icon icon="chevron-right" />}
                   onPress={() => navigation.navigate('InjuryHistory')}

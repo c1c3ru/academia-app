@@ -17,6 +17,7 @@ import {
 import { collection, query, where, getDocs, doc, getDoc, addDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { InviteService } from '../../services/inviteService';
 import QRCodeScanner from '../../components/QRCodeScanner';
 import CountryStatePicker from '../../components/CountryStatePicker';
@@ -25,6 +26,7 @@ import ModalityPicker from '../../components/ModalityPicker';
 
 export default function AcademiaSelectionScreen({ navigation, route }) {
   const { user, userProfile, updateAcademiaAssociation, logout } = useAuth();
+  const { getString } = useTheme();
   const forceCreate = route?.params?.forceCreate || false;
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -94,7 +96,7 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
 
   const searchAcademiaByCode = async () => {
     if (!searchCode.trim()) {
-      showSnackbar('Digite o código da academia', 'error');
+      showSnackbar(getString('enterAcademyCode'), 'error');
       return;
     }
 
@@ -115,14 +117,14 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
           id: academiaDoc.id,
           ...academiaData
         }]);
-        showSnackbar('Academia encontrada com sucesso!', 'success');
+        showSnackbar(getString('academyFoundSuccess'), 'success');
       } else {
-        showSnackbar('Academia não encontrada. Verifique o código e tente novamente', 'error');
+        showSnackbar(getString('academyNotFound'), 'error');
         setAcademias([]);
       }
     } catch (error) {
-      console.error('Erro ao buscar academia:', error);
-      showSnackbar('Erro ao buscar academia. Tente novamente', 'error');
+      console.error(getString('logoutError'), error);
+      showSnackbar(getString('errorSearchingAcademy'), 'error');
     } finally {
       setSearchLoading(false);
     }
@@ -132,12 +134,12 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
     setLoading(true);
     try {
       await updateAcademiaAssociation(academiaId);
-      showSnackbar('Você foi associado à academia com sucesso!', 'success');
+      showSnackbar(getString('associatedSuccessfully'), 'success');
       // O AppNavigator irá detectar a mudança e redirecionar automaticamente
       console.log('✅ AcademiaSelection: Usuário associado, AppNavigator irá redirecionar');
     } catch (error) {
-      console.error('Erro ao associar à academia:', error);
-      showSnackbar('Erro ao associar à academia. Tente novamente', 'error');
+      console.error(getString('logoutError'), error);
+      showSnackbar(getString('errorAssociating'), 'error');
     } finally {
       setLoading(false);
     }
@@ -148,7 +150,7 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
       const urlInfo = InviteService.parseInviteUrl(data);
       
       if (!urlInfo) {
-        Alert.alert('Erro', 'QR Code inválido');
+        Alert.alert(getString('error'), getString('invalidQRCode'));
         return;
       }
 
@@ -160,8 +162,8 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
         await processInviteLink(urlInfo.token);
       }
     } catch (error) {
-      console.error('Erro ao processar QR Code:', error);
-      Alert.alert('Erro', 'Erro ao processar QR Code');
+      console.error(getString('logoutError'), error);
+      Alert.alert(getString('error'), getString('errorProcessingQR'));
     } finally {
       setShowQRScanner(false);
     }
@@ -173,15 +175,15 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
       const invite = await InviteService.getInviteByToken(token);
       
       if (!invite) {
-        Alert.alert('Erro', 'Convite inválido ou expirado');
+        Alert.alert(getString('error'), getString('invalidOrExpiredInvite'));
         return;
       }
 
       const result = await InviteService.acceptInvite(invite.id, user.uid);
       await joinAcademia(result.academiaId, result.tipo);
     } catch (error) {
-      console.error('Erro ao processar convite:', error);
-      Alert.alert('Erro', 'Erro ao processar convite');
+      console.error(getString('logoutError'), error);
+      Alert.alert(getString('error'), getString('errorProcessingInvite'));
     } finally {
       setLoading(false);
     }
@@ -189,7 +191,7 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
 
   const handleInviteLinkSubmit = async () => {
     if (!inviteLink.trim()) {
-      Alert.alert('Erro', 'Digite o link do convite');
+      Alert.alert(getString('error'), getString('enterInviteLink'));
       return;
     }
 
@@ -197,7 +199,7 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
       const urlInfo = InviteService.parseInviteUrl(inviteLink.trim());
       
       if (!urlInfo) {
-        Alert.alert('Erro', 'Link inválido');
+        Alert.alert(getString('error'), getString('invalidLink'));
         return;
       }
 
@@ -207,8 +209,8 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
         await processInviteLink(urlInfo.token);
       }
     } catch (error) {
-      console.error('Erro ao processar link:', error);
-      Alert.alert('Erro', 'Erro ao processar link do convite');
+      console.error(getString('logoutError'), error);
+      Alert.alert(getString('error'), getString('errorProcessingInviteLink'));
     } finally {
       setShowInviteLinkModal(false);
       setInviteLink('');
@@ -227,8 +229,8 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
     
     if (!isAdmin) {
       Alert.alert(
-        'Permissão Negada', 
-        `Apenas usuários com perfil de administrador podem criar uma nova academia.\n\nSeu perfil atual: ${userProfile?.tipo || userProfile?.userType || 'não definido'}`
+        getString('permissionDenied'), 
+        `${getString('onlyAdminsCanCreate')}\n\n${getString('currentProfile')}: ${userProfile?.tipo || userProfile?.userType || getString('notDefined')}`
       );
       return;
     }
@@ -236,34 +238,34 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
     const createAcademia = async () => {
       // Validações obrigatórias
       if (!newAcademiaData.nome.trim()) {
-        showSnackbar('Nome da academia é obrigatório', 'error');
+        showSnackbar(getString('academyNameRequired'), 'error');
         return;
       }
 
       if (!newAcademiaData.email.trim()) {
-        showSnackbar('Email é obrigatório', 'error');
+        showSnackbar(getString('emailRequired'), 'error');
         return;
       }
 
       if (!newAcademiaData.endereco.cidade.trim()) {
-        showSnackbar('Cidade é obrigatória', 'error');
+        showSnackbar(getString('cityRequired'), 'error');
         return;
       }
 
       if (!newAcademiaData.endereco.rua.trim()) {
-        showSnackbar('Rua/Avenida é obrigatória', 'error');
+        showSnackbar(getString('streetRequired'), 'error');
         return;
       }
 
       if (!newAcademiaData.telefone.numero.trim()) {
-        showSnackbar('Telefone é obrigatório', 'error');
+        showSnackbar(getString('phoneRequired'), 'error');
         return;
       }
 
       // Validação de email
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(newAcademiaData.email.trim())) {
-        showSnackbar('Email inválido', 'error');
+        showSnackbar(getString('invalidEmail'), 'error');
         return;
       }
 
@@ -305,11 +307,11 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
         
         // Mostrar o código da academia criada
         Alert.alert(
-          'Academia Criada com Sucesso! 🎉',
-          `Sua academia foi criada!\n\n📋 CÓDIGO DA ACADEMIA: ${codigoGerado}\n\n⚠️ IMPORTANTE: Anote este código! Os usuários precisarão dele para se associar à sua academia.\n\nVocê será redirecionado para o dashboard em alguns segundos.`,
+          getString('academyCreatedSuccess'),
+          getString('academyCreatedMessage').replace('{code}', codigoGerado),
           [
             {
-              text: 'Copiar Código',
+              text: getString('copyCode'),
               onPress: () => {
                 // Para React Native, seria necessário usar Clipboard
                 // Por enquanto, apenas mostra o código
@@ -317,7 +319,7 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
               }
             },
             {
-              text: 'OK',
+              text: getString('ok'),
               onPress: () => {
                 navigation.reset({
                   index: 0,
@@ -329,8 +331,8 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
           { cancelable: false }
         );
       } catch (error) {
-        console.error('Erro ao criar academia:', error);
-        showSnackbar('Não foi possível criar a academia. Tente novamente', 'error');
+        console.error(getString('logoutError'), error);
+        showSnackbar(getString('cannotCreateAcademy'), 'error');
       } finally {
         setLoading(false);
       }
@@ -348,7 +350,7 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
         <Text variant="bodyMedium" style={styles.academiaAddress}>
           📍 {typeof academia.endereco === 'object' 
             ? `${academia.endereco.rua}${academia.endereco.numero ? ', ' + academia.endereco.numero : ''}, ${academia.endereco.cidade} - ${academia.endereco.estadoNome || academia.endereco.estado}, ${academia.endereco.paisNome || academia.endereco.pais}`
-            : academia.endereco || 'Endereço não informado'
+            : academia.endereco || getString('addressNotInformed')
           }
         </Text>
         {academia.telefone && (
@@ -415,8 +417,8 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
                 console.log('🚪 Fazendo logout direto...');
                 await logout();
               } catch (error) {
-                console.error('Erro ao fazer logout:', error);
-                showSnackbar('Erro ao sair. Tente novamente.', 'error');
+                console.error(getString('logoutError'), error);
+                showSnackbar(getString('errorLoggingOut'), 'error');
               }
             }}
             icon="arrow-left"
@@ -427,12 +429,12 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
           </Button>
           <View style={styles.headerTextContainer}>
             <Text variant="headlineMedium" style={styles.title}>
-              {forceCreate ? 'Criar Academia' : 'Selecionar Academia'}
+              {forceCreate ? getString('createAcademy') : getString('selectAcademy')}
             </Text>
             <Text variant="bodyMedium" style={styles.subtitle}>
               {forceCreate 
-                ? 'Como administrador, você precisa criar uma nova academia' 
-                : 'Para continuar, você precisa se associar a uma academia'
+                ? getString('adminMustCreate') 
+                : getString('mustAssociate')
               }
             </Text>
           </View>
@@ -485,12 +487,12 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
           </Text>
           
           <TextInput
-            label="Código da Academia"
+            label={getString('academyCode')}
             value={searchCode}
             onChangeText={setSearchCode}
             mode="outlined"
             style={styles.input}
-            placeholder="Ex: ABC123"
+            placeholder={getString('academyCodePlaceholder')}
           />
           
           <Button 

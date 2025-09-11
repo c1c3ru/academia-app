@@ -56,6 +56,8 @@ import PrivacySettingsScreen from '../screens/shared/PrivacySettingsScreen';
 import LoadingScreen from '../screens/shared/LoadingScreen';
 import ClassDetailsScreen from '../screens/shared/ClassDetailsScreen';
 import StudentDetailsScreen from '../screens/shared/StudentDetailsScreen';
+import StudentProfileScreen from '../screens/shared/StudentProfileScreen';
+import AddGraduationScreen from '../screens/shared/AddGraduationScreen';
 
 const Stack = createStackNavigator();
 
@@ -211,6 +213,36 @@ const AdminStackNavigator = () => {
         header: ({ navigation }) => (
           <UniversalHeader
             title={getString('reports')}
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#FF9800"
+          />
+        ),
+      }}
+    />
+    <AdminStack.Screen 
+      name="StudentProfile" 
+      component={StudentProfileScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Perfil do Aluno"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#FF9800"
+          />
+        ),
+      }}
+    />
+    <AdminStack.Screen 
+      name="AddGraduation" 
+      component={AddGraduationScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Nova Graduação"
             navigation={navigation}
             showBack={true}
             backgroundColor="#FF9800"
@@ -386,6 +418,36 @@ const InstructorStackNavigator = () => {
         header: ({ navigation }) => (
           <UniversalHeader
             title={getString('newStudent')}
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#4CAF50"
+          />
+        ),
+      }}
+    />
+    <InstructorStack.Screen 
+      name="StudentProfile" 
+      component={StudentProfileScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Perfil do Aluno"
+            navigation={navigation}
+            showBack={true}
+            backgroundColor="#4CAF50"
+          />
+        ),
+      }}
+    />
+    <InstructorStack.Screen 
+      name="AddGraduation" 
+      component={AddGraduationScreen}
+      options={{
+        headerShown: true,
+        header: ({ navigation }) => (
+          <UniversalHeader
+            title="Nova Graduação"
             navigation={navigation}
             showBack={true}
             backgroundColor="#4CAF50"
