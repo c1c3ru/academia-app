@@ -8,7 +8,11 @@ service cloud.firestore {
     }
     
     function getUserData() {
-      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) ? 
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data : 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) ? 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data : 
+          {});
     }
     
     function isMemberOf(academiaId) {
@@ -30,6 +34,8 @@ service cloud.firestore {
     // Coleção de usuários - acesso restrito ao próprio usuário
     match /usuarios/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
+      // Permitir leitura para admins (para AdminDashboard e AdminStudents)
+      allow read: if isSignedIn() && isAdmin();
     }
     
     // Coleção de academias

@@ -4,11 +4,11 @@ import {
   Card, 
   Text, 
   Button,
-  ListItem,
+  List,
   Switch,
-  Icon,
   Divider
-} from 'react-native-elements';
+} from 'react-native-paper';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { ResponsiveUtils } from '../../utils/animations';
@@ -73,177 +73,175 @@ const SettingsScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         {/* Informações da Conta */}
-        <Card containerStyle={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="account-circle" type="material" size={24} color="#2196F3" />
-            <Text h4 style={styles.cardTitle}>Conta</Text>
-          </View>
-          
-          <ListItem bottomDivider>
-            <Icon name="person" type="material" />
-            <ListItem.Content>
-              <ListItem.Title>Nome</ListItem.Title>
-              <ListItem.Subtitle>{userProfile?.name || 'Não informado'}</ListItem.Subtitle>
-            </ListItem.Content>
-          </ListItem>
-          
-          <ListItem bottomDivider>
-            <Icon name="email" type="material" />
-            <ListItem.Content>
-              <ListItem.Title>Email</ListItem.Title>
-              <ListItem.Subtitle>{user?.email}</ListItem.Subtitle>
-            </ListItem.Content>
-          </ListItem>
-          
-          <ListItem bottomDivider onPress={() => navigation.navigate('Profile')}>
-            <Icon name="edit" type="material" />
-            <ListItem.Content>
-              <ListItem.Title>Editar Perfil</ListItem.Title>
-            </ListItem.Content>
-            <ListItem.Chevron />
-          </ListItem>
-          
-          <ListItem onPress={handleChangePassword}>
-            <Icon name="lock" type="material" />
-            <ListItem.Content>
-              <ListItem.Title>Alterar Senha</ListItem.Title>
-            </ListItem.Content>
-            <ListItem.Chevron />
-          </ListItem>
+        <Card style={styles.card}>
+          <Card.Title 
+            title="Conta" 
+            left={(props) => <Ionicons name="person-circle" size={24} color="#2196F3" />}
+          />
+          <Card.Content>
+            <List.Item
+              title="Nome"
+              description={userProfile?.name || 'Não informado'}
+              left={(props) => <Ionicons name="person" size={20} color="#666" />}
+            />
+            <Divider />
+            <List.Item
+              title="Email"
+              description={user?.email}
+              left={(props) => <Ionicons name="mail" size={20} color="#666" />}
+            />
+            <Divider />
+            <List.Item
+              title="Editar Perfil"
+              left={(props) => <Ionicons name="create" size={20} color="#666" />}
+              right={(props) => <Ionicons name="chevron-forward" size={20} color="#666" />}
+              onPress={() => navigation.navigate('Profile')}
+            />
+            <Divider />
+            <List.Item
+              title="Alterar Senha"
+              left={(props) => <Ionicons name="lock-closed" size={20} color="#666" />}
+              right={(props) => <Ionicons name="chevron-forward" size={20} color="#666" />}
+              onPress={handleChangePassword}
+            />
+          </Card.Content>
         </Card>
 
         {/* Preferências */}
-        <Card containerStyle={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="settings" type="material" size={24} color="#4CAF50" />
-            <Text h4 style={styles.cardTitle}>Preferências</Text>
-          </View>
-          
-          <ListItem bottomDivider>
-            <Icon name="notifications" type="material" />
-            <ListItem.Content>
-              <ListItem.Title>Notificações</ListItem.Title>
-              <ListItem.Subtitle>Receber notificações push</ListItem.Subtitle>
-            </ListItem.Content>
-            <Switch 
-              value={notifications} 
-              onValueChange={setNotifications}
-              trackColor={{ false: '#767577', true: '#2196F3' }}
+        <Card style={styles.card}>
+          <Card.Title 
+            title="Preferências" 
+            left={(props) => <Ionicons name="settings" size={24} color="#4CAF50" />}
+          />
+          <Card.Content>
+            <List.Item
+              title="Notificações"
+              description="Receber notificações push"
+              left={(props) => <Ionicons name="notifications" size={20} color="#666" />}
+              right={() => (
+                <Switch 
+                  value={notifications} 
+                  onValueChange={setNotifications}
+                />
+              )}
             />
-          </ListItem>
-          
-          <ListItem bottomDivider>
-            <Icon name="dark-mode" type="material" />
-            <ListItem.Content>
-              <ListItem.Title>Modo Escuro</ListItem.Title>
-              <ListItem.Subtitle>Tema escuro da aplicação</ListItem.Subtitle>
-            </ListItem.Content>
-            <Switch 
-              value={darkMode} 
-              onValueChange={setDarkMode}
-              trackColor={{ false: '#767577', true: '#2196F3' }}
+            <Divider />
+            <List.Item
+              title="Modo Escuro"
+              description="Tema escuro da aplicação"
+              left={(props) => <Ionicons name="moon" size={20} color="#666" />}
+              right={() => (
+                <Switch 
+                  value={darkMode} 
+                  onValueChange={setDarkMode}
+                />
+              )}
             />
-          </ListItem>
-          
-          <ListItem>
-            <Icon name="backup" type="material" />
-            <ListItem.Content>
-              <ListItem.Title>Backup Automático</ListItem.Title>
-              <ListItem.Subtitle>Backup automático dos dados</ListItem.Subtitle>
-            </ListItem.Content>
-            <Switch 
-              value={autoBackup} 
-              onValueChange={setAutoBackup}
-              trackColor={{ false: '#767577', true: '#2196F3' }}
+            <Divider />
+            <List.Item
+              title="Idioma"
+              description="Português (Brasil)"
+              left={(props) => <Ionicons name="language" size={20} color="#666" />}
+              right={(props) => <Ionicons name="chevron-forward" size={20} color="#666" />}
+              onPress={() => Alert.alert('Em Desenvolvimento', 'Seleção de idioma será implementada em breve')}
             />
-          </ListItem>
+            <Divider />
+            <List.Item
+              title="Backup Automático"
+              description="Backup automático dos dados"
+              left={(props) => <Ionicons name="cloud-upload" size={20} color="#666" />}
+              right={() => (
+                <Switch 
+                  value={autoBackup} 
+                  onValueChange={setAutoBackup}
+                />
+              )}
+            />
+          </Card.Content>
         </Card>
 
         {/* Dados e Privacidade */}
-        <Card containerStyle={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="privacy-tip" type="material" size={24} color="#FF9800" />
-            <Text h4 style={styles.cardTitle}>Dados e Privacidade</Text>
-          </View>
-          
-          <ListItem bottomDivider onPress={handleDataExport}>
-            <Icon name="download" type="material" />
-            <ListItem.Content>
-              <ListItem.Title>Exportar Dados</ListItem.Title>
-              <ListItem.Subtitle>Baixar uma cópia dos seus dados</ListItem.Subtitle>
-            </ListItem.Content>
-            <ListItem.Chevron />
-          </ListItem>
-          
-          <ListItem bottomDivider>
-            <Icon name="policy" type="material" />
-            <ListItem.Content>
-              <ListItem.Title>Política de Privacidade</ListItem.Title>
-            </ListItem.Content>
-            <ListItem.Chevron />
-          </ListItem>
-          
-          <ListItem>
-            <Icon name="gavel" type="material" />
-            <ListItem.Content>
-              <ListItem.Title>Termos de Uso</ListItem.Title>
-            </ListItem.Content>
-            <ListItem.Chevron />
-          </ListItem>
+        <Card style={styles.card}>
+          <Card.Title 
+            title="Dados e Privacidade" 
+            left={(props) => <Ionicons name="shield-checkmark" size={24} color="#FF9800" />}
+          />
+          <Card.Content>
+            <List.Item
+              title="Exportar Dados"
+              description="Baixar uma cópia dos seus dados"
+              left={(props) => <Ionicons name="download" size={20} color="#666" />}
+              right={(props) => <Ionicons name="chevron-forward" size={20} color="#666" />}
+              onPress={handleDataExport}
+            />
+            <Divider />
+            <List.Item
+              title="Política de Privacidade"
+              left={(props) => <Ionicons name="document-text" size={20} color="#666" />}
+              right={(props) => <Ionicons name="chevron-forward" size={20} color="#666" />}
+            />
+            <Divider />
+            <List.Item
+              title="Termos de Uso"
+              left={(props) => <Ionicons name="reader" size={20} color="#666" />}
+              right={(props) => <Ionicons name="chevron-forward" size={20} color="#666" />}
+            />
+          </Card.Content>
         </Card>
 
         {/* Sobre */}
-        <Card containerStyle={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="info" type="material" size={24} color="#9C27B0" />
-            <Text h4 style={styles.cardTitle}>Sobre</Text>
-          </View>
-          
-          <ListItem bottomDivider>
-            <Icon name="apps" type="material" />
-            <ListItem.Content>
-              <ListItem.Title>Versão do App</ListItem.Title>
-              <ListItem.Subtitle>1.0.0</ListItem.Subtitle>
-            </ListItem.Content>
-          </ListItem>
-          
-          <ListItem bottomDivider>
-            <Icon name="help" type="material" />
-            <ListItem.Content>
-              <ListItem.Title>Central de Ajuda</ListItem.Title>
-            </ListItem.Content>
-            <ListItem.Chevron />
-          </ListItem>
-          
-          <ListItem>
-            <Icon name="feedback" type="material" />
-            <ListItem.Content>
-              <ListItem.Title>Enviar Feedback</ListItem.Title>
-            </ListItem.Content>
-            <ListItem.Chevron />
-          </ListItem>
+        <Card style={styles.card}>
+          <Card.Title 
+            title="Sobre" 
+            left={(props) => <Ionicons name="information-circle" size={24} color="#9C27B0" />}
+          />
+          <Card.Content>
+            <List.Item
+              title="Versão do App"
+              description="1.0.0"
+              left={(props) => <Ionicons name="apps" size={20} color="#666" />}
+            />
+            <Divider />
+            <List.Item
+              title="Central de Ajuda"
+              left={(props) => <Ionicons name="help-circle" size={20} color="#666" />}
+              right={(props) => <Ionicons name="chevron-forward" size={20} color="#666" />}
+            />
+            <Divider />
+            <List.Item
+              title="Enviar Feedback"
+              left={(props) => <Ionicons name="chatbubble" size={20} color="#666" />}
+              right={(props) => <Ionicons name="chevron-forward" size={20} color="#666" />}
+            />
+          </Card.Content>
         </Card>
 
         {/* Ações Perigosas */}
-        <Card containerStyle={[styles.card, styles.dangerCard]}>
-          <View style={styles.cardHeader}>
-            <Icon name="warning" type="material" size={24} color="#F44336" />
-            <Text h4 style={[styles.cardTitle, styles.dangerTitle]}>Zona de Perigo</Text>
-          </View>
-          
-          <Button
-            title="Sair da Conta"
-            onPress={handleLogout}
-            buttonStyle={[styles.dangerButton, { backgroundColor: '#FF9800' }]}
-            icon={<Icon name="logout" type="material" size={20} color="white" />}
+        <Card style={[styles.card, styles.dangerCard]}>
+          <Card.Title 
+            title="Zona de Perigo" 
+            titleStyle={styles.dangerTitle}
+            left={(props) => <Ionicons name="warning" size={24} color="#F44336" />}
           />
-          
-          <Button
-            title="Excluir Conta"
-            onPress={handleDeleteAccount}
-            buttonStyle={[styles.dangerButton, { backgroundColor: '#F44336', marginTop: 12 }]}
-            icon={<Icon name="delete-forever" type="material" size={20} color="white" />}
-          />
+          <Card.Content>
+            <Button
+              mode="contained"
+              onPress={handleLogout}
+              style={[styles.dangerButton, { backgroundColor: '#FF9800' }]}
+              icon={() => <Ionicons name="log-out" size={20} color="white" />}
+            >
+              Sair da Conta
+            </Button>
+            
+            <Button
+              mode="contained"
+              onPress={handleDeleteAccount}
+              style={[styles.dangerButton, { backgroundColor: '#F44336', marginTop: 12 }]}
+              icon={() => <Ionicons name="trash" size={20} color="white" />}
+            >
+              Excluir Conta
+            </Button>
+          </Card.Content>
         </Card>
       </ScrollView>
     </SafeAreaView>
@@ -266,16 +264,6 @@ const styles = StyleSheet.create({
     marginTop: ResponsiveUtils?.spacing?.sm || 8,
     maxWidth: ResponsiveUtils?.isTablet?.() ? 600 : '100%',
     alignSelf: 'center',
-    width: '100%',
-    ...Platform.select({
-      ios: {},
-      android: {
-        elevation: 4,
-      },
-      web: {
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-      },
-    }),
   },
   dangerCard: {
     backgroundColor: '#FFF5F5',
