@@ -16,19 +16,24 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.c1c3ru.academiaapp"
+      "bundleIdentifier": "com.c1c3ru.academiaapp",
+      "newArchEnabled": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2196F3"
       },
-      "package": "com.c1c3ru.academiaapp"
+      "package": "com.c1c3ru.academiaapp",
+      "newArchEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
+    "plugins": [
+      "expo-dev-client"
+    ],
     "extra": {
       "eas": {
         "projectId": "f3d7c8a4-700c-461b-b740-82bee97edf17"

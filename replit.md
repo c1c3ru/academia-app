@@ -69,12 +69,13 @@ The app uses Firebase with the following services:
 - ✅ Implemented professional email invitation system with SendGrid integration
 - ✅ Created comprehensive LGPD privacy policy screen with legal compliance
 
-## Recent Changes (Sept 10, 2025)
+## Recent Changes (Sept 14, 2025)
 - ✅ **FRESH IMPORT**: Successfully re-imported GitHub project to clean Replit environment
 - ✅ **DEPENDENCIES**: Installed all npm dependencies successfully with version compatibility
 - ✅ **WORKFLOW**: Configured and verified Expo web development server on port 5000
 - ✅ **FIREBASE**: Confirmed Firebase initialization and connectivity in web environment
-- ✅ **DEPLOYMENT**: Set up production deployment configuration with autoscale and web build
+- ✅ **BUILD SYSTEM**: Updated build:web script to use modern expo export --platform web command
+- ✅ **DEPLOYMENT**: Set up production deployment configuration with autoscale, build process, and static file serving
 - ✅ **VERIFICATION**: Confirmed web application is running and accessible to users
 
 ## User Preferences

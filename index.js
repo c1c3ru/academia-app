@@ -1,3 +1,6 @@
+// Polyfill para import.meta antes de qualquer importação
+import './src/polyfills/import-meta-polyfill';
+
 import { registerRootComponent } from 'expo';
 
 import App from './App';

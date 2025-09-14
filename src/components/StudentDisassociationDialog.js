@@ -3,7 +3,6 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { 
   Dialog, 
-  Portal, 
   Button, 
   Text, 
   TextInput,
@@ -154,8 +153,7 @@ const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess })
   }
 
   return (
-    <Portal>
-      <Dialog visible={visible} onDismiss={onDismiss}>
+    <Dialog visible={visible} onDismiss={onDismiss}>
         <Dialog.Title>
           <View style={styles.titleContainer}>
             <Ionicons name="person-remove-outline" size={24} color="#F44336" />
@@ -216,7 +214,6 @@ const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess })
           </Button>
         </Dialog.Actions>
       </Dialog>
-    </Portal>
   );
 };
 

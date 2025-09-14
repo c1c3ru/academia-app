@@ -10,7 +10,7 @@ import {
   Card,
   Text,
   Button
-} from 'react-native-elements';
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';

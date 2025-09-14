@@ -1,12 +1,14 @@
 import sgMail from '@sendgrid/mail';
 
 // Configuração do SendGrid
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@academiaapp.com';
-const FROM_NAME = process.env.FROM_NAME || 'Academia App';
+const isDev = (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') || false;
+const isProduction = (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') || false;
+const sendGridApiKey = (typeof process !== 'undefined' && process.env?.SENDGRID_API_KEY) || null;
+const fromEmail = (typeof process !== 'undefined' && process.env?.FROM_EMAIL) || 'noreply@academiaapp.com';
+const FROM_NAME = (typeof process !== 'undefined' && process.env?.FROM_NAME) || 'Academia App';
 
-if (SENDGRID_API_KEY) {
-  sgMail.setApiKey(SENDGRID_API_KEY);
+if (sendGridApiKey) {
+  sgMail.setApiKey(sendGridApiKey);
 }
 
 export class EmailService {
@@ -47,7 +49,7 @@ export class EmailService {
       console.error('❌ Erro ao enviar email:', error);
       
       // Em caso de erro, simular sucesso em desenvolvimento
-      if (process.env.NODE_ENV === 'development') {
+      if (isDev) {
         console.log('📧 Simulando sucesso em desenvolvimento');
         console.log('Email que seria enviado:', emailData);
         return true;

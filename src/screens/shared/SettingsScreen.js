@@ -4,11 +4,11 @@ import {
   Card, 
   Text, 
   Button,
-  ListItem,
+  List,
   Switch,
-  Icon,
   Divider
-} from 'react-native-elements';
+} from 'react-native-paper';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { ResponsiveUtils } from '../../utils/animations';

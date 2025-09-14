@@ -4,12 +4,10 @@ import {
   Card, 
   Text, 
   Button,
-  Badge,
-  Avatar,
-  Icon,
-  ListItem,
+  List,
   Divider
-} from 'react-native-elements';
+} from 'react-native-paper';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';

@@ -25,11 +25,17 @@ export const NotificationProvider = ({ children }) => {
 
   // Carregar notificações do usuário quando logado
   useEffect(() => {
-    if (user && userProfile) {
+    if (user && userProfile?.academiaId) {
       loadUserNotifications();
+    }
+  }, [user?.uid, userProfile?.academiaId]);
+
+  // Salvar push token separadamente
+  useEffect(() => {
+    if (pushToken && user?.uid) {
       savePushTokenToFirestore();
     }
-  }, [user, userProfile, pushToken]);
+  }, [pushToken, user?.uid]);
 
   const initializeNotificationService = async () => {
     try {

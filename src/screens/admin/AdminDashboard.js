@@ -12,8 +12,7 @@ import {
   Text,
   Surface,
   List,
-  Modal,
-  Portal
+  Modal
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -215,27 +214,25 @@ const AdminDashboard = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       {/* Modal do QR Code */}
-      <Portal>
-        <Modal 
-          visible={showQRModal} 
-          onDismiss={() => setShowQRModal(false)}
-          contentContainerStyle={styles.modalContainer}
+      <Modal 
+        visible={showQRModal} 
+        onDismiss={() => setShowQRModal(false)}
+        contentContainerStyle={styles.modalContainer}
+      >
+        <QRCodeGenerator 
+          academiaId={academia?.id}
+          academiaNome={academia?.nome}
+          size={200}
+          showActions={true}
+        />
+        <Button 
+          mode="outlined" 
+          onPress={() => setShowQRModal(false)}
+          style={styles.closeModalButton}
         >
-          <QRCodeGenerator 
-            academiaId={academia?.id}
-            academiaNome={academia?.nome}
-            size={200}
-            showActions={true}
-          />
-          <Button 
-            mode="outlined" 
-            onPress={() => setShowQRModal(false)}
-            style={styles.closeModalButton}
-          >
-            Fechar
-          </Button>
-        </Modal>
-      </Portal>
+          Fechar
+        </Button>
+      </Modal>
       <Animated.ScrollView 
         style={styles.scrollView}
         refreshControl={

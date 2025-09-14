@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Platform, Alert } from 'react-native';
-import { 
-  Card, 
-  Text, 
+import {
+  Card,
+  Text,
   Button,
-  Badge,
-  Icon,
-  ListItem,
+  List,
   Divider
-} from 'react-native-elements';
+} from 'react-native-paper';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { firestoreService } from '../../services/firestoreService';
 

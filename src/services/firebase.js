@@ -7,14 +7,14 @@ import { Platform } from 'react-native';
 // Detectar plataforma
 const isWeb = Platform.OS === 'web';
 
-// Configuração do Firebase - usando valores do google-services.json
+// Configuração do Firebase - compatível com web
 const firebaseConfig = {
-  apiKey: "AIzaSyA_hzFPt9hUITlMq9BrsJuxAdzycVR3AEI",
-  authDomain: "academia-app-5cf79.firebaseapp.com",
-  projectId: "academia-app-5cf79",
-  storageBucket: "academia-app-5cf79.firebasestorage.app",
-  messagingSenderId: "377489252583",
-  appId: "1:377489252583:android:87f2c3948511325769c242"
+  apiKey: (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_FIREBASE_API_KEY) || "AIzaSyA_hzFPt9hUITlMq9BrsJuxAdzycVR3AEI",
+  authDomain: (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN) || "academia-app-5cf79.firebaseapp.com",
+  projectId: (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_FIREBASE_PROJECT_ID) || "academia-app-5cf79",
+  storageBucket: (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET) || "academia-app-5cf79.firebasestorage.app",
+  messagingSenderId: (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID) || "377489252583",
+  appId: (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_FIREBASE_APP_ID) || "1:377489252583:android:87f2c3948511325769c242"
 };
 
 console.log('🔥 Inicializando Firebase...');

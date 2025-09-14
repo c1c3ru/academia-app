@@ -4,6 +4,24 @@ const { getDefaultConfig } = require('expo/metro-config');
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
+// Fix import.meta error for web
+config.transformer = {
+  ...config.transformer,
+  unstable_allowRequireContext: true,
+  // Polyfill para import.meta
+  getTransformOptions: async () => ({
+    transform: {
+      experimentalImportSupport: false,
+      inlineRequires: true,
+    },
+  }),
+};
+
+config.resolver = {
+  ...config.resolver,
+  platforms: ['ios', 'android', 'native', 'web'],
+};
+
 // Configure for Replit environment
 config.server = {
   ...config.server,

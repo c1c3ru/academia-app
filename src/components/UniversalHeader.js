@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
-import { Appbar, Avatar, Menu, Divider, Modal, Portal, Button, Text } from 'react-native-paper';
+import { Appbar, Avatar, Menu, Divider, Modal, Button, Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { ResponsiveUtils } from '../utils/animations';
-import NotificationBell from './NotificationBell';
+// import NotificationBell from './NotificationBell';
 import { useTheme } from '../contexts/ThemeContext';
-import { LinearGradient } from 'expo-linear-gradient';
+// import { LinearGradient } from 'expo-linear-gradient';
 
 const UniversalHeader = ({ 
   title, 
@@ -124,27 +124,31 @@ const UniversalHeader = ({
     }
   };
 
-  const getHeaderGradient = () => {
-    if (theme?.palette?.gradient) {
-      return theme.palette.gradient;
-    }
-    
-    // Fallback gradients
-    switch (userProfile?.userType) {
-      case 'admin':
-        return ['#6A1B9A', '#8E24AA'];
-      case 'instructor':
-        return ['#2E7D32', '#388E3C'];
-      case 'student':
-        return ['#1976D2', '#1565C0'];
-      default:
-        return ['#1976D2', '#1565C0'];
-    }
-  };
+  // const getHeaderGradient = () => {
+  //   if (theme?.palette?.gradient) {
+  //     return theme.palette.gradient;
+  //   }
+  //   
+  //   // Fallback gradients based on user type
+  //   const userType = userProfile?.userType || userProfile?.tipo || 'student';
+  //   switch (userType) {
+  //     case 'admin':
+  //     case 'administrador':
+  //       return ['#FF9800', '#F57C00'];
+  //     case 'instructor':
+  //     case 'instrutor':
+  //       return ['#4CAF50', '#388E3C'];
+  //     case 'student':
+  //     case 'aluno':
+  //     default:
+  //       return ['#2196F3', '#1976D2'];
+  //   }
+  // };
 
   const getUserTypeLabel = () => {
     switch (userProfile?.userType) {
       case 'admin':
+      case 'administrador':
         return 'Administrador';
       case 'instructor':
         return 'Instrutor';
@@ -159,12 +163,7 @@ const UniversalHeader = ({
 
   return (
     <>
-      <LinearGradient
-        colors={getHeaderGradient()}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.gradientHeader}
-      >
+      <View style={[styles.container, { backgroundColor }]}>
         <Appbar.Header style={[styles.header, styles.transparentHeader]}>
         {showBack && (
           <Appbar.BackAction 
@@ -180,7 +179,7 @@ const UniversalHeader = ({
           subtitleStyle={styles.subtitle}
         />
 
-        {showMenu && <NotificationBell color="white" size={24} />}
+        {/* {showMenu && <NotificationBell color="white" size={24} />} */}
 
         {showMenu && (
           <Menu
@@ -262,40 +261,38 @@ const UniversalHeader = ({
             </Menu>
         )}
         </Appbar.Header>
-      </LinearGradient>
+      </View>
       
       {/* Modal de confirmação de logout para web */}
-      <Portal>
-        <Modal
-          visible={logoutModalVisible}
-          onDismiss={cancelLogout}
-          contentContainerStyle={styles.modalContainer}
-        >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirmar Saída</Text>
-            <Text style={styles.modalMessage}>
-              Tem certeza que deseja sair da sua conta?
-            </Text>
-            <View style={styles.modalButtons}>
-              <Button
-                mode="outlined"
-                onPress={cancelLogout}
-                style={styles.modalButton}
-              >
-                Cancelar
-              </Button>
-              <Button
-                mode="contained"
-                onPress={confirmLogout}
-                style={[styles.modalButton, styles.logoutButton]}
-                buttonColor="#F44336"
-              >
-                Sair
-              </Button>
-            </View>
+      <Modal
+        visible={logoutModalVisible}
+        onDismiss={cancelLogout}
+        contentContainerStyle={styles.modalContainer}
+      >
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Confirmar Saída</Text>
+          <Text style={styles.modalMessage}>
+            Tem certeza que deseja sair da sua conta?
+          </Text>
+          <View style={styles.modalButtons}>
+            <Button
+              mode="outlined"
+              onPress={cancelLogout}
+              style={styles.modalButton}
+            >
+              Cancelar
+            </Button>
+            <Button
+              mode="contained"
+              onPress={confirmLogout}
+              style={[styles.modalButton, styles.logoutButton]}
+              buttonColor="#F44336"
+            >
+              Sair
+            </Button>
           </View>
-        </Modal>
-      </Portal>
+        </View>
+      </Modal>
     </>
   );
 };

@@ -3,16 +3,18 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Alert,
-  Platform
+  TouchableOpacity,
+  Dimensions,
+  Platform,
+  Alert
 } from 'react-native';
 import {
   Card,
-  Text,
   Button,
   Avatar,
-  Icon
-} from 'react-native-elements';
+  Text
+} from 'react-native-paper';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 
 const UserTypeSelectionScreen = ({ navigation, route }) => {
@@ -95,7 +97,7 @@ const UserTypeSelectionScreen = ({ navigation, route }) => {
   const renderUserTypeCard = (userType) => (
     <Card
       key={userType.id}
-      containerStyle={[
+      style={[
         styles.typeCard,
         selectedType === userType.id && { 
           borderColor: userType.color, 
@@ -104,63 +106,54 @@ const UserTypeSelectionScreen = ({ navigation, route }) => {
         }
       ]}
     >
-      <View style={styles.cardHeader}>
-        <View style={[styles.iconContainer, { backgroundColor: userType.color }]}>
-          <Icon
-            name={userType.icon}
-            type="material"
-            color="white"
-            size={32}
-          />
-        </View>
-        <View style={styles.titleContainer}>
-          <Text style={styles.typeTitle}>{userType.title}</Text>
-          <Text style={styles.typeDescription}>{userType.description}</Text>
-        </View>
-      </View>
-
-      <View style={styles.featuresContainer}>
-        {userType.features.map((feature, index) => (
-          <View key={index} style={styles.featureRow}>
-            <Icon
-              name="check-circle"
-              type="material"
-              color={userType.color}
-              size={16}
+      <Card.Content>
+        <View style={styles.cardHeader}>
+          <View style={[styles.iconContainer, { backgroundColor: userType.color }]}>
+            <Ionicons
+              name={userType.icon === 'school' ? 'school' : userType.icon === 'fitness-center' ? 'fitness' : 'business'}
+              color="white"
+              size={32}
             />
-            <Text style={styles.featureText}>{feature}</Text>
           </View>
-        ))}
-      </View>
+          <View style={styles.titleContainer}>
+            <Text style={styles.typeTitle}>{userType.title}</Text>
+            <Text style={styles.typeDescription}>{userType.description}</Text>
+          </View>
+        </View>
 
-      <Button
-        title={selectedType === userType.id ? "Selecionado" : "Selecionar"}
-        buttonStyle={[
-          styles.selectButton,
-          selectedType === userType.id 
-            ? { backgroundColor: userType.color }
-            : { backgroundColor: '#E0E0E0' }
-        ]}
-        titleStyle={[
-          styles.selectButtonText,
-          selectedType === userType.id 
-            ? { color: 'white' }
-            : { color: '#666' }
-        ]}
-        onPress={() => setSelectedType(userType.id)}
-      />
+        <View style={styles.featuresContainer}>
+          {userType.features.map((feature, index) => (
+            <View key={index} style={styles.featureRow}>
+              <Ionicons
+                name="checkmark-circle"
+                color={userType.color}
+                size={16}
+              />
+              <Text style={styles.featureText}>{feature}</Text>
+            </View>
+          ))}
+        </View>
+
+        <Button
+          mode={selectedType === userType.id ? "contained" : "outlined"}
+          buttonColor={selectedType === userType.id ? userType.color : '#E0E0E0'}
+          textColor={selectedType === userType.id ? 'white' : '#666'}
+          style={styles.selectButton}
+          onPress={() => setSelectedType(userType.id)}
+        >
+          {selectedType === userType.id ? "Selecionado" : "Selecionar"}
+        </Button>
+      </Card.Content>
     </Card>
   );
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Avatar
-          rounded
-          size="large"
-          source={user?.photoURL ? { uri: user.photoURL } : null}
-          title={user?.displayName?.charAt(0) || user?.email?.charAt(0)}
-          containerStyle={styles.avatar}
+        <Avatar.Text
+          size={80}
+          label={user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+          style={styles.avatar}
         />
         <Text style={styles.welcomeText}>
           Olá, {user?.displayName || user?.email}!
@@ -176,16 +169,15 @@ const UserTypeSelectionScreen = ({ navigation, route }) => {
 
       <View style={styles.footer}>
         <Button
-          title="Continuar"
-          buttonStyle={[
-            styles.continueButton,
-            !selectedType && styles.continueButtonDisabled
-          ]}
-          titleStyle={styles.continueButtonText}
+          mode="contained"
+          buttonColor={selectedType ? '#2196F3' : '#CCCCCC'}
+          style={styles.continueButton}
           onPress={handleSelectType}
           loading={loading}
           disabled={!selectedType || loading}
-        />
+        >
+          Continuar
+        </Button>
         
         <Text style={styles.footerNote}>
           Você poderá alterar essas configurações depois nas configurações do app.

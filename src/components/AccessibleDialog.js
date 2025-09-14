@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Platform, Modal, Pressable } from 'react-native';
-import { Overlay } from 'react-native-elements';
+import { Portal, Dialog } from 'react-native-paper';
 
 const AccessibleDialog = ({ visible, onDismiss, children, style, ...props }) => {
   const dialogRef = useRef(null);

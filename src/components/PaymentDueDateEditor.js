@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { 
   Modal, 
-  Portal, 
   Card, 
   Title, 
   Button, 
@@ -137,8 +136,7 @@ const PaymentDueDateEditor = ({ visible, onDismiss, currentPayment, onUpdate }) 
   };
 
   return (
-    <Portal>
-      <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={styles.modal}>
+    <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={styles.modal}>
         <Card style={styles.card}>
           <Card.Content>
             <View style={styles.header}>
@@ -199,7 +197,6 @@ const PaymentDueDateEditor = ({ visible, onDismiss, currentPayment, onUpdate }) 
           </Card.Content>
         </Card>
       </Modal>
-    </Portal>
   );
 };
 

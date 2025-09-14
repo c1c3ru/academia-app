@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, View, Text } from 'react-native';
-import { Provider as PaperProvider } from 'react-native-paper';
+import { Provider as PaperProvider, Portal } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Componentes e contextos
-import { AuthProvider } from './src/contexts/AuthContext';
+import { AuthProvider } from './src/contexts/AuthProvider';
 import { NotificationProvider } from './src/contexts/NotificationContext';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -37,12 +37,14 @@ export default function App() {
     
     return (
       <PaperProvider theme={theme}>
-        <AuthProvider>
-          <NotificationProvider>
-            <StatusBar style="auto" />
-            <AppNavigator />
-          </NotificationProvider>
-        </AuthProvider>
+        <Portal.Host>
+          <AuthProvider>
+              <StatusBar style="auto" />
+              {/* <NotificationProvider> */}
+                <AppNavigator />
+              {/* </NotificationProvider> */}
+          </AuthProvider>
+        </Portal.Host>
       </PaperProvider>
     );
   };

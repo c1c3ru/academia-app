@@ -12,7 +12,6 @@ import {
   Chip,
   List,
   Modal,
-  Portal,
   Surface
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -569,41 +568,39 @@ const ProfileScreen = ({ navigation }) => {
       </ScrollView>
       
       {/* Modal Treinos no Ano */}
-      <Portal>
-        <Modal
-          visible={showYearModal}
-          onDismiss={() => setShowYearModal(false)}
-          contentContainerStyle={styles.modalContainer}
-        >
-          <Card style={styles.modalCard}>
-            <Card.Title
-              title="Treinos no ano"
-              left={() => <Ionicons name="calendar" size={24} color="#2196F3" />}
-              right={() => (
-                <Button onPress={() => setShowYearModal(false)} icon="close">
-                  Fechar
-                </Button>
-              )}
-            />
+      <Modal
+        visible={showYearModal}
+        onDismiss={() => setShowYearModal(false)}
+        contentContainerStyle={styles.modalContainer}
+      >
+        <Card style={styles.modalCard}>
+          <Card.Title
+            title="Treinos no ano"
+            left={() => <Ionicons name="calendar" size={24} color="#2196F3" />}
+            right={() => (
+              <Button onPress={() => setShowYearModal(false)} icon="close">
+                Fechar
+              </Button>
+            )}
+          />
+          
+          <Card.Content>
+            <View style={styles.yearSelector}>
+              <Button 
+                mode="outlined" 
+                onPress={() => setSelectedYear(selectedYear - 1)}
+              >
+                {selectedYear - 1}
+              </Button>
+              <Text style={styles.selectedYear}>{selectedYear}</Text>
+            </View>
             
-            <Card.Content>
-              <View style={styles.yearSelector}>
-                <Button 
-                  mode="outlined" 
-                  onPress={() => setSelectedYear(selectedYear - 1)}
-                >
-                  {selectedYear - 1}
-                </Button>
-                <Text style={styles.selectedYear}>{selectedYear}</Text>
-              </View>
-              
-              <ScrollView style={styles.monthsContainer}>
-                {renderMonthsGrid()}
-              </ScrollView>
-            </Card.Content>
-          </Card>
-        </Modal>
-      </Portal>
+            <ScrollView style={styles.monthsContainer}>
+              {renderMonthsGrid()}
+            </ScrollView>
+          </Card.Content>
+        </Card>
+      </Modal>
       
       {/* Modal Editor de Data de Vencimento */}
       <PaymentDueDateEditor

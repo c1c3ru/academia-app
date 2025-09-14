@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Snackbar, Portal } from 'react-native-paper';
+import { Snackbar } from 'react-native-paper';
 
 const NotificationContext = createContext();
 
@@ -88,29 +88,27 @@ export const NotificationProvider = ({ children }) => {
   return (
     <NotificationContext.Provider value={value}>
       {children}
-      <Portal>
-        <View style={styles.container}>
-          {notifications.map((notification) => (
-            <Snackbar
-              key={notification.id}
-              visible={notification.visible}
-              onDismiss={() => hideNotification(notification.id)}
-              duration={notification.duration}
-              style={[
-                styles.snackbar,
-                { backgroundColor: getSnackbarColor(notification.type) }
-              ]}
-              action={{
-                label: 'Fechar',
-                onPress: () => hideNotification(notification.id),
-                textColor: 'white'
-              }}
-            >
-              {notification.message}
-            </Snackbar>
-          ))}
-        </View>
-      </Portal>
+      <View style={styles.container}>
+        {notifications.map((notification) => (
+          <Snackbar
+            key={notification.id}
+            visible={notification.visible}
+            onDismiss={() => hideNotification(notification.id)}
+            duration={notification.duration}
+            style={[
+              styles.snackbar,
+              { backgroundColor: getSnackbarColor(notification.type) }
+            ]}
+            action={{
+              label: 'Fechar',
+              onPress: () => hideNotification(notification.id),
+              textColor: 'white'
+            }}
+          >
+            {notification.message}
+          </Snackbar>
+        ))}
+      </View>
     </NotificationContext.Provider>
   );
 };

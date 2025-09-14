@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { 
   IconButton, 
   Badge, 
-  Portal, 
   Modal, 
   Card, 
   Title, 
@@ -98,12 +97,11 @@ const NotificationBell = ({ color = '#fff', size = 24 }) => {
         )}
       </View>
 
-      <Portal>
-        <Modal
-          visible={modalVisible}
-          onDismiss={() => setModalVisible(false)}
-          contentContainerStyle={styles.modalContainer}
-        >
+      <Modal
+        visible={modalVisible}
+        onDismiss={() => setModalVisible(false)}
+        contentContainerStyle={styles.modalContainer}
+      >
           <Card style={styles.modalCard}>
             <Card.Title
               title="Notificações"
@@ -205,7 +203,6 @@ const NotificationBell = ({ color = '#fff', size = 24 }) => {
             )}
           </Card>
         </Modal>
-      </Portal>
     </>
   );
 };

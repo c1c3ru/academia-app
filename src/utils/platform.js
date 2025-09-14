@@ -72,7 +72,7 @@ export const getCurrentPlatformConfig = () => {
 export const BuildUtils = {
   // Verificar se está em modo de produção
   isProduction: () => {
-    return !__DEV__;
+    return (typeof __DEV__ !== 'undefined') ? !__DEV__ : true;
   },
 
   // Obter informações da build
@@ -80,7 +80,7 @@ export const BuildUtils = {
     return {
       platform: Platform.OS,
       version: Platform.Version,
-      isProduction: !__DEV__,
+      isProduction: (typeof __DEV__ !== 'undefined') ? !__DEV__ : true,
       buildType: isAndroid ? 'apk' : 'ipa'
     };
   }
