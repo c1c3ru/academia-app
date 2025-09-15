@@ -148,6 +148,30 @@ const UserTypeSelectionScreen = ({ navigation, route }) => {
   );
 
   const handleLogout = async () => {
+    console.log('🔘 UserTypeSelection: handleLogout chamado');
+    
+    // Para web, usar confirm nativo do browser
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Tem certeza que deseja sair da sua conta?');
+      console.log('🔘 UserTypeSelection: Web confirm result:', confirmed);
+      
+      if (confirmed) {
+        try {
+          setLoading(true);
+          console.log('🚪 UserTypeSelection: Iniciando logout...');
+          await logout();
+          console.log('✅ UserTypeSelection: Logout concluído');
+        } catch (error) {
+          console.error('❌ UserTypeSelection: Erro ao fazer logout:', error);
+          window.alert(`Erro: ${error.message}`);
+        } finally {
+          setLoading(false);
+        }
+      }
+      return;
+    }
+    
+    // Para mobile, usar Alert.alert
     Alert.alert(
       'Sair',
       'Tem certeza que deseja sair da sua conta?',
@@ -162,10 +186,12 @@ const UserTypeSelectionScreen = ({ navigation, route }) => {
           onPress: async () => {
             try {
               setLoading(true);
+              console.log('🚪 UserTypeSelection: Iniciando logout...');
               await logout();
+              console.log('✅ UserTypeSelection: Logout concluído');
             } catch (error) {
-              console.error('Erro ao fazer logout:', error);
-              Alert.alert('Erro', 'Não foi possível sair da conta. Tente novamente.');
+              console.error('❌ UserTypeSelection: Erro ao fazer logout:', error);
+              Alert.alert('Erro', `Não foi possível sair da conta: ${error.message}`);
             } finally {
               setLoading(false);
             }

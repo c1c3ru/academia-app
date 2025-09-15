@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import useAuthStore from '../stores/authStore';
@@ -266,6 +266,24 @@ export const useAuthMigration = () => {
     }
   };
 
+  // Função de logout
+  const logoutUser = async () => {
+    try {
+      console.log('🚪 Iniciando logout...');
+      
+      // Fazer signOut do Firebase
+      await signOut(auth);
+      
+      // Limpar estado do Zustand
+      logout(); // Chama a função logout do store
+      
+      console.log('✅ Logout realizado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao fazer logout:', error);
+      throw error;
+    }
+  };
+
   return {
     user,
     userProfile,
@@ -275,7 +293,7 @@ export const useAuthMigration = () => {
     getUserType,
     isComplete: isComplete(),
     login,
-    logout,
+    logout: logoutUser,
     setUser,
     setUserProfile,
     setAcademia,
