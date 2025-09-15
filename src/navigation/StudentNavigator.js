@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import UniversalHeader from '../components/UniversalHeader';
@@ -10,7 +11,16 @@ import StudentPayments from '../screens/student/StudentPayments';
 import StudentEvolution from '../screens/student/StudentEvolution';
 import StudentCalendar from '../screens/student/StudentCalendar';
 
+// Telas Compartilhadas
+import ProfileScreen from '../screens/shared/ProfileScreen';
+import ChangePasswordScreen from '../screens/shared/ChangePasswordScreen';
+import PhysicalEvaluationScreen from '../screens/shared/PhysicalEvaluationScreen';
+import PhysicalEvaluationHistoryScreen from '../screens/shared/PhysicalEvaluationHistoryScreen';
+import NotificationSettingsScreen from '../screens/shared/NotificationSettingsScreen';
+import PrivacySettingsScreen from '../screens/shared/PrivacySettingsScreen';
+
 const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
 
 // Navegação para Alunos
 const StudentNavigator = () => {
@@ -68,4 +78,109 @@ const StudentNavigator = () => {
   );
 };
 
-export default StudentNavigator;
+// Stack Navigator para Student (para incluir telas modais e de perfil)
+const StudentStackNavigator = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen 
+        name="StudentTabs" 
+        component={StudentNavigator}
+        options={{ headerShown: false }}
+      />
+      
+      {/* Profile-related screens */}
+      <Stack.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={{
+          headerShown: true,
+          header: ({ navigation }) => (
+            <UniversalHeader
+              title="Perfil"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor="#2196F3"
+            />
+          ),
+        }}
+      />
+      <Stack.Screen 
+        name="ChangePassword" 
+        component={ChangePasswordScreen}
+        options={{
+          headerShown: true,
+          header: ({ navigation }) => (
+            <UniversalHeader
+              title="Alterar Senha"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor="#2196F3"
+            />
+          ),
+        }}
+      />
+      <Stack.Screen 
+        name="PhysicalEvaluation" 
+        component={PhysicalEvaluationScreen}
+        options={{
+          headerShown: true,
+          header: ({ navigation }) => (
+            <UniversalHeader
+              title="Avaliação Física"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor="#2196F3"
+            />
+          ),
+        }}
+      />
+      <Stack.Screen 
+        name="PhysicalEvaluationHistory" 
+        component={PhysicalEvaluationHistoryScreen}
+        options={{
+          headerShown: true,
+          header: ({ navigation }) => (
+            <UniversalHeader
+              title="Histórico de Avaliações"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor="#2196F3"
+            />
+          ),
+        }}
+      />
+      <Stack.Screen 
+        name="NotificationSettings" 
+        component={NotificationSettingsScreen}
+        options={{
+          headerShown: true,
+          header: ({ navigation }) => (
+            <UniversalHeader
+              title="Configurações de Notificação"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor="#2196F3"
+            />
+          ),
+        }}
+      />
+      <Stack.Screen 
+        name="PrivacySettings" 
+        component={PrivacySettingsScreen}
+        options={{
+          headerShown: true,
+          header: ({ navigation }) => (
+            <UniversalHeader
+              title="Privacidade e Segurança"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor="#2196F3"
+            />
+          ),
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
+
+export default StudentStackNavigator;

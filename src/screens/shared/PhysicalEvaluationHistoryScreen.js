@@ -37,7 +37,7 @@ const PhysicalEvaluationHistoryScreen = ({ navigation }) => {
       const evaluationData = await firestoreService.getDocuments(
         `gyms/${academia.id}/physicalEvaluations`,
         [{ field: 'userId', operator: '==', value: user.uid }],
-        [{ field: 'date', direction: 'desc' }]
+        { field: 'date', direction: 'desc' }
       );
       
       setEvaluations(evaluationData);

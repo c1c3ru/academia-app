@@ -5,7 +5,8 @@ import {
   ScrollView, 
   Alert,
   ActivityIndicator,
-  Platform
+  Platform,
+  RefreshControl
 } from 'react-native';
 import { 
   Card, 

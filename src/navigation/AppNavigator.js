@@ -7,7 +7,7 @@ import { useTheme } from '../contexts/ThemeContext';
 
 // Navegadores Modulares
 import AuthNavigator from './AuthNavigator';
-import StudentNavigator from './StudentNavigator';
+import StudentStackNavigator from './StudentNavigator';
 import InstructorNavigator from './InstructorNavigator';
 import AdminNavigator from './AdminNavigator';
 import SharedNavigator from './SharedNavigator';
@@ -24,7 +24,7 @@ const MainNavigator = ({ userType }) => {
   let TabNavigator;
   switch (userType) {
     case 'student':
-      TabNavigator = StudentNavigator;
+      TabNavigator = StudentStackNavigator;
       break;
     case 'instructor':
       TabNavigator = InstructorNavigator;
@@ -33,7 +33,7 @@ const MainNavigator = ({ userType }) => {
       TabNavigator = AdminNavigator;
       break;
     default:
-      TabNavigator = StudentNavigator;
+      TabNavigator = StudentStackNavigator;
   }
 
   return (
