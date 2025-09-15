@@ -66,28 +66,39 @@ const AdminModalities = ({ navigation }) => {
     console.log('Profile UserType:', userProfile?.userType);
     console.log('Profile Tipo:', userProfile?.tipo);
     console.log('======================');
+    loadData();
   }, []);
 
   const loadData = async () => {
     try {
+      console.log('🔄 AdminModalities: Iniciando carregamento de dados...');
       setLoading(true);
       
       // Buscar modalidades
+      console.log('📋 Buscando modalidades...');
       const modalitiesData = await firestoreService.getAll('modalities');
+      console.log('✅ Modalidades carregadas:', modalitiesData.length);
       setModalities(modalitiesData);
       
       // Buscar planos
+      console.log('💰 Buscando planos...');
       const plansData = await firestoreService.getAll('plans');
+      console.log('✅ Planos carregados:', plansData.length);
       setPlans(plansData);
       
       // Buscar avisos
+      console.log('📢 Buscando avisos...');
       const announcementsData = await firestoreService.getAll('announcements');
+      console.log('✅ Avisos carregados:', announcementsData.length);
       setAnnouncements(announcementsData);
       
+      console.log('✅ AdminModalities: Carregamento concluído com sucesso!');
     } catch (error) {
-      console.error(getString('logoutError'), error);
+      console.error('❌ Erro ao carregar dados:', error);
+      console.error('Error details:', error.message, error.code);
       Alert.alert(getString('error'), getString('errorLoadingData'));
     } finally {
+      console.log('🏁 AdminModalities: Finalizando loading...');
       setLoading(false);
       setRefreshing(false);
     }
