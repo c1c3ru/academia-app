@@ -57,8 +57,8 @@ const AdminDashboard = ({ navigation }) => {
     if (loading) {
       Animated.loop(
         Animated.sequence([
-          Animated.timing(skeletonPulse, { toValue: 1, duration: 800, useNativeDriver: true }),
-          Animated.timing(skeletonPulse, { toValue: 0.6, duration: 800, useNativeDriver: true }),
+          Animated.timing(skeletonPulse, { toValue: 1, duration: 800, useNativeDriver: Platform.OS !== 'web' }),
+          Animated.timing(skeletonPulse, { toValue: 0.6, duration: 800, useNativeDriver: Platform.OS !== 'web' }),
         ])
       ).start();
     }

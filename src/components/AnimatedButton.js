@@ -76,7 +76,10 @@ const AnimatedButton = ({
           {
             borderRadius: 8,
             marginVertical: 4,
-            ...(Platform.OS === 'web' && { pointerEvents: disabled ? 'none' : 'auto' }),
+            ...(Platform.OS === 'web' && { 
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              userSelect: 'none'
+            }),
           },
           style
         ]}

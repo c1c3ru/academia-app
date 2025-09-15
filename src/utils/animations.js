@@ -17,7 +17,7 @@ export const AnimationConfig = {
   },
   fade: {
     duration: Platform.OS === 'web' ? 400 : 300,
-    useNativeDriver: true,
+    useNativeDriver: Platform.OS !== 'web',
   }
 };
 
@@ -63,6 +63,8 @@ export const ResponsiveUtils = {
   // Elevação/sombra responsiva
   elevation: Platform.OS === 'android' ? {
     elevation: width >= 768 ? 8 : 4,
+  } : Platform.OS === 'web' ? {
+    boxShadow: `0px ${width >= 768 ? 4 : 2}px ${width >= 768 ? 8 : 4}px rgba(0, 0, 0, 0.1)`,
   } : {
     shadowColor: '#000',
     shadowOffset: {
@@ -90,6 +92,8 @@ export const ShadowUtils = {
   none: {},
   light: Platform.OS === 'android' ? {
     elevation: 2,
+  } : Platform.OS === 'web' ? {
+    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
   } : {
     shadowColor: '#000',
     shadowOffset: {
@@ -101,6 +105,8 @@ export const ShadowUtils = {
   },
   medium: Platform.OS === 'android' ? {
     elevation: 4,
+  } : Platform.OS === 'web' ? {
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
   } : {
     shadowColor: '#000',
     shadowOffset: {
@@ -112,6 +118,8 @@ export const ShadowUtils = {
   },
   heavy: Platform.OS === 'android' ? {
     elevation: 8,
+  } : Platform.OS === 'web' ? {
+    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
   } : {
     shadowColor: '#000',
     shadowOffset: {
