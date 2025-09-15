@@ -11,7 +11,8 @@ import {
   Text, 
   Button, 
   TextInput,
-  Title
+  Title,
+  RadioButton
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import { Picker } from '@react-native-picker/picker'; // Removido - dependência não disponível
