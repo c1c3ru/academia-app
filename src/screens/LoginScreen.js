@@ -22,7 +22,7 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, signInWithFacebook, signInWithMicrosoft, signInWithApple } = useAuth();
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -74,16 +74,10 @@ export default function LoginScreen({ navigation }) {
   };
 
   const handleGoogleLogin = async () => {
+    console.log('handleGoogleLogin chamado');
     try {
       setLoading(true);
-      // Para web, usar popup do Google
-      if (Platform.OS === 'web') {
-        Alert.alert('Google Login', 'Login com Google disponível apenas no app mobile');
-        return;
-      }
-      
-      // Implementar Google Sign-In para mobile
-      Alert.alert('Google Login', 'Funcionalidade disponível em breve');
+      await signInWithGoogle();
     } catch (error) {
       console.error('Erro no login Google:', error);
       Alert.alert('Erro', 'Não foi possível fazer login com Google');
@@ -92,15 +86,34 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
-  const handleSocialLogin = (provider) => {
-    Alert.alert(
-      `Login ${provider}`,
-      `Login com ${provider} será implementado em breve`,
-      [{ text: 'OK' }]
-    );
+  const handleSocialLogin = async (provider) => {
+    console.log(`handleSocialLogin chamado para ${provider}`);
+    try {
+      setLoading(true);
+      
+      switch (provider) {
+        case 'Facebook':
+          await signInWithFacebook();
+          break;
+        case 'Microsoft':
+          await signInWithMicrosoft();
+          break;
+        case 'Apple':
+          await signInWithApple();
+          break;
+        default:
+          Alert.alert('Erro', 'Provedor não suportado');
+      }
+    } catch (error) {
+      console.error(`Erro no login ${provider}:`, error);
+      Alert.alert('Erro', `Não foi possível fazer login com ${provider}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleThemeToggle = () => {
+    console.log('handleThemeToggle chamado');
     Alert.alert(
       'Tema',
       'Escolha o tema do aplicativo:',
@@ -113,6 +126,7 @@ export default function LoginScreen({ navigation }) {
   };
 
   const handleLanguageToggle = () => {
+    console.log('handleLanguageToggle chamado');
     Alert.alert(
       'Idioma',
       'Escolha o idioma do aplicativo:',

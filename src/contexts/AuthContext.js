@@ -5,7 +5,11 @@ import {
   signOut, 
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithCredential
+  FacebookAuthProvider,
+  OAuthProvider,
+  signInWithCredential,
+  signInWithPopup,
+  signInWithRedirect
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
@@ -206,8 +210,22 @@ export const AuthProvider = ({ children }) => {
 
   const signInWithGoogle = async (googleCredential) => {
     try {
-      const credential = GoogleAuthProvider.credential(googleCredential);
-      const { user: firebaseUser } = await signInWithCredential(auth, credential);
+      let firebaseUser;
+      
+      if (googleCredential) {
+        // Login mobile com credential
+        const credential = GoogleAuthProvider.credential(googleCredential);
+        const result = await signInWithCredential(auth, credential);
+        firebaseUser = result.user;
+      } else {
+        // Login web com popup
+        const provider = new GoogleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('profile');
+        
+        const result = await signInWithPopup(auth, provider);
+        firebaseUser = result.user;
+      }
       
       // Verificar se o usuário já existe no Firestore (nova estrutura)
       let userDoc = await getDoc(doc(db, 'usuarios', firebaseUser.uid));
@@ -224,6 +242,107 @@ export const AuthProvider = ({ children }) => {
           email: firebaseUser.email,
           photoURL: firebaseUser.photoURL,
           tipo: 'aluno', // Padrão para novos usuários
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
+      
+      await fetchUserProfile(firebaseUser.uid);
+      return firebaseUser;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const signInWithFacebook = async () => {
+    try {
+      const provider = new FacebookAuthProvider();
+      provider.addScope('email');
+      
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+      
+      // Verificar se o usuário já existe no Firestore
+      let userDoc = await getDoc(doc(db, 'usuarios', firebaseUser.uid));
+      
+      if (!userDoc.exists()) {
+        userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      }
+      
+      if (!userDoc.exists()) {
+        await setDoc(doc(db, 'usuarios', firebaseUser.uid), {
+          name: firebaseUser.displayName,
+          email: firebaseUser.email,
+          photoURL: firebaseUser.photoURL,
+          tipo: 'aluno',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
+      
+      await fetchUserProfile(firebaseUser.uid);
+      return firebaseUser;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const signInWithMicrosoft = async () => {
+    try {
+      const provider = new OAuthProvider('microsoft.com');
+      provider.addScope('email');
+      provider.addScope('profile');
+      
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+      
+      // Verificar se o usuário já existe no Firestore
+      let userDoc = await getDoc(doc(db, 'usuarios', firebaseUser.uid));
+      
+      if (!userDoc.exists()) {
+        userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      }
+      
+      if (!userDoc.exists()) {
+        await setDoc(doc(db, 'usuarios', firebaseUser.uid), {
+          name: firebaseUser.displayName,
+          email: firebaseUser.email,
+          photoURL: firebaseUser.photoURL,
+          tipo: 'aluno',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
+      
+      await fetchUserProfile(firebaseUser.uid);
+      return firebaseUser;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const signInWithApple = async () => {
+    try {
+      const provider = new OAuthProvider('apple.com');
+      provider.addScope('email');
+      provider.addScope('name');
+      
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+      
+      // Verificar se o usuário já existe no Firestore
+      let userDoc = await getDoc(doc(db, 'usuarios', firebaseUser.uid));
+      
+      if (!userDoc.exists()) {
+        userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      }
+      
+      if (!userDoc.exists()) {
+        await setDoc(doc(db, 'usuarios', firebaseUser.uid), {
+          name: firebaseUser.displayName || 'Usuário Apple',
+          email: firebaseUser.email,
+          photoURL: firebaseUser.photoURL,
+          tipo: 'aluno',
           createdAt: new Date(),
           updatedAt: new Date()
         });
@@ -347,6 +466,9 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signIn,
     signInWithGoogle,
+    signInWithFacebook,
+    signInWithMicrosoft,
+    signInWithApple,
     logout,
     updateUserProfile,
     updateAcademiaAssociation,
