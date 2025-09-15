@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthProvider';
 
 const UserTypeSelectionScreen = ({ navigation, route }) => {
-  const { user, updateUserProfile } = useAuth();
+  const { user, updateUserProfile, logout } = useAuth();
   const [selectedType, setSelectedType] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -147,9 +147,48 @@ const UserTypeSelectionScreen = ({ navigation, route }) => {
     </Card>
   );
 
+  const handleLogout = async () => {
+    Alert.alert(
+      'Sair',
+      'Tem certeza que deseja sair da sua conta?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel'
+        },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await logout();
+            } catch (error) {
+              console.error('Erro ao fazer logout:', error);
+              Alert.alert('Erro', 'Não foi possível sair da conta. Tente novamente.');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <Button
+            mode="text"
+            onPress={handleLogout}
+            icon="logout"
+            textColor="#666"
+            style={styles.logoutButton}
+          >
+            Sair
+          </Button>
+        </View>
         <Avatar.Text
           size={80}
           label={user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
@@ -191,6 +230,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  headerTop: {
+    width: '100%',
+    alignItems: 'flex-end',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  logoutButton: {
+    marginBottom: 10,
   },
   header: {
     alignItems: 'center',
