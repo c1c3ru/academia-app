@@ -5,7 +5,8 @@ import {
   Text,
   Button,
   List,
-  Divider
+  Divider,
+  Badge
 } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -127,21 +128,21 @@ const ClassDetailsScreen = ({ route, navigation }) => {
           <Divider style={styles.divider} />
           
           <View style={styles.infoRow}>
-            <Icon name="person" type="material" size={20} color="#666" />
+            <Ionicons name="person" size={20} color="#666" />
             <Text style={styles.infoText}>
               Instrutor: {classInfo?.instructor || 'Não definido'}
             </Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Icon name="schedule" type="material" size={20} color="#666" />
+            <Ionicons name="time" size={20} color="#666" />
             <Text style={styles.infoText}>
               Horários: {formatSchedule(classInfo?.schedule)}
             </Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Icon name="people" type="material" size={20} color="#666" />
+            <Ionicons name="people" size={20} color="#666" />
             <Text style={styles.infoText}>
               Alunos: {students.length} / {classInfo?.maxStudents || 'Ilimitado'}
             </Text>
@@ -158,28 +159,30 @@ const ClassDetailsScreen = ({ route, navigation }) => {
         {/* Lista de Alunos */}
         <Card containerStyle={styles.card}>
           <View style={styles.cardHeader}>
-            <Icon name="group" type="material" size={24} color="#2196F3" />
+            <Ionicons name="people" size={24} color="#2196F3" />
             <Text h4 style={styles.cardTitle}>Alunos Matriculados</Text>
           </View>
           
           {students.length > 0 ? (
             students.map((student, index) => (
-              <ListItem key={student.id || index} bottomDivider>
-                <Icon name="person" type="material" />
-                <ListItem.Content>
-                  <ListItem.Title>{student.name}</ListItem.Title>
-                  <ListItem.Subtitle>{student.email}</ListItem.Subtitle>
-                </ListItem.Content>
-                <Button
-                  title="Ver Perfil"
-                  type="outline"
-                  size="sm"
-                  onPress={() => navigation.navigate('StudentProfile', { 
-                    studentId: student.id, 
-                    studentData: student 
-                  })}
-                />
-              </ListItem>
+              <List.Item
+                key={student.id || index}
+                title={student.name}
+                description={student.email}
+                left={(props) => <Ionicons name="person" size={20} color="#666" />}
+                right={(props) => (
+                  <Button
+                    mode="outlined"
+                    compact
+                    onPress={() => navigation.navigate('StudentProfile', { 
+                      studentId: student.id, 
+                      studentData: student 
+                    })}
+                  >
+                    Ver Perfil
+                  </Button>
+                )}
+              />
             ))
           ) : (
             <Text style={styles.noStudentsText}>
@@ -200,21 +203,21 @@ const ClassDetailsScreen = ({ route, navigation }) => {
                 className: classInfo?.name 
               })}
               buttonStyle={[styles.actionButton, { backgroundColor: '#2196F3' }]}
-              icon={<Icon name="check-circle" type="material" size={20} color="white" />}
+              icon={<Ionicons name="checkmark-circle" size={20} color="white" />}
             />
             
             <Button
               title="Gerenciar Alunos"
               onPress={() => navigation.navigate('ClassStudents', { classId: classId })}
               buttonStyle={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
-              icon={<Icon name="group-add" type="material" size={20} color="white" />}
+              icon={<Ionicons name="person-add" size={20} color="white" />}
             />
             
             <Button
               title="Excluir Turma"
               onPress={handleDeleteClass}
               buttonStyle={[styles.actionButton, { backgroundColor: '#F44336' }]}
-              icon={<Icon name="delete" type="material" size={20} color="white" />}
+              icon={<Ionicons name="trash" size={20} color="white" />}
             />
           </View>
         </Card>

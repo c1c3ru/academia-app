@@ -32,6 +32,8 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
       // Permitir leitura para admins e instrutores (para dashboards e busca de alunos)
       allow read: if isSignedIn() && (isAdmin() || isInstructor());
+      // Permitir criação, edição e exclusão de usuários por admins e instrutores
+      allow create, update, delete: if isSignedIn() && (isAdmin() || isInstructor());
     }
     
     // Coleção de academias (gyms)
@@ -58,7 +60,14 @@ service cloud.firestore {
       // Subcoleção de turmas
       match /turmas/{turmaId} {
         allow read: if isSignedIn() && isMemberOf(academiaId);
-        allow write: if isSignedIn() && isMemberOf(academiaId) && (isAdmin() || isInstructor());
+        allow create, update: if isSignedIn() && isMemberOf(academiaId) && (isAdmin() || isInstructor());
+        allow delete: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
+        
+        // Subcoleção de alunos da turma
+        match /alunos/{alunoId} {
+          allow read: if isSignedIn() && isMemberOf(academiaId);
+          allow create, update, delete: if isSignedIn() && isMemberOf(academiaId) && (isAdmin() || isInstructor());
+        }
       }
       
       // Subcoleção de pagamentos
@@ -91,19 +100,19 @@ service cloud.firestore {
     // Coleção de modalidades globais - leitura pública para criação de academias
     match /modalities/{modalityId} {
       allow read: if true; // Permite leitura pública para seleção durante criação de academia
-      allow write: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
+      allow create, update, delete: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
     }
     
     // Coleção de planos globais - leitura pública
     match /plans/{planId} {
       allow read: if true; // Permite leitura pública
-      allow write: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
+      allow create, update, delete: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
     }
     
     // Coleção de avisos globais - leitura pública
     match /announcements/{announcementId} {
       allow read: if true; // Permite leitura pública
-      allow write: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
+      allow create, update, delete: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
     }
     
     // Removido: coleção legacy 'usuarios'. O projeto agora usa apenas 'users'.

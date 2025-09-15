@@ -39,10 +39,10 @@ export default function App() {
       <PaperProvider theme={theme}>
         <Portal.Host>
           <AuthProvider>
+            <NotificationProvider>
               <StatusBar style="auto" />
-              {/* <NotificationProvider> */}
-                <AppNavigator />
-              {/* </NotificationProvider> */}
+              <AppNavigator />
+            </NotificationProvider>
           </AuthProvider>
         </Portal.Host>
       </PaperProvider>

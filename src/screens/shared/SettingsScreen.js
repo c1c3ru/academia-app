@@ -8,6 +8,7 @@ import {
   Switch,
   Divider
 } from 'react-native-paper';
+import { ListItem } from 'react-native-elements';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthProvider';
@@ -75,12 +76,12 @@ const SettingsScreen = ({ navigation }) => {
         {/* Informações da Conta */}
         <Card containerStyle={styles.card}>
           <View style={styles.cardHeader}>
-            <Icon name="account-circle" type="material" size={24} color="#2196F3" />
+            <Ionicons name="person-circle" size={24} color="#2196F3" />
             <Text h4 style={styles.cardTitle}>Conta</Text>
           </View>
           
           <ListItem bottomDivider>
-            <Icon name="person" type="material" />
+            <Ionicons name="person" size={20} color="#666" />
             <ListItem.Content>
               <ListItem.Title>Nome</ListItem.Title>
               <ListItem.Subtitle>{userProfile?.name || 'Não informado'}</ListItem.Subtitle>
@@ -88,7 +89,7 @@ const SettingsScreen = ({ navigation }) => {
           </ListItem>
           
           <ListItem bottomDivider>
-            <Icon name="email" type="material" />
+            <Ionicons name="mail" size={20} color="#666" />
             <ListItem.Content>
               <ListItem.Title>Email</ListItem.Title>
               <ListItem.Subtitle>{user?.email}</ListItem.Subtitle>
@@ -96,7 +97,7 @@ const SettingsScreen = ({ navigation }) => {
           </ListItem>
           
           <ListItem bottomDivider onPress={() => navigation.navigate('Profile')}>
-            <Icon name="edit" type="material" />
+            <Ionicons name="create" size={20} color="#666" />
             <ListItem.Content>
               <ListItem.Title>Editar Perfil</ListItem.Title>
             </ListItem.Content>
@@ -104,7 +105,7 @@ const SettingsScreen = ({ navigation }) => {
           </ListItem>
           
           <ListItem onPress={handleChangePassword}>
-            <Icon name="lock" type="material" />
+            <Ionicons name="lock-closed" size={20} color="#666" />
             <ListItem.Content>
               <ListItem.Title>Alterar Senha</ListItem.Title>
             </ListItem.Content>
@@ -115,12 +116,12 @@ const SettingsScreen = ({ navigation }) => {
         {/* Preferências */}
         <Card containerStyle={styles.card}>
           <View style={styles.cardHeader}>
-            <Icon name="settings" type="material" size={24} color="#4CAF50" />
+            <Ionicons name="settings" size={24} color="#4CAF50" />
             <Text h4 style={styles.cardTitle}>Preferências</Text>
           </View>
           
           <ListItem bottomDivider>
-            <Icon name="notifications" type="material" />
+            <Ionicons name="notifications" size={20} color="#666" />
             <ListItem.Content>
               <ListItem.Title>Notificações</ListItem.Title>
               <ListItem.Subtitle>Receber notificações push</ListItem.Subtitle>
@@ -133,7 +134,7 @@ const SettingsScreen = ({ navigation }) => {
           </ListItem>
           
           <ListItem bottomDivider>
-            <Icon name="dark-mode" type="material" />
+            <Ionicons name="moon" size={20} color="#666" />
             <ListItem.Content>
               <ListItem.Title>Modo Escuro</ListItem.Title>
               <ListItem.Subtitle>Tema escuro da aplicação</ListItem.Subtitle>
@@ -146,7 +147,7 @@ const SettingsScreen = ({ navigation }) => {
           </ListItem>
           
           <ListItem>
-            <Icon name="backup" type="material" />
+            <Ionicons name="cloud-upload" size={20} color="#666" />
             <ListItem.Content>
               <ListItem.Title>Backup Automático</ListItem.Title>
               <ListItem.Subtitle>Backup automático dos dados</ListItem.Subtitle>
@@ -162,12 +163,12 @@ const SettingsScreen = ({ navigation }) => {
         {/* Dados e Privacidade */}
         <Card containerStyle={styles.card}>
           <View style={styles.cardHeader}>
-            <Icon name="privacy-tip" type="material" size={24} color="#FF9800" />
+            <Ionicons name="shield-checkmark" size={24} color="#FF9800" />
             <Text h4 style={styles.cardTitle}>Dados e Privacidade</Text>
           </View>
           
           <ListItem bottomDivider onPress={handleDataExport}>
-            <Icon name="download" type="material" />
+            <Ionicons name="download" size={20} color="#666" />
             <ListItem.Content>
               <ListItem.Title>Exportar Dados</ListItem.Title>
               <ListItem.Subtitle>Baixar uma cópia dos seus dados</ListItem.Subtitle>
@@ -176,7 +177,7 @@ const SettingsScreen = ({ navigation }) => {
           </ListItem>
           
           <ListItem bottomDivider>
-            <Icon name="policy" type="material" />
+            <Ionicons name="document-text" size={20} color="#666" />
             <ListItem.Content>
               <ListItem.Title>Política de Privacidade</ListItem.Title>
             </ListItem.Content>
@@ -184,7 +185,7 @@ const SettingsScreen = ({ navigation }) => {
           </ListItem>
           
           <ListItem>
-            <Icon name="gavel" type="material" />
+            <Ionicons name="library" size={20} color="#666" />
             <ListItem.Content>
               <ListItem.Title>Termos de Uso</ListItem.Title>
             </ListItem.Content>

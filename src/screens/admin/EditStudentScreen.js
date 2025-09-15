@@ -3,8 +3,7 @@ import {
   View, 
   StyleSheet, 
   ScrollView, 
-  Alert, 
-  Platform
+  Alert
 } from 'react-native';
 import { 
   Card, 
@@ -14,7 +13,8 @@ import {
   HelperText,
   Title,
   RadioButton,
-  ActivityIndicator
+  ActivityIndicator,
+  Snackbar
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthProvider';
@@ -25,6 +25,9 @@ const EditStudentScreen = ({ navigation, route }) => {
   const { studentId } = route.params;
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarType, setSnackbarType] = useState('success'); // 'success' | 'error'
   
   // Form data
   const [formData, setFormData] = useState({
@@ -134,20 +137,20 @@ const EditStudentScreen = ({ navigation, route }) => {
 
       await firestoreService.update('users', studentId, studentData);
 
-      Alert.alert(
-        'Sucesso',
-        'Aluno atualizado com sucesso!',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack()
-          }
-        ]
-      );
+      setSnackbarMessage('Aluno atualizado com sucesso!');
+      setSnackbarType('success');
+      setSnackbarVisible(true);
+      
+      // Navegar de volta após 2 segundos
+      setTimeout(() => {
+        navigation.goBack();
+      }, 2000);
 
     } catch (error) {
       console.error('Erro ao atualizar aluno:', error);
-      Alert.alert('Erro', 'Não foi possível atualizar o aluno. Tente novamente.');
+      setSnackbarMessage('Erro ao atualizar aluno. Tente novamente.');
+      setSnackbarType('error');
+      setSnackbarVisible(true);
     } finally {
       setLoading(false);
     }
@@ -170,19 +173,19 @@ const EditStudentScreen = ({ navigation, route }) => {
               setLoading(true);
               await firestoreService.delete('users', studentId);
               
-              Alert.alert(
-                'Sucesso',
-                'Aluno excluído com sucesso!',
-                [
-                  {
-                    text: 'OK',
-                    onPress: () => navigation.goBack()
-                  }
-                ]
-              );
+              setSnackbarMessage('Aluno excluído com sucesso!');
+              setSnackbarType('success');
+              setSnackbarVisible(true);
+              
+              // Navegar de volta após 2 segundos
+              setTimeout(() => {
+                navigation.goBack();
+              }, 2000);
             } catch (error) {
               console.error('Erro ao excluir aluno:', error);
-              Alert.alert('Erro', 'Não foi possível excluir o aluno.');
+              setSnackbarMessage('Erro ao excluir aluno. Tente novamente.');
+              setSnackbarType('error');
+              setSnackbarVisible(true);
             } finally {
               setLoading(false);
             }
@@ -392,6 +395,17 @@ const EditStudentScreen = ({ navigation, route }) => {
           </Card.Content>
         </Card>
       </ScrollView>
+      
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={3000}
+        style={{
+          backgroundColor: snackbarType === 'success' ? '#4CAF50' : '#F44336'
+        }}
+      >
+        {snackbarMessage}
+      </Snackbar>
     </SafeAreaView>
   );
 };

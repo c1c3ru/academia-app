@@ -68,10 +68,10 @@ export const ThemeProvider = ({ children }) => {
   };
 
   // Function to manually update theme (called when user type changes)
-  const updateUserTheme = (userType) => {
+  const updateUserTheme = React.useCallback((userType) => {
     const newTheme = getThemeForUserType(userType, isDarkMode);
     setTheme(newTheme);
-  };
+  }, [isDarkMode]);
 
   const value = {
     isDarkMode,

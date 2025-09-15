@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert, Platform } from 'react-native';
+import { 
+  View, 
+  StyleSheet, 
+  ScrollView, 
+  Alert,
+  ActivityIndicator
+} from 'react-native';
 import { 
   Card, 
   Text, 
-  Button,
-  List,
+  Button, 
+  Avatar,
+  Badge,
   Divider
 } from 'react-native-paper';
-import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ListItem } from 'react-native-elements';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';
 
@@ -139,21 +147,21 @@ const StudentDetailsScreen = ({ route, navigation }) => {
           
           <View style={styles.infoSection}>
             <View style={styles.infoRow}>
-              <Icon name="phone" type="material" size={20} color="#666" />
+              <Ionicons name="call" size={20} color="#666" />
               <Text style={styles.infoText}>
                 {studentInfo?.phone || 'Telefone não informado'}
               </Text>
             </View>
             
             <View style={styles.infoRow}>
-              <Icon name="location-on" type="material" size={20} color="#666" />
+              <Ionicons name="location" size={20} color="#666" />
               <Text style={styles.infoText}>
                 {studentInfo?.address || 'Endereço não informado'}
               </Text>
             </View>
             
             <View style={styles.infoRow}>
-              <Icon name="event" type="material" size={20} color="#666" />
+              <Ionicons name="calendar" size={20} color="#666" />
               <Text style={styles.infoText}>
                 Cadastrado em: {formatDate(studentInfo?.createdAt)}
               </Text>
@@ -164,14 +172,14 @@ const StudentDetailsScreen = ({ route, navigation }) => {
         {/* Turmas Matriculadas */}
         <Card containerStyle={styles.card}>
           <View style={styles.cardHeader}>
-            <Icon name="school" type="material" size={24} color="#2196F3" />
+            <Ionicons name="school" size={24} color="#2196F3" />
             <Text h4 style={styles.cardTitle}>Turmas Matriculadas</Text>
           </View>
           
           {studentClasses.length > 0 ? (
             studentClasses.map((classItem, index) => (
               <ListItem key={classItem.id || index} bottomDivider>
-                <Icon name="fitness-center" type="material" />
+                <Ionicons name="fitness" size={20} color="#666" />
                 <ListItem.Content>
                   <ListItem.Title>{classItem.name}</ListItem.Title>
                   <ListItem.Subtitle>{classItem.modality}</ListItem.Subtitle>
@@ -197,14 +205,14 @@ const StudentDetailsScreen = ({ route, navigation }) => {
         {/* Histórico de Pagamentos */}
         <Card containerStyle={styles.card}>
           <View style={styles.cardHeader}>
-            <Icon name="payment" type="material" size={24} color="#4CAF50" />
+            <Ionicons name="card" size={24} color="#4CAF50" />
             <Text h4 style={styles.cardTitle}>Histórico de Pagamentos</Text>
           </View>
           
           {payments.length > 0 ? (
             payments.slice(0, 5).map((payment, index) => (
               <ListItem key={payment.id || index} bottomDivider>
-                <Icon name="receipt" type="material" />
+                <Ionicons name="receipt" size={20} color="#666" />
                 <ListItem.Content>
                   <ListItem.Title>
                     {formatCurrency(payment.amount)}
@@ -247,7 +255,7 @@ const StudentDetailsScreen = ({ route, navigation }) => {
                 studentData: studentInfo 
               })}
               buttonStyle={[styles.actionButton, { backgroundColor: '#2196F3' }]}
-              icon={<Icon name="edit" type="material" size={20} color="white" />}
+              icon={<Ionicons name="create" size={20} color="white" />}
             />
             
             <Button
@@ -257,7 +265,7 @@ const StudentDetailsScreen = ({ route, navigation }) => {
                 studentName: studentInfo?.name 
               })}
               buttonStyle={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
-              icon={<Icon name="emoji-events" type="material" size={20} color="white" />}
+              icon={<Ionicons name="trophy" size={20} color="white" />}
             />
           </View>
         </Card>

@@ -26,7 +26,7 @@ const UniversalHeader = ({
     if (userProfile?.userType) {
       updateUserTheme(userProfile.userType);
     }
-  }, [userProfile?.userType, updateUserTheme]);
+  }, [userProfile?.userType]); // Removido updateUserTheme das dependências
 
   const openMenu = () => {
     console.log('🔐 Avatar clicado - abrindo menu');

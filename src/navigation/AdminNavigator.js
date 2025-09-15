@@ -21,6 +21,7 @@ import InviteManagement from '../screens/admin/InviteManagement';
 import ClassDetailsScreen from '../screens/shared/ClassDetailsScreen';
 import StudentDetailsScreen from '../screens/shared/StudentDetailsScreen';
 import StudentProfileScreen from '../screens/shared/StudentProfileScreen';
+import ProfileScreen from '../screens/shared/ProfileScreen';
 import AddGraduationScreen from '../screens/shared/AddGraduationScreen';
 import StudentPayments from '../screens/student/StudentPayments';
 import CheckIn from '../screens/instructor/CheckIn';
@@ -271,6 +272,21 @@ const AdminNavigator = () => {
           header: ({ navigation }) => (
             <UniversalHeader
               title="Nova Graduação"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor="#FF9800"
+            />
+          ),
+        }}
+      />
+      <Stack.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={{
+          headerShown: true,
+          header: ({ navigation }) => (
+            <UniversalHeader
+              title="Perfil"
               navigation={navigation}
               showBack={true}
               backgroundColor="#FF9800"
