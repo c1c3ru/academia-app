@@ -115,6 +115,8 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
       // Permitir leitura para admins (para AdminDashboard e AdminStudents)
       allow read: if isSignedIn() && isAdmin();
+      // Permitir leitura para instrutores (para InstructorDashboard e InstructorStudents)
+      allow read: if isSignedIn() && isInstructor();
     }
     
     // Coleção legacy 'classes' - compatibilidade temporária
