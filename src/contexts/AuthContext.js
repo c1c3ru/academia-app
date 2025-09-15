@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
   const fetchAcademiaData = async (academiaId) => {
     try {
       console.log('🏢 fetchAcademiaData: Buscando dados da academia:', academiaId);
-      const academiaDoc = await getDoc(doc(db, 'academias', academiaId));
+      const academiaDoc = await getDoc(doc(db, 'gyms', academiaId));
       if (academiaDoc.exists()) {
         console.log('✅ fetchAcademiaData: Academia encontrada');
         setAcademia({

@@ -1,18 +1,28 @@
-import React from 'react';
+import React, { createContext, useContext } from 'react';
 import useAuthMigration from '../hooks/useAuthMigration';
+
+// Criar contexto para compartilhar o estado
+const AuthContext = createContext();
 
 // Provider de compatibilidade para migração gradual
 export const AuthProvider = ({ children }) => {
-  // Inicializar o hook de migração para configurar listeners
-  useAuthMigration();
+  // Usar o hook uma única vez e compartilhar o estado via contexto
+  const authState = useAuthMigration();
   
-  // Simplesmente renderizar os children, o estado agora é gerenciado pelo Zustand
-  return children;
+  return (
+    <AuthContext.Provider value={authState}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-// Hook de compatibilidade que usa o Zustand store
+// Hook de compatibilidade que usa o contexto
 export const useAuth = () => {
-  return useAuthMigration();
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+  }
+  return context;
 };
 
 export default AuthProvider;

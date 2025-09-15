@@ -15,7 +15,7 @@ import {
   Text
 } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthProvider';
 
 const UserTypeSelectionScreen = ({ navigation, route }) => {
   const { user, updateUserProfile } = useAuth();

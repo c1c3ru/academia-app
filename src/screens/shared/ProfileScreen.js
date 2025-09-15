@@ -77,7 +77,7 @@ const ProfileScreen = ({ navigation }) => {
     try {
       // Carregar dados de treino
       const trainingHistory = await firestoreService.getDocuments(
-        `academias/${academia.id}/checkins`,
+        `gyms/${academia.id}/checkins`,
         [{ field: 'userId', operator: '==', value: user.uid }]
       );
       
@@ -87,14 +87,14 @@ const ProfileScreen = ({ navigation }) => {
       
       // Carregar avaliações físicas
       const evaluations = await firestoreService.getDocuments(
-        `academias/${academia.id}/physicalEvaluations`,
+        `gyms/${academia.id}/physicalEvaluations`,
         [{ field: 'userId', operator: '==', value: user.uid }]
       );
       setPhysicalEvaluations(evaluations);
       
       // Carregar lesões
       const userInjuries = await firestoreService.getDocuments(
-        `academias/${academia.id}/injuries`,
+        `gyms/${academia.id}/injuries`,
         [{ field: 'userId', operator: '==', value: user.uid }]
       );
       setInjuries(userInjuries);
@@ -126,7 +126,7 @@ const ProfileScreen = ({ navigation }) => {
     
     try {
       const payments = await firestoreService.getDocuments(
-        `academias/${academia.id}/payments`,
+        `gyms/${academia.id}/payments`,
         [{ field: 'userId', operator: '==', value: user.uid }]
       );
       

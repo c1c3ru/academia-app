@@ -10,7 +10,7 @@ import {
 } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthProvider';
 import { ResponsiveUtils } from '../../utils/animations';
 
 const SettingsScreen = ({ navigation }) => {

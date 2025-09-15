@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
-import useAuthMigration from '../hooks/useAuthMigration';
+import { useAuth } from '../contexts/AuthProvider';
 import { useTheme } from '../contexts/ThemeContext';
 
 // Navegadores Modulares
@@ -54,7 +54,7 @@ const MainNavigator = ({ userType }) => {
 
 // Navegador Principal da Aplicação
 const AppNavigator = () => {
-  const { user, userProfile, academia, loading } = useAuthMigration();
+  const { user, userProfile, academia, loading } = useAuth();
 
   console.log('🧭 AppNavigator: Estado atual:', {
     loading,

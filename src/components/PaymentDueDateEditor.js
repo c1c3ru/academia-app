@@ -71,7 +71,7 @@ const PaymentDueDateEditor = ({ visible, onDismiss, currentPayment, onUpdate }) 
       const dueDate = new Date(year, month - 1, day);
       
       // Atualizar pagamento no Firestore
-      await firestoreService.update(`academias/${academia.id}/payments`, currentPayment.id, {
+      await firestoreService.update(`gyms/${academia.id}/payments`, currentPayment.id, {
         dueDate: dueDate,
         dueDateChangedBy: user.uid,
         dueDateChangedAt: new Date(),
@@ -98,14 +98,14 @@ const PaymentDueDateEditor = ({ visible, onDismiss, currentPayment, onUpdate }) 
     try {
       // Buscar administradores da academia
       const admins = await firestoreService.getWhere(
-        `academias/${academia.id}/users`,
+        `gyms/${academia.id}/users`,
         'role',
         'admin'
       );
 
       // Criar notificação para cada administrador
       const notificationPromises = admins.map(admin => 
-        firestoreService.create(`academias/${academia.id}/notifications`, {
+        firestoreService.create(`gyms/${academia.id}/notifications`, {
           userId: admin.id,
           type: 'payment_date_change',
           title: 'Data de Vencimento Alterada',

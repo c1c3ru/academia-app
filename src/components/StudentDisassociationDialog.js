@@ -52,7 +52,7 @@ const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess })
       setLoading(true);
 
       // Atualizar status do usuário para inativo
-      await firestoreService.update(`academias/${academia.id}/users`, student.id, {
+      await firestoreService.update(`gyms/${academia.id}/users`, student.id, {
         status: 'inactive',
         disassociatedAt: new Date(),
         disassociatedBy: user.uid,
@@ -62,7 +62,7 @@ const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess })
 
       // Cancelar pagamentos pendentes
       const pendingPayments = await firestoreService.getDocuments(
-        `academias/${academia.id}/payments`,
+        `gyms/${academia.id}/payments`,
         [
           { field: 'userId', operator: '==', value: student.id },
           { field: 'status', operator: '==', value: 'pending' }
@@ -70,7 +70,7 @@ const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess })
       );
 
       const cancelPaymentPromises = pendingPayments.map(payment =>
-        firestoreService.update(`academias/${academia.id}/payments`, payment.id, {
+        firestoreService.update(`gyms/${academia.id}/payments`, payment.id, {
           status: 'cancelled',
           cancelledAt: new Date(),
           cancelledBy: user.uid,
@@ -81,7 +81,7 @@ const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess })
       await Promise.all(cancelPaymentPromises);
 
       // Registrar log da desassociação
-      await firestoreService.create(`academias/${academia.id}/logs`, {
+      await firestoreService.create(`gyms/${academia.id}/logs`, {
         type: 'student_disassociation',
         userId: student.id,
         performedBy: user.uid,
@@ -116,7 +116,7 @@ const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess })
     try {
       // Buscar todos os administradores
       const admins = await firestoreService.getDocuments(
-        `academias/${academia.id}/users`,
+        `gyms/${academia.id}/users`,
         [{ field: 'role', operator: '==', value: 'admin' }]
       );
 
@@ -124,7 +124,7 @@ const StudentDisassociationDialog = ({ visible, onDismiss, student, onSuccess })
       const notificationPromises = admins
         .filter(admin => admin.id !== user.uid)
         .map(admin => 
-          firestoreService.create(`academias/${academia.id}/notifications`, {
+          firestoreService.create(`gyms/${academia.id}/notifications`, {
             userId: admin.id,
             type: 'student_disassociation',
             title: 'Aluno Desassociado',

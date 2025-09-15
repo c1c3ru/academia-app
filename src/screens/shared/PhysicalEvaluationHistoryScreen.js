@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthProvider';
 import { firestoreService } from '../../services/firestoreService';
 
 const { width } = Dimensions.get('window');
@@ -35,7 +35,7 @@ const PhysicalEvaluationHistoryScreen = ({ navigation }) => {
       setLoading(true);
       
       const evaluationData = await firestoreService.getDocuments(
-        `academias/${academia.id}/physicalEvaluations`,
+        `gyms/${academia.id}/physicalEvaluations`,
         [{ field: 'userId', operator: '==', value: user.uid }],
         [{ field: 'date', direction: 'desc' }]
       );

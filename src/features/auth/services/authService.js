@@ -44,7 +44,7 @@ class AuthService {
         updatedAt: new Date().toISOString()
       };
       
-      await setDoc(doc(db, 'usuarios', user.uid), userProfile);
+      await setDoc(doc(db, 'users', user.uid), userProfile);
       
       // Atualizar store
       const { login } = useAuthStore.getState();
@@ -84,7 +84,7 @@ class AuthService {
   // Buscar perfil do usuário
   async getUserProfile(userId) {
     try {
-      const userDoc = await getDoc(doc(db, 'usuarios', userId));
+      const userDoc = await getDoc(doc(db, 'users', userId));
       if (userDoc.exists()) {
         return { id: userId, ...userDoc.data() };
       }
@@ -103,7 +103,7 @@ class AuthService {
         updatedAt: new Date().toISOString()
       };
       
-      await setDoc(doc(db, 'usuarios', userId), updatedData, { merge: true });
+      await setDoc(doc(db, 'users', userId), updatedData, { merge: true });
       
       // Atualizar store
       const { updateProfile } = useAuthStore.getState();

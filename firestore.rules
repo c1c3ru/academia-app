@@ -34,8 +34,8 @@ service cloud.firestore {
       allow read: if isSignedIn() && (isAdmin() || isInstructor());
     }
     
-    // Coleção de academias
-    match /academias/{academiaId} {
+    // Coleção de academias (gyms)
+    match /gyms/{academiaId} {
       // Leitura: membros da academia ou qualquer usuário autenticado para busca por código
       allow read: if isSignedIn() && (isMemberOf(academiaId) || true);
       // Criação: qualquer usuário autenticado pode criar nova academia (temporário para debug)

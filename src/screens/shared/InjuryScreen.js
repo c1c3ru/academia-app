@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthProvider';
 import { firestoreService } from '../../services/firestoreService';
 
 const InjuryScreen = ({ navigation, route }) => {
@@ -139,7 +139,7 @@ const InjuryScreen = ({ navigation, route }) => {
 
       if (isEditing && injury) {
         await firestoreService.update(
-          `academias/${academia.id}/injuries`, 
+          `gyms/${academia.id}/injuries`, 
           injury.id, 
           injuryData
         );
@@ -152,7 +152,7 @@ const InjuryScreen = ({ navigation, route }) => {
         injuryData.createdAt = new Date();
         injuryData.createdBy = user.uid;
         await firestoreService.create(
-          `academias/${academia.id}/injuries`, 
+          `gyms/${academia.id}/injuries`, 
           injuryData
         );
         setSnackbar({

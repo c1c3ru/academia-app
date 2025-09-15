@@ -27,7 +27,7 @@ export function useAcademiaCollection(collectionName, options = {}) {
 
     try {
       // Referência para a subcoleção da academia
-      const collectionRef = collection(db, 'academias', userProfile.academiaId, collectionName);
+      const collectionRef = collection(db, 'gyms', userProfile.academiaId, collectionName);
       
       // Aplicar filtros se fornecidos
       let queryRef = collectionRef;
@@ -67,7 +67,7 @@ export function useAcademiaCollection(collectionName, options = {}) {
     }
 
     try {
-      const collectionRef = collection(db, 'academias', userProfile.academiaId, collectionName);
+      const collectionRef = collection(db, 'gyms', userProfile.academiaId, collectionName);
       const docRef = await addDoc(collectionRef, {
         ...itemData,
         createdAt: new Date(),
@@ -87,7 +87,7 @@ export function useAcademiaCollection(collectionName, options = {}) {
     }
 
     try {
-      const docRef = doc(db, 'academias', userProfile.academiaId, collectionName, itemId);
+      const docRef = doc(db, 'gyms', userProfile.academiaId, collectionName, itemId);
       await updateDoc(docRef, {
         ...updates,
         updatedAt: new Date()
@@ -105,7 +105,7 @@ export function useAcademiaCollection(collectionName, options = {}) {
     }
 
     try {
-      const docRef = doc(db, 'academias', userProfile.academiaId, collectionName, itemId);
+      const docRef = doc(db, 'gyms', userProfile.academiaId, collectionName, itemId);
       await deleteDoc(docRef);
     } catch (error) {
       console.error(`Erro ao deletar ${collectionName}:`, error);
@@ -147,7 +147,7 @@ export function useAcademiaDocument(collectionName, itemId) {
 
     const fetchDocument = async () => {
       try {
-        const docRef = doc(db, 'academias', userProfile.academiaId, collectionName, itemId);
+        const docRef = doc(db, 'gyms', userProfile.academiaId, collectionName, itemId);
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {

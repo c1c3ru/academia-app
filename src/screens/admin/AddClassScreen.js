@@ -113,10 +113,10 @@ const AddClassScreen = ({ navigation, route }) => {
       console.warn('Aviso: falha ao buscar instrutores em users (permissões?):', error?.message || error);
     }
 
-    // 2) Tentar buscar em subcoleção 'academias/{academiaId}/instrutores' se houver academia
+    // 2) Tentar buscar em subcoleção 'gyms/{academiaId}/instrutores' se houver academia
     if (userProfile?.academiaId) {
       try {
-        const sub = await firestoreService.getAll(`academias/${userProfile.academiaId}/instrutores`);
+        const sub = await firestoreService.getAll(`gyms/${userProfile.academiaId}/instrutores`);
         subInstructors = (sub || []).map(i => ({
           id: i.id || i.uid,
           name: i.name || i.displayName || i.fullName || i.email || 'Instrutor',

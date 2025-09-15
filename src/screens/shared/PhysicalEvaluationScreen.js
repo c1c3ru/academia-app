@@ -13,7 +13,7 @@ import {
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthProvider';
 import { firestoreService } from '../../services/firestoreService';
 
 const PhysicalEvaluationScreen = ({ navigation, route }) => {
@@ -166,7 +166,7 @@ const PhysicalEvaluationScreen = ({ navigation, route }) => {
 
       if (isEditing && evaluation) {
         await firestoreService.update(
-          `academias/${academia.id}/physicalEvaluations`, 
+          `gyms/${academia.id}/physicalEvaluations`, 
           evaluation.id, 
           evaluationData
         );
@@ -178,7 +178,7 @@ const PhysicalEvaluationScreen = ({ navigation, route }) => {
       } else {
         evaluationData.createdAt = new Date();
         await firestoreService.create(
-          `academias/${academia.id}/physicalEvaluations`, 
+          `gyms/${academia.id}/physicalEvaluations`, 
           evaluationData
         );
         setSnackbar({

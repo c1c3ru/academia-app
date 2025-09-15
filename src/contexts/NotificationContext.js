@@ -80,7 +80,7 @@ export const NotificationProvider = ({ children }) => {
       
       // Usar consulta simples com índice existente
       const userNotifications = await firestoreService.getDocuments(
-        `academias/${userProfile.academiaId}/notifications`,
+        `gyms/${userProfile.academiaId}/notifications`,
         [
           { field: 'userId', operator: '==', value: user.uid }
         ],
@@ -111,7 +111,7 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       await firestoreService.update(
-        `academias/${userProfile.academiaId}/notifications`,
+        `gyms/${userProfile.academiaId}/notifications`,
         notificationId,
         { isRead: true, readAt: new Date() }
       );
@@ -129,7 +129,7 @@ export const NotificationProvider = ({ children }) => {
       await Promise.all(
         unreadNotifications.map(notification =>
           firestoreService.update(
-            `academias/${userProfile.academiaId}/notifications`,
+            `gyms/${userProfile.academiaId}/notifications`,
             notification.id,
             { isRead: true, readAt: new Date() }
           )

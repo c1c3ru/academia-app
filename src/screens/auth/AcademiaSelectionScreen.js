@@ -16,7 +16,7 @@ import {
 } from 'react-native-paper';
 import { collection, query, where, getDocs, doc, getDoc, addDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthProvider';
 import { useTheme } from '../../contexts/ThemeContext';
 import { InviteService } from '../../services/inviteService';
 import QRCodeScanner from '../../components/QRCodeScanner';
@@ -25,7 +25,7 @@ import PhonePicker from '../../components/PhonePicker';
 import ModalityPicker from '../../components/ModalityPicker';
 
 export default function AcademiaSelectionScreen({ navigation, route }) {
-  const { user, userProfile, updateAcademiaAssociation, logout } = useAuth();
+  const { user, userProfile, updateAcademiaAssociation, updateUserProfile, logout } = useAuth();
   const { getString } = useTheme();
   const forceCreate = route?.params?.forceCreate || false;
   const [loading, setLoading] = useState(false);
@@ -104,7 +104,7 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
     try {
       // Buscar por campo 'codigo' em vez de usar como ID do documento
       const q = query(
-        collection(db, 'academias'),
+        collection(db, 'gyms'),
         where('codigo', '==', searchCode.trim().toUpperCase())
       );
       
@@ -275,7 +275,7 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
         const codigoGerado = Math.random().toString(36).substr(2, 8).toUpperCase();
         
         // Criar nova academia no Firestore com estrutura completa
-        const academiaRef = await addDoc(collection(db, 'academias'), {
+        const academiaRef = await addDoc(collection(db, 'gyms'), {
           nome: newAcademiaData.nome.trim(),
           email: newAcademiaData.email.trim(),
           endereco: {
@@ -414,11 +414,17 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
             mode="text"
             onPress={async () => {
               try {
-                console.log('🚪 Fazendo logout direto...');
-                await logout();
+                console.log('🔙 Voltando para seleção de tipo de usuário...');
+                // Resetar o tipo de usuário para voltar à tela anterior
+                await updateUserProfile({
+                  tipo: null,
+                  userType: null,
+                  profileCompleted: false,
+                  updatedAt: new Date()
+                });
               } catch (error) {
-                console.error(getString('logoutError'), error);
-                showSnackbar(getString('errorLoggingOut'), 'error');
+                console.error('Erro ao voltar:', error);
+                showSnackbar('Erro ao voltar', 'error');
               }
             }}
             icon="arrow-left"

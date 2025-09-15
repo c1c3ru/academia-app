@@ -24,7 +24,7 @@ export async function fixUsersInFirestore() {
   try {
     // 1. Verificar se a academia IFCE existe
     console.log('🏢 Verificando academia IFCE...');
-    const academiasRef = collection(db, 'academias');
+    const academiasRef = collection(db, 'gyms');
     const academiasSnapshot = await getDocs(academiasRef);
     
     let ifceExists = false;
@@ -41,7 +41,7 @@ export async function fixUsersInFirestore() {
     // 2. Criar academia se não existir
     if (!ifceExists) {
       console.log('🏗️ Criando academia IFCE...');
-      const academiaRef = doc(db, 'academias', IFCE_ACADEMIA_ID);
+      const academiaRef = doc(db, 'gyms', IFCE_ACADEMIA_ID);
       await setDoc(academiaRef, {
         name: 'IFCE - Campus Maracanaú',
         nome: 'IFCE - Campus Maracanaú',

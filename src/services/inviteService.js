@@ -103,7 +103,7 @@ export class InviteService {
       const inviteData = inviteDoc.data();
 
       // Buscar dados da academia
-      const academiaDoc = await getDoc(doc(db, 'academias', inviteData.academiaId));
+      const academiaDoc = await getDoc(doc(db, 'gyms', inviteData.academiaId));
       
       if (!academiaDoc.exists()) {
         throw new Error('Academia não encontrada');

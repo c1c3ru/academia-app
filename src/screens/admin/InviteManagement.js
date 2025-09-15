@@ -12,7 +12,7 @@ import {
   Portal,
   Divider
 } from 'react-native-paper';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthProvider';
 import { InviteService } from '../../services/inviteService';
 import QRCodeGenerator from '../../components/QRCodeGenerator';
 import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';

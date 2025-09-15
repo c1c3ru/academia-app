@@ -4,17 +4,30 @@ const { getDefaultConfig } = require('expo/metro-config');
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
-// Fix import.meta error for web
+// Fix import.meta error using custom transformer
 config.transformer = {
   ...config.transformer,
+  babelTransformerPath: require.resolve('./metro-transformer.js'),
   unstable_allowRequireContext: true,
-  // Polyfill para import.meta
   getTransformOptions: async () => ({
     transform: {
       experimentalImportSupport: false,
-      inlineRequires: true,
+      inlineRequires: false,
     },
   }),
+};
+
+// Inject polyfill at the very beginning of every bundle
+const originalGetPolyfills = config.serializer?.getPolyfills;
+config.serializer = {
+  ...config.serializer,
+  getPolyfills: () => {
+    const polyfills = originalGetPolyfills ? originalGetPolyfills() : [];
+    return [
+      require.resolve('./src/polyfills/import-meta-polyfill.js'),
+      ...polyfills,
+    ];
+  },
 };
 
 config.resolver = {
