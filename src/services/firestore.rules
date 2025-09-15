@@ -94,15 +94,18 @@ service cloud.firestore {
     
     // Funções auxiliares
     function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return userData.userType == 'admin' || userData.userType == 'administrador' || userData.tipo == 'admin' || userData.tipo == 'administrador';
     }
     
     function isInstructor() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'instructor';
+      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return userData.userType == 'instructor' || userData.userType == 'instrutor' || userData.tipo == 'instructor' || userData.tipo == 'instrutor';
     }
     
     function isStudent() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'student';
+      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return userData.userType == 'student' || userData.userType == 'aluno' || userData.tipo == 'student' || userData.tipo == 'aluno';
     }
     
     function isStudentOfInstructor(studentId) {

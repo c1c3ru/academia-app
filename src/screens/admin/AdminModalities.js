@@ -18,11 +18,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthProvider';
+import { useAuthMigration } from '../../hooks/useAuthMigration';
 import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';
 
 const AdminModalities = ({ navigation }) => {
   const { user } = useAuth();
+  const { userProfile } = useAuthMigration();
   const { getString } = useTheme();
   const [modalities, setModalities] = useState([]);
   const [plans, setPlans] = useState([]);
@@ -36,6 +38,11 @@ const AdminModalities = ({ navigation }) => {
   const [planDialogVisible, setPlanDialogVisible] = useState(false);
   const [announcementDialogVisible, setAnnouncementDialogVisible] = useState(false);
   
+  // Estados para edição
+  const [editingModality, setEditingModality] = useState(null);
+  const [editingPlan, setEditingPlan] = useState(null);
+  const [editingAnnouncement, setEditingAnnouncement] = useState(null);
+  
   // Estados para formulários
   const [newModality, setNewModality] = useState({ name: '', description: '' });
   const [newPlan, setNewPlan] = useState({ name: '', value: '', duration: '', description: '' });
@@ -48,6 +55,17 @@ const AdminModalities = ({ navigation }) => {
 
   useEffect(() => {
     loadData();
+    
+    // Debug do usuário atual
+    console.log('=== DEBUG USER INFO ===');
+    console.log('User:', user);
+    console.log('User Profile:', userProfile);
+    console.log('User UID:', user?.uid);
+    console.log('User Type:', user?.userType);
+    console.log('User Tipo:', user?.tipo);
+    console.log('Profile UserType:', userProfile?.userType);
+    console.log('Profile Tipo:', userProfile?.tipo);
+    console.log('======================');
   }, []);
 
   const loadData = async () => {
@@ -88,37 +106,61 @@ const AdminModalities = ({ navigation }) => {
     }
 
     try {
-      await firestoreService.create('modalities', newModality);
+      if (editingModality) {
+        // Editar modalidade existente
+        await firestoreService.update('modalities', editingModality.id, newModality);
+        Alert.alert(getString('success'), 'Modalidade atualizada com sucesso!');
+      } else {
+        // Criar nova modalidade
+        await firestoreService.create('modalities', newModality);
+        Alert.alert(getString('success'), getString('modalityCreatedSuccess'));
+      }
+      
       setNewModality({ name: '', description: '' });
+      setEditingModality(null);
       setModalityDialogVisible(false);
       loadData();
-      Alert.alert(getString('success'), getString('modalityCreatedSuccess'));
     } catch (error) {
-      Alert.alert(getString('error'), getString('errorCreatingModality'));
+      Alert.alert(getString('error'), editingModality ? 'Erro ao atualizar modalidade' : getString('errorCreatingModality'));
     }
+  };
+
+  const handleEditModality = (modality) => {
+    setEditingModality(modality);
+    setNewModality({ name: modality.name, description: modality.description || '' });
+    setModalityDialogVisible(true);
   };
 
   const handleDeleteModality = (modality) => {
     Alert.alert(
       getString('confirmDeletion'),
-      getString('confirmDeleteModality').replace('{modalityName}', modality.name),
+      `Tem certeza que deseja excluir a modalidade "${modality.name}"?`,
       [
         { text: getString('cancel'), style: 'cancel' },
         { 
-          text: getString('delete'), 
+          text: 'Excluir', 
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('Tentando excluir modalidade:', modality.id, 'User:', user?.uid, 'UserType:', user?.userType || user?.tipo);
+              console.log('=== DEBUG DELETE MODALITY ===');
+              console.log('Modalidade ID:', modality.id);
+              console.log('User UID:', user?.uid);
+              console.log('User Type:', user?.userType);
+              console.log('User Tipo:', user?.tipo);
+              console.log('User Profile:', userProfile);
+              console.log('================================');
+              
               await firestoreService.delete('modalities', modality.id);
               
               // Atualizar lista local imediatamente
               setModalities(prev => prev.filter(m => m.id !== modality.id));
               
-              Alert.alert(getString('success'), getString('modalityDeletedSuccess'));
+              Alert.alert('Sucesso', 'Modalidade excluída com sucesso!');
             } catch (error) {
               console.error('Erro detalhado ao excluir modalidade:', error);
-              Alert.alert(getString('error'), getString('errorDeletingModality').replace('{error}', error.message || getString('unknownError')));
+              console.error('Error code:', error.code);
+              console.error('Error message:', error.message);
+              Alert.alert('Erro', `Erro ao excluir modalidade: ${error.message}`);
             }
           }
         }
@@ -140,37 +182,66 @@ const AdminModalities = ({ navigation }) => {
         duration: parseInt(newPlan.duration) || 1
       };
       
-      await firestoreService.create('plans', planData);
+      if (editingPlan) {
+        // Editar plano existente
+        await firestoreService.update('plans', editingPlan.id, planData);
+        Alert.alert(getString('success'), 'Plano atualizado com sucesso!');
+      } else {
+        // Criar novo plano
+        await firestoreService.create('plans', planData);
+        Alert.alert(getString('success'), getString('planCreatedSuccess'));
+      }
+      
       setNewPlan({ name: '', value: '', duration: '', description: '' });
+      setEditingPlan(null);
       setPlanDialogVisible(false);
       loadData();
-      Alert.alert(getString('success'), getString('planCreatedSuccess'));
     } catch (error) {
-      Alert.alert(getString('error'), getString('errorCreatingPlan'));
+      Alert.alert(getString('error'), editingPlan ? 'Erro ao atualizar plano' : getString('errorCreatingPlan'));
     }
+  };
+
+  const handleEditPlan = (plan) => {
+    setEditingPlan(plan);
+    setNewPlan({ 
+      name: plan.name, 
+      value: plan.value.toString(), 
+      duration: plan.duration.toString(), 
+      description: plan.description || '' 
+    });
+    setPlanDialogVisible(true);
   };
 
   const handleDeletePlan = (plan) => {
     Alert.alert(
       getString('confirmDeletion'),
-      getString('confirmDeletePlan').replace('{planName}', plan.name),
+      `Tem certeza que deseja excluir o plano "${plan.name}"?`,
       [
         { text: getString('cancel'), style: 'cancel' },
         { 
-          text: getString('delete'), 
+          text: 'Excluir', 
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('Tentando excluir plano:', plan.id, 'User:', user?.uid, 'UserType:', user?.userType || user?.tipo);
+              console.log('=== DEBUG DELETE PLAN ===');
+              console.log('Plano ID:', plan.id);
+              console.log('User UID:', user?.uid);
+              console.log('User Type:', user?.userType);
+              console.log('User Tipo:', user?.tipo);
+              console.log('User Profile:', userProfile);
+              console.log('========================');
+              
               await firestoreService.delete('plans', plan.id);
               
               // Atualizar lista local imediatamente
               setPlans(prev => prev.filter(p => p.id !== plan.id));
               
-              Alert.alert(getString('success'), getString('planDeletedSuccess'));
+              Alert.alert('Sucesso', 'Plano excluído com sucesso!');
             } catch (error) {
               console.error('Erro detalhado ao excluir plano:', error);
-              Alert.alert(getString('error'), getString('errorDeletingPlan').replace('{error}', error.message || getString('unknownError')));
+              console.error('Error code:', error.code);
+              console.error('Error message:', error.message);
+              Alert.alert('Erro', `Erro ao excluir plano: ${error.message}`);
             }
           }
         }
@@ -191,40 +262,70 @@ const AdminModalities = ({ navigation }) => {
         expirationDate: newAnnouncement.expirationDate ? new Date(newAnnouncement.expirationDate) : null,
         publishedBy: user.uid,
         targetAudience: newAnnouncement.targetAudience,
-        createdAt: new Date()
+        createdAt: editingAnnouncement ? editingAnnouncement.createdAt : new Date(),
+        updatedAt: editingAnnouncement ? new Date() : null
       };
       
-      await firestoreService.create('announcements', announcementData);
+      if (editingAnnouncement) {
+        // Editar aviso existente
+        await firestoreService.update('announcements', editingAnnouncement.id, announcementData);
+        Alert.alert(getString('success'), 'Aviso atualizado com sucesso!');
+      } else {
+        // Criar novo aviso
+        await firestoreService.create('announcements', announcementData);
+        Alert.alert(getString('success'), getString('announcementPublishedSuccess'));
+      }
+      
       setNewAnnouncement({ title: '', content: '', expirationDate: '', targetAudience: 'all' });
+      setEditingAnnouncement(null);
       setAnnouncementDialogVisible(false);
       loadData();
-      Alert.alert(getString('success'), getString('announcementPublishedSuccess'));
     } catch (error) {
-      Alert.alert(getString('error'), getString('errorPublishingAnnouncement'));
+      Alert.alert(getString('error'), editingAnnouncement ? 'Erro ao atualizar aviso' : getString('errorPublishingAnnouncement'));
     }
+  };
+
+  const handleEditAnnouncement = (announcement) => {
+    setEditingAnnouncement(announcement);
+    setNewAnnouncement({
+      title: announcement.title,
+      content: announcement.content,
+      expirationDate: announcement.expirationDate ? formatDate(announcement.expirationDate) : '',
+      targetAudience: announcement.targetAudience || 'all'
+    });
+    setAnnouncementDialogVisible(true);
   };
 
   const handleDeleteAnnouncement = (announcement) => {
     Alert.alert(
       getString('confirmDeletion'),
-      getString('confirmDeleteAnnouncement').replace('{announcementTitle}', announcement.title),
+      `Tem certeza que deseja excluir o aviso "${announcement.title}"?`,
       [
         { text: getString('cancel'), style: 'cancel' },
         { 
-          text: getString('delete'), 
+          text: 'Excluir', 
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('Tentando excluir anuncio:', announcement.id, 'User:', user?.uid, 'UserType:', user?.userType || user?.tipo);
+              console.log('=== DEBUG DELETE ANNOUNCEMENT ===');
+              console.log('Aviso ID:', announcement.id);
+              console.log('User UID:', user?.uid);
+              console.log('User Type:', user?.userType);
+              console.log('User Tipo:', user?.tipo);
+              console.log('User Profile:', userProfile);
+              console.log('================================');
+              
               await firestoreService.delete('announcements', announcement.id);
               
               // Atualizar lista local imediatamente
               setAnnouncements(prev => prev.filter(a => a.id !== announcement.id));
               
-              Alert.alert(getString('success'), getString('announcementDeletedSuccess'));
+              Alert.alert('Sucesso', 'Aviso excluído com sucesso!');
             } catch (error) {
-              console.error('Erro detalhado ao excluir anuncio:', error);
-              Alert.alert(getString('error'), getString('errorDeletingAnnouncement').replace('{error}', error.message || getString('unknownError')));
+              console.error('Erro detalhado ao excluir aviso:', error);
+              console.error('Error code:', error.code);
+              console.error('Error message:', error.message);
+              Alert.alert('Erro', `Erro ao excluir aviso: ${error.message}`);
             }
           }
         }
@@ -276,13 +377,26 @@ const AdminModalities = ({ navigation }) => {
                     description={modality.description || getString('noDescription')}
                     left={() => <List.Icon icon="dumbbell" color="#4CAF50" />}
                     right={() => (
-                      <Button 
-                        mode="text" 
-                        onPress={() => handleDeleteModality(modality)}
-                        textColor="#F44336"
-                      >
-                        {getString('delete')}
-                      </Button>
+                      <View style={styles.actionButtons}>
+                        <Button 
+                          mode="text" 
+                          onPress={() => handleEditModality(modality)}
+                          textColor="#2196F3"
+                          icon="pencil"
+                          compact
+                        >
+                          Editar
+                        </Button>
+                        <Button 
+                          mode="text" 
+                          onPress={() => handleDeleteModality(modality)}
+                          textColor="#F44336"
+                          icon="delete"
+                          compact
+                        >
+                          Excluir
+                        </Button>
+                      </View>
                     )}
                   />
                   {index < modalities.length - 1 && <Divider />}
@@ -320,13 +434,26 @@ const AdminModalities = ({ navigation }) => {
                     description={`${plan.duration || 1} ${getString('months')} • ${plan.description || getString('noDescription')}`}
                     left={() => <List.Icon icon="cash" color="#2196F3" />}
                     right={() => (
-                      <Button 
-                        mode="text" 
-                        onPress={() => handleDeletePlan(plan)}
-                        textColor="#F44336"
-                      >
-                        {getString('delete')}
-                      </Button>
+                      <View style={styles.actionButtons}>
+                        <Button 
+                          mode="text" 
+                          onPress={() => handleEditPlan(plan)}
+                          textColor="#2196F3"
+                          icon="pencil"
+                          compact
+                        >
+                          Editar
+                        </Button>
+                        <Button 
+                          mode="text" 
+                          onPress={() => handleDeletePlan(plan)}
+                          textColor="#F44336"
+                          icon="delete"
+                          compact
+                        >
+                          Excluir
+                        </Button>
+                      </View>
                     )}
                   />
                   {index < plans.length - 1 && <Divider />}
@@ -364,13 +491,26 @@ const AdminModalities = ({ navigation }) => {
                     description={`${announcement.content.substring(0, 100)}${announcement.content.length > 100 ? '...' : ''}`}
                     left={() => <List.Icon icon="bullhorn" color="#FF9800" />}
                     right={() => (
-                      <Button 
-                        mode="text" 
-                        onPress={() => handleDeleteAnnouncement(announcement)}
-                        textColor="#F44336"
-                      >
-                        {getString('delete')}
-                      </Button>
+                      <View style={styles.actionButtons}>
+                        <Button 
+                          mode="text" 
+                          onPress={() => handleEditAnnouncement(announcement)}
+                          textColor="#2196F3"
+                          icon="pencil"
+                          compact
+                        >
+                          Editar
+                        </Button>
+                        <Button 
+                          mode="text" 
+                          onPress={() => handleDeleteAnnouncement(announcement)}
+                          textColor="#F44336"
+                          icon="delete"
+                          compact
+                        >
+                          Excluir
+                        </Button>
+                      </View>
                     )}
                   />
                   <Text style={styles.announcementDate}>
@@ -415,8 +555,12 @@ const AdminModalities = ({ navigation }) => {
       {/* Diálogos */}
       <Portal>
         {/* Diálogo para adicionar modalidade */}
-        <Dialog visible={modalityDialogVisible} onDismiss={() => setModalityDialogVisible(false)}>
-          <Dialog.Title>{getString('newModality')}</Dialog.Title>
+        <Dialog visible={modalityDialogVisible} onDismiss={() => {
+          setModalityDialogVisible(false);
+          setEditingModality(null);
+          setNewModality({ name: '', description: '' });
+        }}>
+          <Dialog.Title>{editingModality ? 'Editar Modalidade' : getString('newModality')}</Dialog.Title>
           <Dialog.Content>
             <TextInput
               label={getString('modalityName')}
@@ -436,14 +580,24 @@ const AdminModalities = ({ navigation }) => {
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setModalityDialogVisible(false)}>{getString('cancel')}</Button>
-            <Button onPress={handleAddModality}>{getString('create')}</Button>
+            <Button onPress={() => {
+              setModalityDialogVisible(false);
+              setEditingModality(null);
+              setNewModality({ name: '', description: '' });
+            }}>{getString('cancel')}</Button>
+            <Button onPress={handleAddModality}>
+              {editingModality ? 'Atualizar' : getString('create')}
+            </Button>
           </Dialog.Actions>
         </Dialog>
 
         {/* Diálogo para adicionar plano */}
-        <Dialog visible={planDialogVisible} onDismiss={() => setPlanDialogVisible(false)}>
-          <Dialog.Title>{getString('newPlan')}</Dialog.Title>
+        <Dialog visible={planDialogVisible} onDismiss={() => {
+          setPlanDialogVisible(false);
+          setEditingPlan(null);
+          setNewPlan({ name: '', value: '', duration: '', description: '' });
+        }}>
+          <Dialog.Title>{editingPlan ? 'Editar Plano' : getString('newPlan')}</Dialog.Title>
           <Dialog.Content>
             <TextInput
               label={getString('planName')}
@@ -479,14 +633,24 @@ const AdminModalities = ({ navigation }) => {
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setPlanDialogVisible(false)}>{getString('cancel')}</Button>
-            <Button onPress={handleAddPlan}>{getString('create')}</Button>
+            <Button onPress={() => {
+              setPlanDialogVisible(false);
+              setEditingPlan(null);
+              setNewPlan({ name: '', value: '', duration: '', description: '' });
+            }}>{getString('cancel')}</Button>
+            <Button onPress={handleAddPlan}>
+              {editingPlan ? 'Atualizar' : getString('create')}
+            </Button>
           </Dialog.Actions>
         </Dialog>
 
         {/* Diálogo para adicionar aviso */}
-        <Dialog visible={announcementDialogVisible} onDismiss={() => setAnnouncementDialogVisible(false)}>
-          <Dialog.Title>{getString('newAnnouncement')}</Dialog.Title>
+        <Dialog visible={announcementDialogVisible} onDismiss={() => {
+          setAnnouncementDialogVisible(false);
+          setEditingAnnouncement(null);
+          setNewAnnouncement({ title: '', content: '', expirationDate: '', targetAudience: 'all' });
+        }}>
+          <Dialog.Title>{editingAnnouncement ? 'Editar Aviso' : getString('newAnnouncement')}</Dialog.Title>
           <Dialog.Content>
             <TextInput
               label={getString('announcementTitle')}
@@ -539,8 +703,14 @@ const AdminModalities = ({ navigation }) => {
             </View>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setAnnouncementDialogVisible(false)}>{getString('cancel')}</Button>
-            <Button onPress={handleAddAnnouncement}>{getString('publish')}</Button>
+            <Button onPress={() => {
+              setAnnouncementDialogVisible(false);
+              setEditingAnnouncement(null);
+              setNewAnnouncement({ title: '', content: '', expirationDate: '', targetAudience: 'all' });
+            }}>{getString('cancel')}</Button>
+            <Button onPress={handleAddAnnouncement}>
+              {editingAnnouncement ? 'Atualizar' : getString('publish')}
+            </Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -578,7 +748,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
     fontStyle: 'italic',
-    marginVertical: 16,
+    marginVertical: 20,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   announcementDate: {
     fontSize: 12,

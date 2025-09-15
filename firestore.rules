@@ -16,7 +16,7 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return isSignedIn() && (getUserData().tipo == 'admin' || getUserData().userType == 'admin');
+      return isSignedIn() && (getUserData().tipo == 'admin' || getUserData().userType == 'admin' || getUserData().tipo == 'administrador' || getUserData().userType == 'administrador');
     }
     
     function isInstructor() {

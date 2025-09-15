@@ -24,7 +24,7 @@ export class EmailService {
   static async sendEmail(emailData) {
     try {
       // Verificar se está configurado para envio real
-      if (!SENDGRID_API_KEY) {
+      if (!sendGridApiKey) {
         console.log('📧 Modo simulação - SendGrid não configurado');
         console.log('Email que seria enviado:', emailData);
         return true;
@@ -33,7 +33,7 @@ export class EmailService {
       const msg = {
         to: emailData.to,
         from: {
-          email: FROM_EMAIL,
+          email: fromEmail,
           name: FROM_NAME
         },
         subject: emailData.subject,
