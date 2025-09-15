@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Modal, StyleSheet, Platform } from 'react-native';
-import { Text, Icon } from 'react-native-elements';
+import { Text } from 'react-native-paper';
+import { Ionicons } from '@expo/vector-icons';
 
 const CustomMenu = ({ visible, onDismiss, anchor, children, style }) => {
   return (

@@ -4,7 +4,8 @@ import {
   StyleSheet, 
   ScrollView, 
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { 
   Card, 
@@ -15,7 +16,6 @@ import {
   Divider
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ListItem } from 'react-native-elements';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';
@@ -178,22 +178,27 @@ const StudentDetailsScreen = ({ route, navigation }) => {
           
           {studentClasses.length > 0 ? (
             studentClasses.map((classItem, index) => (
-              <ListItem key={classItem.id || index} bottomDivider>
-                <Ionicons name="fitness" size={20} color="#666" />
-                <ListItem.Content>
-                  <ListItem.Title>{classItem.name}</ListItem.Title>
-                  <ListItem.Subtitle>{classItem.modality}</ListItem.Subtitle>
-                </ListItem.Content>
-                <Button
-                  title="Detalhes"
-                  type="outline"
-                  size="sm"
-                  onPress={() => navigation.navigate('ClassDetails', { 
-                    classId: classItem.id, 
-                    classData: classItem 
-                  })}
-                />
-              </ListItem>
+              <Card.Content key={classItem.id || index} style={styles.listItem}>
+                <View style={styles.listItemContent}>
+                  <View style={styles.listItemLeft}>
+                    <Ionicons name="fitness" size={20} color="#666" style={styles.listIcon} />
+                    <View>
+                      <Text style={styles.listTitle}>{classItem.name}</Text>
+                      <Text style={styles.listSubtitle}>{classItem.modality}</Text>
+                    </View>
+                  </View>
+                  <Button
+                    mode="outlined"
+                    compact
+                    onPress={() => navigation.navigate('ClassDetails', { 
+                      classId: classItem.id, 
+                      classData: classItem 
+                    })}
+                  >
+                    Detalhes
+                  </Button>
+                </View>
+              </Card.Content>
             ))
           ) : (
             <Text style={styles.noDataText}>
@@ -211,21 +216,29 @@ const StudentDetailsScreen = ({ route, navigation }) => {
           
           {payments.length > 0 ? (
             payments.slice(0, 5).map((payment, index) => (
-              <ListItem key={payment.id || index} bottomDivider>
-                <Ionicons name="receipt" size={20} color="#666" />
-                <ListItem.Content>
-                  <ListItem.Title>
-                    {formatCurrency(payment.amount)}
-                  </ListItem.Title>
-                  <ListItem.Subtitle>
-                    {formatDate(payment.createdAt)}
-                  </ListItem.Subtitle>
-                </ListItem.Content>
-                <Badge 
-                  value={getPaymentStatusText(payment.status)}
-                  badgeStyle={{ backgroundColor: getPaymentStatusColor(payment.status) }}
-                />
-              </ListItem>
+              <Card.Content key={payment.id || index} style={styles.listItem}>
+                <View style={styles.listItemContent}>
+                  <View style={styles.listItemLeft}>
+                    <Ionicons name="receipt" size={20} color="#666" style={styles.listIcon} />
+                    <View>
+                      <Text style={styles.listTitle}>
+                        {formatCurrency(payment.amount)}
+                      </Text>
+                      <Text style={styles.listSubtitle}>
+                        {formatDate(payment.createdAt)}
+                      </Text>
+                    </View>
+                  </View>
+                  <Badge 
+                    style={{
+                      backgroundColor: getPaymentStatusColor(payment.status) === 'success' ? '#4CAF50' : 
+                                     getPaymentStatusColor(payment.status) === 'warning' ? '#FF9800' : '#F44336'
+                    }}
+                  >
+                    {getPaymentStatusText(payment.status)}
+                  </Badge>
+                </View>
+              </Card.Content>
             ))
           ) : (
             <Text style={styles.noDataText}>
@@ -362,9 +375,37 @@ const styles = StyleSheet.create({
   },
   noDataText: {
     textAlign: 'center',
-    color: '#999',
+    color: '#666',
     fontStyle: 'italic',
-    marginTop: 16,
+    padding: 20,
+  },
+  listItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  listItemContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  listItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  listIcon: {
+    marginRight: 12,
+  },
+  listTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+  },
+  listSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
   },
   viewAllButton: {
     marginTop: 16,
