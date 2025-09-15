@@ -54,8 +54,6 @@ const AdminModalities = ({ navigation }) => {
   });
 
   useEffect(() => {
-    loadData();
-    
     // Debug do usuário atual
     console.log('=== DEBUG USER INFO ===');
     console.log('User:', user);
@@ -66,6 +64,7 @@ const AdminModalities = ({ navigation }) => {
     console.log('Profile UserType:', userProfile?.userType);
     console.log('Profile Tipo:', userProfile?.tipo);
     console.log('======================');
+    
     loadData();
   }, []);
 
@@ -74,29 +73,46 @@ const AdminModalities = ({ navigation }) => {
       console.log('🔄 AdminModalities: Iniciando carregamento de dados...');
       setLoading(true);
       
+      // Timeout para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Carregamento demorou mais de 10 segundos')), 10000)
+      );
+      
       // Buscar modalidades
       console.log('📋 Buscando modalidades...');
-      const modalitiesData = await firestoreService.getAll('modalities');
-      console.log('✅ Modalidades carregadas:', modalitiesData.length);
-      setModalities(modalitiesData);
+      const modalitiesPromise = firestoreService.getAll('modalities');
+      const modalitiesData = await Promise.race([modalitiesPromise, timeoutPromise]);
+      console.log('✅ Modalidades carregadas:', modalitiesData?.length || 0);
+      setModalities(modalitiesData || []);
       
       // Buscar planos
       console.log('💰 Buscando planos...');
-      const plansData = await firestoreService.getAll('plans');
-      console.log('✅ Planos carregados:', plansData.length);
-      setPlans(plansData);
+      const plansPromise = firestoreService.getAll('plans');
+      const plansData = await Promise.race([plansPromise, timeoutPromise]);
+      console.log('✅ Planos carregados:', plansData?.length || 0);
+      setPlans(plansData || []);
       
       // Buscar avisos
       console.log('📢 Buscando avisos...');
-      const announcementsData = await firestoreService.getAll('announcements');
-      console.log('✅ Avisos carregados:', announcementsData.length);
-      setAnnouncements(announcementsData);
+      const announcementsPromise = firestoreService.getAll('announcements');
+      const announcementsData = await Promise.race([announcementsPromise, timeoutPromise]);
+      console.log('✅ Avisos carregados:', announcementsData?.length || 0);
+      setAnnouncements(announcementsData || []);
       
       console.log('✅ AdminModalities: Carregamento concluído com sucesso!');
     } catch (error) {
       console.error('❌ Erro ao carregar dados:', error);
       console.error('Error details:', error.message, error.code);
-      Alert.alert(getString('error'), getString('errorLoadingData'));
+      
+      // Se for timeout ou erro de permissão, mostrar dados vazios
+      if (error.message.includes('Timeout') || error.code === 'permission-denied') {
+        console.log('⚠️ Carregando com dados vazios devido ao erro');
+        setModalities([]);
+        setPlans([]);
+        setAnnouncements([]);
+      }
+      
+      Alert.alert('Erro', `Erro ao carregar dados: ${error.message}`);
     } finally {
       console.log('🏁 AdminModalities: Finalizando loading...');
       setLoading(false);

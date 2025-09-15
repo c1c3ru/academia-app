@@ -70,9 +70,13 @@ const AppNavigator = () => {
   }), [loading, user, userProfile, academia]);
 
   console.log('🧭 AppNavigator: Estado atual:', navigationState);
+  console.log('🧭 AppNavigator: Loading:', loading);
+  console.log('🧭 AppNavigator: User:', !!user);
+  console.log('🧭 AppNavigator: UserProfile:', !!userProfile);
+  console.log('🧭 AppNavigator: Academia:', !!academia);
 
   if (loading) {
-    console.log('🧭 AppNavigator: Mostrando LoadingScreen');
+    console.log('🧭 AppNavigator: Mostrando LoadingScreen - LOADING TRUE');
     return <LoadingScreen />;
   }
 

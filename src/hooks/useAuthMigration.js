@@ -62,21 +62,19 @@ export const useAuthMigration = () => {
   };
 
   // Função para buscar perfil do usuário
-  const fetchUserProfile = async (userId, firebaseUser = null) => {
+  const fetchUserProfile = async (userId, firebaseUser) => {
     try {
-      console.log('👤 fetchUserProfile: Buscando perfil do usuário:', userId);
+      console.log('🔍 fetchUserProfile: Buscando perfil do usuário:', userId);
       const userDoc = await getDoc(doc(db, 'users', userId));
+      
       if (userDoc.exists()) {
+        console.log('✅ fetchUserProfile: Perfil encontrado');
         const profileData = { id: userId, ...userDoc.data() };
-        console.log('✅ fetchUserProfile: Perfil encontrado:', profileData.tipo || profileData.userType);
         setUserProfile(profileData);
         
-        // Se tem academia associada, buscar dados da academia
+        // Buscar dados da academia se o usuário tiver uma associada
         if (profileData.academiaId) {
           await fetchAcademiaData(profileData.academiaId);
-        } else {
-          // Se não tem academia, limpar dados da academia
-          setAcademia(null);
         }
       } else {
         console.log('❌ fetchUserProfile: Perfil não encontrado, criando perfil básico...');
@@ -102,6 +100,7 @@ export const useAuthMigration = () => {
       }
     } catch (error) {
       console.error('❌ fetchUserProfile: Erro ao buscar perfil:', error);
+      setUserProfile(null);
     }
   };
 
@@ -110,8 +109,16 @@ export const useAuthMigration = () => {
     console.log('🔄 useAuthMigration: Configurando listener do Firebase Auth');
     setLoading(true);
 
+    // Timeout de segurança para evitar loading infinito
+    const loadingTimeout = setTimeout(() => {
+      console.log('⚠️ useAuthMigration: Timeout de loading - forçando loading = false');
+      setLoading(false);
+    }, 5000);
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log('🔄 Auth state changed:', firebaseUser ? 'Logado' : 'Deslogado');
+      clearTimeout(loadingTimeout); // Cancelar timeout se auth resolver
+      
       setUser(firebaseUser);
       
       if (firebaseUser) {
@@ -121,11 +128,13 @@ export const useAuthMigration = () => {
         setAcademia(null);
       }
       
+      console.log('🔄 useAuthMigration: Definindo loading como false');
       setLoading(false);
     });
 
     return () => {
       console.log('🔄 useAuthMigration: Removendo listener do Firebase Auth');
+      clearTimeout(loadingTimeout);
       unsubscribe();
     };
   }, []);
