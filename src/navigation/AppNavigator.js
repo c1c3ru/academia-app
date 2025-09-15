@@ -137,9 +137,23 @@ const AppNavigator = () => {
   }
 
   // Se tem academia mas dados não carregaram ainda, mostrar loading
-  if (!academia) {
+  // EXCETO para admins que podem não ter academia ainda
+  if (!academia && userProfile.academiaId) {
     console.log('🧭 AppNavigator: Carregando dados da academia...');
     return <LoadingScreen />;
+  }
+  
+  // Se é admin sem academia, permitir acesso ao app para criar academia
+  if (!academia && !userProfile.academiaId) {
+    const currentUserType = userProfile.userType || userProfile.tipo || 'student';
+    const mappedUserType = currentUserType === 'administrador' ? 'admin' : 
+                          currentUserType === 'instrutor' ? 'instructor' : 
+                          currentUserType === 'aluno' ? 'student' : currentUserType;
+    
+    if (mappedUserType === 'admin') {
+      console.log('🧭 AppNavigator: Admin sem academia, permitindo acesso ao app principal');
+      // Permitir acesso ao app principal para admins sem academia
+    }
   }
 
   // Determinar tipo de usuário (userType é o campo principal)

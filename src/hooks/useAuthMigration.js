@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider, signOut, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import useAuthStore from '../stores/authStore';
@@ -34,11 +34,30 @@ export const useAuthMigration = () => {
           ...academiaDoc.data()
         });
       } else {
-        console.log('❌ fetchAcademiaData: Academia não encontrada');
+        console.log('❌ fetchAcademiaData: Academia não encontrada, limpando associação do usuário');
         setAcademia(null);
+        
+        // Se a academia não existe mais, limpar a associação do usuário
+        if (user?.uid) {
+          try {
+            await setDoc(doc(db, 'users', user.uid), {
+              academiaId: null,
+              updatedAt: new Date()
+            }, { merge: true });
+            
+            // Atualizar o estado local
+            const updatedProfile = { ...userProfile, academiaId: null };
+            setUserProfile(updatedProfile);
+            
+            console.log('✅ fetchAcademiaData: Associação de academia removida do perfil do usuário');
+          } catch (updateError) {
+            console.error('❌ fetchAcademiaData: Erro ao limpar associação:', updateError);
+          }
+        }
       }
     } catch (error) {
       console.error('❌ fetchAcademiaData: Erro ao buscar dados da academia:', error);
+      setAcademia(null);
     }
   };
 
@@ -55,6 +74,9 @@ export const useAuthMigration = () => {
         // Se tem academia associada, buscar dados da academia
         if (profileData.academiaId) {
           await fetchAcademiaData(profileData.academiaId);
+        } else {
+          // Se não tem academia, limpar dados da academia
+          setAcademia(null);
         }
       } else {
         console.log('❌ fetchUserProfile: Perfil não encontrado, criando perfil básico...');
@@ -266,6 +288,22 @@ export const useAuthMigration = () => {
     }
   };
 
+  // Função de login com email e senha
+  const signIn = async (email, password) => {
+    try {
+      console.log('🔐 Iniciando login com email e senha...');
+      
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = result.user;
+      
+      console.log('✅ Login realizado com sucesso:', firebaseUser.email);
+      return firebaseUser;
+    } catch (error) {
+      console.error('❌ Erro no login:', error);
+      throw error;
+    }
+  };
+
   // Função de logout
   const logoutUser = async () => {
     try {
@@ -294,6 +332,7 @@ export const useAuthMigration = () => {
     isComplete: isComplete(),
     login,
     logout: logoutUser,
+    signIn,
     setUser,
     setUserProfile,
     setAcademia,

@@ -36,10 +36,10 @@ service cloud.firestore {
     
     // Coleção de academias (gyms)
     match /gyms/{academiaId} {
-      // Leitura: membros da academia ou qualquer usuário autenticado para busca por código
-      allow read: if isSignedIn() && (isMemberOf(academiaId) || true);
-      // Criação: qualquer usuário autenticado pode criar nova academia (temporário para debug)
-      allow create: if isSignedIn();
+      // Leitura: qualquer usuário autenticado pode ler (para busca e associação)
+      allow read: if isSignedIn();
+      // Criação: Somente usuários autenticados com perfil de instrutor ou administrador podem criar nova academia
+      allow create: if isSignedIn() && (isAdmin() || isInstructor());
       // Atualização/Exclusão: apenas admins membros da academia
       allow update, delete: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
       
