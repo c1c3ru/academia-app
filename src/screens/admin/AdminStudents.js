@@ -150,11 +150,14 @@ const AdminStudents = ({ navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
+              console.log('Tentando excluir aluno:', student.id, student.name);
               await firestoreService.delete('users', student.id);
-              loadStudents();
+              console.log('Aluno excluído com sucesso, recarregando lista...');
+              await loadStudents();
               Alert.alert('Sucesso', 'Aluno excluído com sucesso');
             } catch (error) {
-              Alert.alert('Erro', 'Não foi possível excluir o aluno');
+              console.error('Erro ao excluir aluno:', error);
+              Alert.alert('Erro', `Não foi possível excluir o aluno: ${error.message}`);
             }
           }
         }
@@ -255,36 +258,32 @@ const AdminStudents = ({ navigation }) => {
                   <Menu
                     visible={student.menuVisible || false}
                     onDismiss={() => {
-                      const updatedStudents = filteredStudents.map(s => 
+                      setStudents(prev => prev.map(s => 
                         s.id === student.id ? { ...s, menuVisible: false } : s
-                      );
-                      setFilteredStudents(updatedStudents);
+                      ));
                     }}
                     anchor={
                       <IconButton
                         icon="dots-vertical"
                         onPress={() => {
-                          const updatedStudents = filteredStudents.map(s => 
+                          setStudents(prev => prev.map(s => 
                             s.id === student.id ? { ...s, menuVisible: true } : { ...s, menuVisible: false }
-                          );
-                          setFilteredStudents(updatedStudents);
+                          ));
                         }}
                       />
                     }
                   >
                     <Menu.Item onPress={() => {
-                      handleEditStudent(student);
-                      const updatedStudents = filteredStudents.map(s => 
+                      setStudents(prev => prev.map(s => 
                         s.id === student.id ? { ...s, menuVisible: false } : s
-                      );
-                      setFilteredStudents(updatedStudents);
+                      ));
+                      handleEditStudent(student);
                     }} title="Editar" />
                     <Menu.Item onPress={() => {
-                      handleDeleteStudent(student);
-                      const updatedStudents = filteredStudents.map(s => 
+                      setStudents(prev => prev.map(s => 
                         s.id === student.id ? { ...s, menuVisible: false } : s
-                      );
-                      setFilteredStudents(updatedStudents);
+                      ));
+                      handleDeleteStudent(student);
                     }} title="Excluir" />
                   </Menu>
                 </View>
