@@ -253,17 +253,39 @@ const AdminStudents = ({ navigation }) => {
                   </View>
                   
                   <Menu
-                    visible={false}
-                    onDismiss={() => {}}
+                    visible={student.menuVisible || false}
+                    onDismiss={() => {
+                      const updatedStudents = filteredStudents.map(s => 
+                        s.id === student.id ? { ...s, menuVisible: false } : s
+                      );
+                      setFilteredStudents(updatedStudents);
+                    }}
                     anchor={
                       <IconButton
                         icon="dots-vertical"
-                        onPress={() => handleStudentPress(student)}
+                        onPress={() => {
+                          const updatedStudents = filteredStudents.map(s => 
+                            s.id === student.id ? { ...s, menuVisible: true } : { ...s, menuVisible: false }
+                          );
+                          setFilteredStudents(updatedStudents);
+                        }}
                       />
                     }
                   >
-                    <Menu.Item onPress={() => handleEditStudent(student)} title="Editar" />
-                    <Menu.Item onPress={() => handleDeleteStudent(student)} title="Excluir" />
+                    <Menu.Item onPress={() => {
+                      handleEditStudent(student);
+                      const updatedStudents = filteredStudents.map(s => 
+                        s.id === student.id ? { ...s, menuVisible: false } : s
+                      );
+                      setFilteredStudents(updatedStudents);
+                    }} title="Editar" />
+                    <Menu.Item onPress={() => {
+                      handleDeleteStudent(student);
+                      const updatedStudents = filteredStudents.map(s => 
+                        s.id === student.id ? { ...s, menuVisible: false } : s
+                      );
+                      setFilteredStudents(updatedStudents);
+                    }} title="Excluir" />
                   </Menu>
                 </View>
 

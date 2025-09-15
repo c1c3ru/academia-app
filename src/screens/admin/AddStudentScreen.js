@@ -10,8 +10,9 @@ import {
   Card, 
   Text, 
   Button, 
-  Input
-} from 'react-native-elements';
+  TextInput,
+  Title
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import { Picker } from '@react-native-picker/picker'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthContext';
@@ -158,7 +159,7 @@ const AddStudentScreen = ({ navigation, route }) => {
               style={styles.input}
               error={!!errors.name}
             />
-            {errors.name && <HelperText type="error">{errors.name}</HelperText>}
+            {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
             <TextInput
               label="Email"
@@ -170,7 +171,7 @@ const AddStudentScreen = ({ navigation, route }) => {
               style={styles.input}
               error={!!errors.email}
             />
-            {errors.email && <HelperText type="error">{errors.email}</HelperText>}
+            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
             <TextInput
               label="Telefone"
@@ -181,7 +182,7 @@ const AddStudentScreen = ({ navigation, route }) => {
               style={styles.input}
               error={!!errors.phone}
             />
-            {errors.phone && <HelperText type="error">{errors.phone}</HelperText>}
+            {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
 
             <TextInput
               label="Data de Nascimento (DD/MM/AAAA)"
@@ -192,7 +193,7 @@ const AddStudentScreen = ({ navigation, route }) => {
               style={styles.input}
               error={!!errors.birthDate}
             />
-            {errors.birthDate && <HelperText type="error">{errors.birthDate}</HelperText>}
+            {errors.birthDate && <Text style={styles.errorText}>{errors.birthDate}</Text>}
 
             <TextInput
               label="Endereço (opcional)"
@@ -356,6 +357,12 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     marginHorizontal: 8,
+  },
+  errorText: {
+    color: '#d32f2f',
+    fontSize: 12,
+    marginTop: 4,
+    marginBottom: 8,
   },
 });
 
