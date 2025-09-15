@@ -22,7 +22,7 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -71,6 +71,58 @@ export default function LoginScreen({ navigation }) {
     } else {
       Alert.alert('Cadastro', 'Funcionalidade de cadastro em desenvolvimento');
     }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      // Para web, usar popup do Google
+      if (Platform.OS === 'web') {
+        Alert.alert('Google Login', 'Login com Google disponível apenas no app mobile');
+        return;
+      }
+      
+      // Implementar Google Sign-In para mobile
+      Alert.alert('Google Login', 'Funcionalidade disponível em breve');
+    } catch (error) {
+      console.error('Erro no login Google:', error);
+      Alert.alert('Erro', 'Não foi possível fazer login com Google');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSocialLogin = (provider) => {
+    Alert.alert(
+      `Login ${provider}`,
+      `Login com ${provider} será implementado em breve`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleThemeToggle = () => {
+    Alert.alert(
+      'Tema',
+      'Escolha o tema do aplicativo:',
+      [
+        { text: 'Claro', onPress: () => console.log('Tema claro selecionado') },
+        { text: 'Escuro', onPress: () => console.log('Tema escuro selecionado') },
+        { text: 'Cancelar', style: 'cancel' }
+      ]
+    );
+  };
+
+  const handleLanguageToggle = () => {
+    Alert.alert(
+      'Idioma',
+      'Escolha o idioma do aplicativo:',
+      [
+        { text: 'Português (BR)', onPress: () => console.log('Português selecionado') },
+        { text: 'English', onPress: () => console.log('Inglês selecionado') },
+        { text: 'Español', onPress: () => console.log('Espanhol selecionado') },
+        { text: 'Cancelar', style: 'cancel' }
+      ]
+    );
   };
 
   if (loading) {
@@ -172,7 +224,7 @@ export default function LoginScreen({ navigation }) {
                   <View style={styles.socialButtons}>
                     <Button
                       mode="outlined"
-                      onPress={() => Alert.alert('Google', 'Login com Google em desenvolvimento')}
+                      onPress={handleGoogleLogin}
                       style={[styles.socialButton, styles.googleButton]}
                       icon="google"
                       disabled={loading}
@@ -182,7 +234,7 @@ export default function LoginScreen({ navigation }) {
                     
                     <Button
                       mode="outlined"
-                      onPress={() => Alert.alert('Facebook', 'Login com Facebook em desenvolvimento')}
+                      onPress={() => handleSocialLogin('Facebook')}
                       style={[styles.socialButton, styles.facebookButton]}
                       icon="facebook"
                       disabled={loading}
@@ -194,7 +246,7 @@ export default function LoginScreen({ navigation }) {
                   <View style={styles.socialButtons}>
                     <Button
                       mode="outlined"
-                      onPress={() => Alert.alert('Microsoft', 'Login com Microsoft em desenvolvimento')}
+                      onPress={() => handleSocialLogin('Microsoft')}
                       style={[styles.socialButton, styles.microsoftButton]}
                       icon="microsoft"
                       disabled={loading}
@@ -204,7 +256,7 @@ export default function LoginScreen({ navigation }) {
                     
                     <Button
                       mode="outlined"
-                      onPress={() => Alert.alert('Apple', 'Login com Apple em desenvolvimento')}
+                      onPress={() => handleSocialLogin('Apple')}
                       style={[styles.socialButton, styles.appleButton]}
                       icon="apple"
                       disabled={loading}
@@ -236,7 +288,7 @@ export default function LoginScreen({ navigation }) {
                   <View style={styles.settingsRow}>
                     <Button
                       mode="text"
-                      onPress={() => Alert.alert('Tema', 'Seleção de tema em desenvolvimento')}
+                      onPress={handleThemeToggle}
                       style={styles.settingsButton}
                       icon="palette"
                       disabled={loading}
@@ -246,7 +298,7 @@ export default function LoginScreen({ navigation }) {
                     
                     <Button
                       mode="text"
-                      onPress={() => Alert.alert('Idioma', 'Seleção de idioma em desenvolvimento')}
+                      onPress={handleLanguageToggle}
                       style={styles.settingsButton}
                       icon="translate"
                       disabled={loading}
