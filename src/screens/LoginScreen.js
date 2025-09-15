@@ -163,6 +163,57 @@ export default function LoginScreen({ navigation }) {
                   Entrar
                 </AnimatedButton>
 
+                <Divider style={styles.dividerSocial} />
+
+                {/* Login Social */}
+                <View style={styles.socialContainer}>
+                  <Text style={styles.socialText}>Ou entre com:</Text>
+                  
+                  <View style={styles.socialButtons}>
+                    <Button
+                      mode="outlined"
+                      onPress={() => Alert.alert('Google', 'Login com Google em desenvolvimento')}
+                      style={[styles.socialButton, styles.googleButton]}
+                      icon="google"
+                      disabled={loading}
+                    >
+                      Google
+                    </Button>
+                    
+                    <Button
+                      mode="outlined"
+                      onPress={() => Alert.alert('Facebook', 'Login com Facebook em desenvolvimento')}
+                      style={[styles.socialButton, styles.facebookButton]}
+                      icon="facebook"
+                      disabled={loading}
+                    >
+                      Facebook
+                    </Button>
+                  </View>
+                  
+                  <View style={styles.socialButtons}>
+                    <Button
+                      mode="outlined"
+                      onPress={() => Alert.alert('Microsoft', 'Login com Microsoft em desenvolvimento')}
+                      style={[styles.socialButton, styles.microsoftButton]}
+                      icon="microsoft"
+                      disabled={loading}
+                    >
+                      Microsoft
+                    </Button>
+                    
+                    <Button
+                      mode="outlined"
+                      onPress={() => Alert.alert('Apple', 'Login com Apple em desenvolvimento')}
+                      style={[styles.socialButton, styles.appleButton]}
+                      icon="apple"
+                      disabled={loading}
+                    >
+                      Apple
+                    </Button>
+                  </View>
+                </View>
+
                 <Divider style={styles.dividerRegister} />
 
                 <View style={styles.registerContainer}>
@@ -176,6 +227,33 @@ export default function LoginScreen({ navigation }) {
                   >
                     Criar Conta
                   </Button>
+                </View>
+
+                {/* Configurações */}
+                <Divider style={styles.dividerSettings} />
+                
+                <View style={styles.settingsContainer}>
+                  <View style={styles.settingsRow}>
+                    <Button
+                      mode="text"
+                      onPress={() => Alert.alert('Tema', 'Seleção de tema em desenvolvimento')}
+                      style={styles.settingsButton}
+                      icon="palette"
+                      disabled={loading}
+                    >
+                      Tema
+                    </Button>
+                    
+                    <Button
+                      mode="text"
+                      onPress={() => Alert.alert('Idioma', 'Seleção de idioma em desenvolvimento')}
+                      style={styles.settingsButton}
+                      icon="translate"
+                      disabled={loading}
+                    >
+                      Idioma
+                    </Button>
+                  </View>
                 </View>
               </Card.Content>
             </AnimatedCard>
@@ -302,5 +380,55 @@ const styles = StyleSheet.create({
   registerButton: {
     borderColor: '#2196F3',
     borderRadius: 25,
+  },
+  dividerSocial: {
+    marginVertical: 20,
+  },
+  socialContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  socialText: {
+    marginBottom: 12,
+    color: '#666',
+    fontSize: 14,
+  },
+  socialButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    width: '100%',
+  },
+  socialButton: {
+    flex: 1,
+    marginHorizontal: 4,
+    borderRadius: 20,
+  },
+  googleButton: {
+    borderColor: '#DB4437',
+  },
+  facebookButton: {
+    borderColor: '#4267B2',
+  },
+  microsoftButton: {
+    borderColor: '#00A1F1',
+  },
+  appleButton: {
+    borderColor: '#000000',
+  },
+  dividerSettings: {
+    marginVertical: 16,
+  },
+  settingsContainer: {
+    alignItems: 'center',
+  },
+  settingsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  settingsButton: {
+    flex: 1,
+    marginHorizontal: 4,
   },
 });
