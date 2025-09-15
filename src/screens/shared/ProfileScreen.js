@@ -528,6 +528,15 @@ const ProfileScreen = ({ navigation }) => {
               description="Acompanhe sua evolução física e IMC"
               left={() => <List.Icon icon="scale" />}
               right={() => <List.Icon icon="chevron-right" />}
+              onPress={() => navigation.navigate('PhysicalEvaluation')}
+            />
+            <Divider />
+            
+            <List.Item
+              title="Histórico de Avaliações"
+              description="Veja todas suas avaliações anteriores"
+              left={() => <List.Icon icon="history" />}
+              right={() => <List.Icon icon="chevron-right" />}
               onPress={() => navigation.navigate('PhysicalEvaluationHistory')}
             />
             <Divider />
@@ -542,7 +551,7 @@ const ProfileScreen = ({ navigation }) => {
             <Divider />
             
             <List.Item
-              title="Privacidade"
+              title="Privacidade e Segurança"
               description="Configurações de privacidade e LGPD"
               left={() => <List.Icon icon="shield" />}
               right={() => <List.Icon icon="chevron-right" />}

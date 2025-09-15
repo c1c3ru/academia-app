@@ -23,6 +23,11 @@ import StudentDetailsScreen from '../screens/shared/StudentDetailsScreen';
 import StudentProfileScreen from '../screens/shared/StudentProfileScreen';
 import ProfileScreen from '../screens/shared/ProfileScreen';
 import AddGraduationScreen from '../screens/shared/AddGraduationScreen';
+import ChangePasswordScreen from '../screens/shared/ChangePasswordScreen';
+import PhysicalEvaluationScreen from '../screens/shared/PhysicalEvaluationScreen';
+import PhysicalEvaluationHistoryScreen from '../screens/shared/PhysicalEvaluationHistoryScreen';
+import NotificationSettingsScreen from '../screens/shared/NotificationSettingsScreen';
+import PrivacySettingsScreen from '../screens/shared/PrivacySettingsScreen';
 import StudentPayments from '../screens/student/StudentPayments';
 import CheckIn from '../screens/instructor/CheckIn';
 
@@ -287,6 +292,83 @@ const AdminNavigator = () => {
           header: ({ navigation }) => (
             <UniversalHeader
               title="Perfil"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor="#FF9800"
+            />
+          ),
+        }}
+      />
+      
+      {/* Nested SharedNavigator screens */}
+      <Stack.Screen 
+        name="ChangePassword" 
+        component={ChangePasswordScreen}
+        options={{
+          headerShown: true,
+          header: ({ navigation }) => (
+            <UniversalHeader
+              title="Alterar Senha"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor="#FF9800"
+            />
+          ),
+        }}
+      />
+      <Stack.Screen 
+        name="PhysicalEvaluation" 
+        component={PhysicalEvaluationScreen}
+        options={{
+          headerShown: true,
+          header: ({ navigation }) => (
+            <UniversalHeader
+              title="Avaliação Física"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor="#FF9800"
+            />
+          ),
+        }}
+      />
+      <Stack.Screen 
+        name="PhysicalEvaluationHistory" 
+        component={PhysicalEvaluationHistoryScreen}
+        options={{
+          headerShown: true,
+          header: ({ navigation }) => (
+            <UniversalHeader
+              title="Histórico de Avaliações"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor="#FF9800"
+            />
+          ),
+        }}
+      />
+      <Stack.Screen 
+        name="NotificationSettings" 
+        component={NotificationSettingsScreen}
+        options={{
+          headerShown: true,
+          header: ({ navigation }) => (
+            <UniversalHeader
+              title="Configurações de Notificação"
+              navigation={navigation}
+              showBack={true}
+              backgroundColor="#FF9800"
+            />
+          ),
+        }}
+      />
+      <Stack.Screen 
+        name="PrivacySettings" 
+        component={PrivacySettingsScreen}
+        options={{
+          headerShown: true,
+          header: ({ navigation }) => (
+            <UniversalHeader
+              title="Privacidade e Segurança"
               navigation={navigation}
               showBack={true}
               backgroundColor="#FF9800"
