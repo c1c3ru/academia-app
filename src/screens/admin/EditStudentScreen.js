@@ -17,7 +17,7 @@ import {
   ActivityIndicator
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthProvider';
 import { firestoreService } from '../../services/firestoreService';
 
 const EditStudentScreen = ({ navigation, route }) => {

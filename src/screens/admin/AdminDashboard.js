@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthProvider';
 import { ADMIN_COLORS, ADMIN_ICONS } from '../../theme/adminTheme';
 import { firestoreService, paymentService, announcementService } from '../../services/firestoreService';
 import AnimatedCard from '../../components/AnimatedCard';

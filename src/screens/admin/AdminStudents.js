@@ -17,7 +17,7 @@ import {
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthProvider';
 import { firestoreService, paymentService } from '../../services/firestoreService';
 import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';
 import StudentDisassociationDialog from '../../components/StudentDisassociationDialog';

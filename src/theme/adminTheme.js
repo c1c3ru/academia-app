@@ -7,6 +7,7 @@ export const ADMIN_COLORS = {
   blue: ['#1976D2', '#1565C0'],                       // Professional Blue
   green: ['#2E7D32', '#388E3C'],                      // Professional Green
   purple: ['#6A1B9A', '#8E24AA'],                     // Professional Purple
+  orange: ['#F57C00', '#FF9800'],                     // Professional Orange
   grayLight: '#f3f3f3',
   white: '#FFFFFF',
   textDark: '#1A1A1A',                                // Darker, more professional text

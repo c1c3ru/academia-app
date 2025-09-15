@@ -56,7 +56,8 @@ const MainNavigator = ({ userType }) => {
 const AppNavigator = () => {
   const { user, userProfile, academia, loading } = useAuth();
 
-  console.log('🧭 AppNavigator: Estado atual:', {
+  // Memoizar o estado para evitar re-renderizações desnecessárias
+  const navigationState = React.useMemo(() => ({
     loading,
     hasUser: !!user,
     hasUserProfile: !!userProfile,
@@ -66,7 +67,9 @@ const AppNavigator = () => {
     userType: userProfile?.userType,
     finalUserType: userProfile?.userType || userProfile?.tipo || 'student',
     academiaId: userProfile?.academiaId
-  });
+  }), [loading, user, userProfile, academia]);
+
+  console.log('🧭 AppNavigator: Estado atual:', navigationState);
 
   if (loading) {
     console.log('🧭 AppNavigator: Mostrando LoadingScreen');

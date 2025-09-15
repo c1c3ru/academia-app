@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Alert } from 'react-native';
 import { Button, TextInput, Card, Title } from 'react-native-paper';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthProvider';
 
 const LoginDebugger = () => {
   const [email, setEmail] = useState('test@example.com');

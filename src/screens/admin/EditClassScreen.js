@@ -9,7 +9,7 @@ import {
 import { Card, Text, Button, TextInput, HelperText, Chip, RadioButton, Snackbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import { Picker } from '@react-native-picker/picker'; // Removido - dependência não disponível
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthProvider';
 import { firestoreService, classService } from '../../services/firestoreService';
 import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';
 

@@ -304,6 +304,42 @@ export const useAuthMigration = () => {
     }
   };
 
+  // Função para atualizar associação de academia
+  const updateAcademiaAssociation = async (academiaId, academiaData = null) => {
+    try {
+      if (!user?.uid) {
+        throw new Error('Usuário não autenticado');
+      }
+      
+      console.log('🏢 updateAcademiaAssociation: Associando usuário à academia:', academiaId);
+      
+      // Atualizar perfil do usuário com a academia
+      await setDoc(doc(db, 'users', user.uid), {
+        academiaId: academiaId,
+        updatedAt: new Date()
+      }, { merge: true });
+      
+      // Atualizar estado local
+      const updatedProfile = { ...userProfile, academiaId };
+      setUserProfile(updatedProfile);
+      
+      // Se dados da academia foram fornecidos, definir no estado
+      if (academiaData) {
+        setAcademia({ id: academiaId, ...academiaData });
+      } else if (academiaId) {
+        // Buscar dados da academia
+        await fetchAcademiaData(academiaId);
+      }
+      
+      console.log('✅ updateAcademiaAssociation: Associação atualizada com sucesso');
+      
+      return updatedProfile;
+    } catch (error) {
+      console.error('❌ updateAcademiaAssociation: Erro ao atualizar associação:', error);
+      throw error;
+    }
+  };
+
   // Função de logout
   const logoutUser = async () => {
     try {
@@ -339,6 +375,7 @@ export const useAuthMigration = () => {
     fetchUserProfile,
     fetchAcademiaData,
     updateUserProfile,
+    updateAcademiaAssociation,
     signInWithGoogle,
     signInWithFacebook,
     signInWithMicrosoft,

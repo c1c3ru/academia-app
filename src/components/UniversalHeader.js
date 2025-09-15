@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
 import { Appbar, Avatar, Menu, Divider, Modal, Button, Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthProvider';
 import { ResponsiveUtils } from '../utils/animations';
 // import NotificationBell from './NotificationBell';
 import { useTheme } from '../contexts/ThemeContext';

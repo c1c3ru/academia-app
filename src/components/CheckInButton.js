@@ -4,7 +4,7 @@ import { Button, Text, Card, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import locationService from '../services/locationService';
 import { firestoreService } from '../services/firestoreService';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthProvider';
 
 const CheckInButton = ({ classId, className, onCheckInSuccess }) => {
   const [loading, setLoading] = useState(false);

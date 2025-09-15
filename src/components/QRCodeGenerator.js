@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Share, Alert } from 'react-native';
 import { Card, Text, Button, IconButton } from 'react-native-paper';
 import QRCode from 'react-native-qrcode-svg';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthProvider';
 
 export default function QRCodeGenerator({ size = 200, showActions = true, academiaId, academiaNome }) {
   // Verificar se está dentro do AuthProvider antes de usar o hook

@@ -6,7 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import UniversalHeader from '../components/UniversalHeader';
 
 // Telas do Admin
-import AdminDashboardSimple from '../screens/admin/AdminDashboardSimple';
+import AdminDashboard from '../screens/admin/AdminDashboard';
 import AdminStudents from '../screens/admin/AdminStudents';
 import AdminClasses from '../screens/admin/AdminClasses';
 import AdminModalities from '../screens/admin/AdminModalities';
@@ -64,7 +64,7 @@ const AdminTabNavigator = () => {
     >
       <Tab.Screen 
         name="Dashboard" 
-        component={AdminDashboardSimple}
+        component={AdminDashboard}
         options={{ title: getString('dashboard') }}
       />
       <Tab.Screen 

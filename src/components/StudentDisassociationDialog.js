@@ -10,7 +10,7 @@ import {
   Chip
 } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthProvider';
 import { useNotification } from '../contexts/NotificationContext';
 import { firestoreService } from '../services/firestoreService';
 

@@ -20,7 +20,7 @@ import {
   Banner
 } from 'react-native-paper';
 // import { Picker } from '@react-native-picker/picker'; // Removido - dependência não disponível
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthProvider';
 import { firestoreService } from '../../services/firestoreService';
 
 const AddStudentScreen = ({ navigation, route }) => {
