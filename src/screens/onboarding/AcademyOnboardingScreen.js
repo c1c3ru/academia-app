@@ -15,13 +15,13 @@ import {
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuthMigration } from '../../hooks/useAuthMigration';
+import { useAuth } from '../../contexts/AuthProvider';
 import { useTheme } from '../../contexts/ThemeContext';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../services/firebase';
 
 const AcademyOnboardingScreen = ({ navigation }) => {
-  const { userProfile, user } = useAuthMigration();
+  const { userProfile, user, refreshClaimsAndProfile } = useAuth();
   const { getString } = useTheme();
   
   // Estados para criação de academia
@@ -56,8 +56,8 @@ const AcademyOnboardingScreen = ({ navigation }) => {
       const result = await createAcademyFunction(academyData);
       
       if (result.data.success) {
-        // Forçar atualização do token para incluir os novos claims
-        await user.getIdToken(true);
+        // Atualizar claims e perfil após criação da academia
+        await refreshClaimsAndProfile();
         
         Alert.alert(
           'Sucesso!', 
@@ -67,11 +67,7 @@ const AcademyOnboardingScreen = ({ navigation }) => {
               text: 'OK',
               onPress: () => {
                 setCreateAcademyVisible(false);
-                // Navegar para o dashboard admin ou recarregar a aplicação
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: 'Main' }],
-                });
+                // A navegação será automática após o AuthContext detectar as mudanças
               }
             }
           ]
@@ -99,8 +95,8 @@ const AcademyOnboardingScreen = ({ navigation }) => {
       const result = await useInviteFunction({ inviteCode: inviteCode.trim() });
       
       if (result.data.success) {
-        // Forçar atualização do token para incluir os novos claims
-        await user.getIdToken(true);
+        // Atualizar claims e perfil após usar convite
+        await refreshClaimsAndProfile();
         
         const roleText = result.data.role === 'instructor' ? 'instrutor' : 'aluno';
         
@@ -112,11 +108,7 @@ const AcademyOnboardingScreen = ({ navigation }) => {
               text: 'OK',
               onPress: () => {
                 setUseInviteVisible(false);
-                // Navegar para o dashboard apropriado ou recarregar a aplicação
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: 'Main' }],
-                });
+                // A navegação será automática após o AuthContext detectar as mudanças
               }
             }
           ]

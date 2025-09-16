@@ -56,7 +56,7 @@ const MainNavigator = ({ userType }) => {
 
 // Navegador Principal da Aplicação
 const AppNavigator = () => {
-  const { user, userProfile, academia, loading } = useAuth();
+  const { user, userProfile, academia, customClaims, loading } = useAuth();
 
   // Memoizar o estado para evitar re-renderizações desnecessárias
   const navigationState = React.useMemo(() => ({
@@ -64,12 +64,15 @@ const AppNavigator = () => {
     hasUser: !!user,
     hasUserProfile: !!userProfile,
     hasAcademia: !!academia,
+    hasCustomClaims: !!customClaims,
     userEmail: user?.email,
     tipo: userProfile?.tipo,
     userType: userProfile?.userType,
     finalUserType: userProfile?.userType || userProfile?.tipo || 'student',
-    academiaId: userProfile?.academiaId
-  }), [loading, user, userProfile, academia]);
+    academiaId: userProfile?.academiaId || customClaims?.academiaId,
+    claimsRole: customClaims?.role,
+    hasValidClaims: !!(customClaims?.role && customClaims?.academiaId)
+  }), [loading, user, userProfile, academia, customClaims]);
 
   console.log('🧭 AppNavigator: Estado atual:', navigationState);
   console.log('🧭 AppNavigator: Loading:', loading);
@@ -111,9 +114,11 @@ const AppNavigator = () => {
     );
   }
 
-  // Se usuário não tem academia associada, mostrar nova tela de onboarding
-  if (!userProfile.academiaId) {
-    console.log('🧭 AppNavigator: Usuário sem academia, mostrando onboarding');
+  // Se usuário não tem academia associada (verificar tanto no perfil quanto nos claims)
+  const hasAcademiaAssociation = userProfile.academiaId || customClaims?.academiaId;
+  
+  if (!hasAcademiaAssociation) {
+    console.log('🧭 AppNavigator: Usuário sem academia (perfil ou claims), mostrando onboarding');
     return (
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>

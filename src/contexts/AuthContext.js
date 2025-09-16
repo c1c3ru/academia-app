@@ -12,6 +12,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
+import { getUserClaims, refreshUserToken, needsOnboarding } from '../utils/customClaimsHelper';
 
 const AuthContext = createContext();
 
@@ -27,6 +28,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [academia, setAcademia] = useState(null);
+  const [customClaims, setCustomClaims] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchAcademiaData = async (academiaId) => {
@@ -98,6 +100,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Função para carregar Custom Claims
+  const loadCustomClaims = async (firebaseUser) => {
+    try {
+      console.log('🔍 loadCustomClaims: Carregando claims para:', firebaseUser.email);
+      const claims = await getUserClaims();
+      setCustomClaims(claims);
+      
+      console.log('📋 loadCustomClaims: Claims carregados:', {
+        role: claims?.role,
+        academiaId: claims?.academiaId,
+        hasValidClaims: !!(claims?.role && claims?.academiaId)
+      });
+      
+      return claims;
+    } catch (error) {
+      console.error('❌ loadCustomClaims: Erro ao carregar claims:', error);
+      setCustomClaims(null);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log('🔐 AuthStateChanged: Firebase user mudou:', firebaseUser?.email || 'null');
@@ -106,26 +129,24 @@ export const AuthProvider = ({ children }) => {
         console.log('🔐 AuthStateChanged: Usuário logado, definindo user state');
         setUser(firebaseUser);
         
-        // TESTE: Verificar se fetchUserProfile existe
-        console.log('🔐 AuthStateChanged: fetchUserProfile existe?', typeof fetchUserProfile);
+        // Carregar Custom Claims primeiro
+        await loadCustomClaims(firebaseUser);
         
         // Buscar perfil do usuário no Firestore
         console.log('🔐 AuthStateChanged: Chamando fetchUserProfile para UID:', firebaseUser.uid);
         
-        // Chamada direta com log imediato
-        console.log('🔐 AuthStateChanged: ANTES de chamar fetchUserProfile');
         try {
           await fetchUserProfile(firebaseUser.uid);
           console.log('🔐 AuthStateChanged: fetchUserProfile concluído');
         } catch (error) {
           console.error('🔐 AuthStateChanged: Erro no fetchUserProfile:', error);
         }
-        console.log('🔐 AuthStateChanged: DEPOIS de chamar fetchUserProfile');
       } else {
         console.log('🔐 AuthContext: Usuário deslogado, limpando estados');
         setUser(null);
         setUserProfile(null);
         setAcademia(null);
+        setCustomClaims(null);
       }
       setLoading(false);
     });
@@ -342,11 +363,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Função para atualizar claims após operações das Cloud Functions
+  const refreshClaimsAndProfile = async () => {
+    try {
+      console.log('🔄 refreshClaimsAndProfile: Atualizando claims e perfil...');
+      
+      if (!user) {
+        console.log('⚠️ refreshClaimsAndProfile: Nenhum usuário logado');
+        return;
+      }
+      
+      // Forçar refresh do token para obter claims atualizados
+      await refreshUserToken();
+      
+      // Recarregar claims
+      await loadCustomClaims(user);
+      
+      // Recarregar perfil do usuário
+      await fetchUserProfile(user.uid);
+      
+      console.log('✅ refreshClaimsAndProfile: Claims e perfil atualizados');
+    } catch (error) {
+      console.error('❌ refreshClaimsAndProfile: Erro na atualização:', error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       console.log('🔐 AuthContext: Iniciando signOut do Firebase...');
       console.log('🔐 AuthContext: User atual antes do logout:', user?.email);
-      console.log('🔐 AuthContext: Auth object:', auth);
       
       await signOut(auth);
       console.log('🔐 AuthContext: SignOut executado com sucesso');
@@ -355,6 +401,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setUserProfile(null);
       setAcademia(null);
+      setCustomClaims(null);
       
       console.log('🔐 AuthContext: Logout completo - estados limpos');
     } catch (error) {
@@ -449,6 +496,7 @@ export const AuthProvider = ({ children }) => {
     user,
     userProfile,
     academia,
+    customClaims,
     loading,
     signUp,
     signIn,
@@ -460,7 +508,9 @@ export const AuthProvider = ({ children }) => {
     updateUserProfile,
     updateAcademiaAssociation,
     fetchUserProfile,
-    fetchAcademiaData
+    fetchAcademiaData,
+    refreshClaimsAndProfile,
+    loadCustomClaims
   };
 
   return (
