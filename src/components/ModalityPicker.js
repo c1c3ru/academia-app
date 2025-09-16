@@ -17,12 +17,28 @@ export default function ModalityPicker({
   }, []);
 
   const loadModalities = async () => {
+    console.time('ModalityPicker.loadModalities');
+    console.log('🔄 ModalityPicker: Iniciando carregamento de modalidades');
+    
     try {
       setLoading(true);
       
-      // Buscar modalidades da coleção global (não específica de academia)
+      // Verificar se o Firestore está inicializado
+      if (!db) {
+        console.error('❌ Firestore não inicializado, usando fallback');
+        throw new Error('Firestore não inicializado');
+      }
+      
+      console.log('🔄 ModalityPicker: Buscando modalidades do Firestore');
+      
+      // Buscar modalidades da coleção global com timeout de 8 segundos
       const modalitiesRef = collection(db, 'modalities');
-      const snapshot = await getDocs(modalitiesRef);
+      const timeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout ao carregar modalidades')), 8000)
+      );
+      
+      const snapshot = await Promise.race([getDocs(modalitiesRef), timeout]);
+      console.log('✅ ModalityPicker: Dados recebidos do Firestore:', snapshot.docs.length, 'documentos');
       
       const modalities = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -50,7 +66,7 @@ export default function ModalityPicker({
         setAvailableModalities(uniqueModalities);
       }
     } catch (error) {
-      console.error('Erro ao carregar modalidades:', error);
+      console.error('❌ ModalityPicker: Erro ao carregar modalidades:', error.message);
       // Modalidades padrão caso não consiga carregar do banco
       setAvailableModalities([
         { id: 'bjj', name: 'Jiu-Jitsu Brasileiro', description: 'Arte marcial brasileira' },
@@ -63,6 +79,8 @@ export default function ModalityPicker({
         { id: 'capoeira', name: 'Capoeira', description: 'Arte marcial brasileira' }
       ]);
     } finally {
+      console.timeEnd('ModalityPicker.loadModalities');
+      console.log('✅ ModalityPicker: Carregamento finalizado, definindo loading=false');
       setLoading(false);
     }
   };

@@ -19,6 +19,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthProvider';
 import { useTheme } from '../../contexts/ThemeContext';
 import { InviteService } from '../../services/inviteService';
+import { isAdmin, getCanonicalUserType } from '../../utils/userTypeHelpers';
 import QRCodeScanner from '../../components/QRCodeScanner';
 import CountryStatePicker from '../../components/CountryStatePicker';
 import PhonePicker from '../../components/PhonePicker';
@@ -224,10 +225,10 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
     console.log('🔍 Debug - userProfile.userType:', userProfile?.userType);
     
     // Verificar se o usuário tem permissão para criar academia
-    // Aceitar tanto 'admin' quanto 'userType' === 'admin'
-    const isAdmin = userProfile?.tipo === 'admin' || userProfile?.userType === 'admin';
+    // Verificar se usuário é admin (inclui 'administrador', 'admin')  
+    const userIsAdmin = isAdmin(userProfile);
     
-    if (!isAdmin) {
+    if (!userIsAdmin) {
       Alert.alert(
         getString('permissionDenied'), 
         `${getString('onlyAdminsCanCreate')}\n\n${getString('currentProfile')}: ${userProfile?.tipo || userProfile?.userType || getString('notDefined')}`
@@ -447,8 +448,8 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
         </View>
       </View>
 
-      {/* Opções de Associação - ocultar para admins */}
-      {!forceCreate && (
+      {/* Opções de Associação - ocultar para todos os admins */}
+      {!forceCreate && !isAdmin(userProfile) && (
         <Card style={styles.optionsCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -481,8 +482,8 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
       </Card>
       )}
 
-      {/* Buscar Academia por Código - ocultar para admins */}
-      {!forceCreate && (
+      {/* Buscar Academia por Código - ocultar para todos os admins */}
+      {!forceCreate && !isAdmin(userProfile) && (
       <Card style={styles.searchCard}>
         <Card.Content>
           <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -528,7 +529,7 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
       {!forceCreate && <Divider style={styles.divider} />}
 
       {/* Criar Nova Academia - Sempre visível para admins, ou quando solicitado */}
-      {(userProfile?.tipo === 'admin' || userProfile?.userType === 'admin' || forceCreate) && (
+      {(isAdmin(userProfile) || forceCreate) && (
         <Card style={styles.createCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -705,7 +706,7 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
       )}
 
       {/* Mensagem para usuários não-admin */}
-      {!(userProfile?.tipo === 'admin' || userProfile?.userType === 'admin') && (
+      {!isAdmin(userProfile) && (
         <Card style={styles.createCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -726,12 +727,14 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
         <Modal 
           visible={showQRScanner} 
           onDismiss={() => setShowQRScanner(false)}
-          contentContainerStyle={styles.qrModal}
+          contentContainerStyle={styles.qrModalWrapper}
         >
-          <QRCodeScanner 
-            onScan={handleQRCodeScan}
-            onCancel={() => setShowQRScanner(false)}
-          />
+          <View style={styles.qrModal}>
+            <QRCodeScanner 
+              onScan={handleQRCodeScan}
+              onCancel={() => setShowQRScanner(false)}
+            />
+          </View>
         </Modal>
       </Portal>
 
@@ -953,11 +956,28 @@ const styles = {
     margin: 20,
     borderRadius: 12,
   },
+  qrModalWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 9999,
+  },
   qrModal: {
     backgroundColor: 'white',
     margin: 20,
     borderRadius: 12,
     overflow: 'hidden',
+    elevation: 10,
+    minWidth: 300,
+    maxWidth: '90%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   modalTitle: {
     textAlign: 'center',

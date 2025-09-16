@@ -1,4 +1,5 @@
 import React from 'react';
+import { getFinalUserType } from '../utils/userTypeHelpers';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
@@ -112,10 +113,7 @@ const AppNavigator = () => {
   // Se usuário não tem academia associada
   if (!userProfile.academiaId) {
     // Determinar tipo de usuário para decidir o fluxo
-    const currentUserType = userProfile.userType || userProfile.tipo || 'student';
-    const mappedUserType = currentUserType === 'administrador' ? 'admin' : 
-                          currentUserType === 'instrutor' ? 'instructor' : 
-                          currentUserType === 'aluno' ? 'student' : currentUserType;
+    const mappedUserType = getFinalUserType(userProfile);
     
     // Admins devem criar academia, outros usuários devem se associar
     if (mappedUserType === 'admin') {
@@ -152,10 +150,7 @@ const AppNavigator = () => {
   
   // Se é admin sem academia, permitir acesso ao app para criar academia
   if (!academia && !userProfile.academiaId) {
-    const currentUserType = userProfile.userType || userProfile.tipo || 'student';
-    const mappedUserType = currentUserType === 'administrador' ? 'admin' : 
-                          currentUserType === 'instrutor' ? 'instructor' : 
-                          currentUserType === 'aluno' ? 'student' : currentUserType;
+    const mappedUserType = getFinalUserType(userProfile);
     
     if (mappedUserType === 'admin') {
       console.log('🧭 AppNavigator: Admin sem academia, permitindo acesso ao app principal');
@@ -163,17 +158,8 @@ const AppNavigator = () => {
     }
   }
 
-  // Determinar tipo de usuário (userType é o campo principal)
-  let userType = userProfile.userType || userProfile.tipo || 'student';
-  
-  // Mapear valores em português para inglês para compatibilidade
-  if (userType === 'instrutor') {
-    userType = 'instructor';
-  } else if (userType === 'aluno') {
-    userType = 'student';
-  } else if (userType === 'administrador') {
-    userType = 'admin';
-  }
+  // Determinar tipo de usuário final (normalizado)
+  const userType = getFinalUserType(userProfile);
   
   // Usuário completo com academia, mostrar app principal
   console.log('🧭 AppNavigator: Renderizando MainNavigator para:', userType, {

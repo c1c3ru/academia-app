@@ -1,7 +1,7 @@
 // Configuração do Firebase
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore } from 'firebase/firestore';
 import { Platform } from 'react-native';
 
 // Detectar plataforma
@@ -48,9 +48,12 @@ try {
   
   console.log('✅ Firebase Auth inicializado');
   
-  // Inicializar Firestore
-  db = getFirestore(app);
-  console.log('✅ Firebase Firestore inicializado');
+  // Inicializar Firestore com configurações para React Native/Web
+  db = initializeFirestore(app, {
+    experimentalAutoDetectLongPolling: true,
+    useFetchStreams: false
+  });
+  console.log('✅ Firebase Firestore inicializado com long-polling');
   
   console.log('🎉 Firebase inicializado com sucesso para', Platform.OS);
 } catch (error) {

@@ -17,6 +17,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthProvider';
 import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';
+import SafeCardContent from '../../components/SafeCardContent';
 
 const StudentProfileScreen = ({ route, navigation }) => {
   const { studentId, studentData } = route.params || {};
@@ -140,6 +141,13 @@ const StudentProfileScreen = ({ route, navigation }) => {
     return age;
   };
 
+  const handleAddGraduation = () => {
+    navigation.navigate('AddGraduation', { 
+      studentId: studentId, 
+      studentName: studentInfo?.name || 'Aluno' 
+    });
+  };
+
   if (loading && !studentInfo) {
     return (
       <SafeAreaView style={styles.container}>
@@ -160,7 +168,7 @@ const StudentProfileScreen = ({ route, navigation }) => {
       >
         {/* Header do Perfil */}
         <Card style={styles.headerCard}>
-          <Card.Content>
+          <SafeCardContent source="StudentProfile/header">
             <View style={styles.profileHeader}>
               <Avatar.Text 
                 size={80} 
@@ -196,12 +204,12 @@ const StudentProfileScreen = ({ route, navigation }) => {
                 </View>
               </View>
             </View>
-          </Card.Content>
+          </SafeCardContent>
         </Card>
 
         {/* Informações Pessoais */}
         <Card style={styles.card}>
-          <Card.Content>
+          <SafeCardContent source="StudentProfile/personalInfo">
             <View style={styles.cardHeader}>
               <MaterialCommunityIcons name="account-circle" size={24} color="#2196F3" />
               <Title style={styles.cardTitle}>Informações Pessoais</Title>
@@ -240,12 +248,12 @@ const StudentProfileScreen = ({ route, navigation }) => {
                 </Text>
               </View>
             </View>
-          </Card.Content>
+          </SafeCardContent>
         </Card>
 
         {/* Turmas Matriculadas */}
         <Card style={styles.card}>
-          <Card.Content>
+          <SafeCardContent source="StudentProfile/classes">
             <View style={styles.cardHeader}>
               <MaterialCommunityIcons name="school" size={24} color="#4CAF50" />
               <Title style={styles.cardTitle}>Turmas Matriculadas</Title>
@@ -274,12 +282,12 @@ const StudentProfileScreen = ({ route, navigation }) => {
                 Nenhuma turma matriculada
               </Text>
             )}
-          </Card.Content>
+          </SafeCardContent>
         </Card>
 
         {/* Histórico de Graduações */}
         <Card style={styles.card}>
-          <Card.Content>
+          <SafeCardContent source="StudentProfile/graduations">
             <View style={styles.cardHeader}>
               <MaterialCommunityIcons name="trophy" size={24} color="#FFD700" />
               <Title style={styles.cardTitle}>Histórico de Graduações</Title>
@@ -308,12 +316,12 @@ const StudentProfileScreen = ({ route, navigation }) => {
             >
               Nova Graduação
             </Button>
-          </Card.Content>
+          </SafeCardContent>
         </Card>
 
         {/* Histórico de Pagamentos */}
         <Card style={styles.card}>
-          <Card.Content>
+          <SafeCardContent source="StudentProfile/payments">
             <View style={styles.cardHeader}>
               <MaterialCommunityIcons name="credit-card" size={24} color="#FF9800" />
               <Title style={styles.cardTitle}>Últimos Pagamentos</Title>
@@ -358,12 +366,12 @@ const StudentProfileScreen = ({ route, navigation }) => {
                 Ver Todos os Pagamentos
               </Button>
             )}
-          </Card.Content>
+          </SafeCardContent>
         </Card>
 
         {/* Ações */}
         <Card style={styles.card}>
-          <Card.Content>
+          <SafeCardContent>
             <Title style={styles.cardTitle}>Ações</Title>
             
             <View style={styles.actionsContainer}>
@@ -391,7 +399,7 @@ const StudentProfileScreen = ({ route, navigation }) => {
                 Nova Graduação
               </Button>
             </View>
-          </Card.Content>
+          </SafeCardContent>
         </Card>
       </ScrollView>
     </SafeAreaView>

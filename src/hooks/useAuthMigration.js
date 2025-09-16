@@ -3,6 +3,7 @@ import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, FacebookAuthPr
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import useAuthStore from '../stores/authStore';
+import { normalizeUserProfile } from '../utils/userTypeHelpers';
 
 // Hook para migrar dados do Context API para Zustand
 export const useAuthMigration = () => {
@@ -48,10 +49,8 @@ export const useAuthMigration = () => {
             // Atualizar o estado local
             const updatedProfile = { ...userProfile, academiaId: null };
             setUserProfile(updatedProfile);
-            
-            console.log('✅ fetchAcademiaData: Associação de academia removida do perfil do usuário');
-          } catch (updateError) {
-            console.error('❌ fetchAcademiaData: Erro ao limpar associação:', updateError);
+          } catch (error) {
+            console.error('❌ Erro ao limpar associação da academia:', error);
           }
         }
       }

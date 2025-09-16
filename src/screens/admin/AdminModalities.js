@@ -110,9 +110,15 @@ const AdminModalities = ({ navigation }) => {
         setModalities([]);
         setPlans([]);
         setAnnouncements([]);
+      } else {
+        // Para outros erros, ainda mostrar dados vazios mas sem alert
+        setModalities([]);
+        setPlans([]);
+        setAnnouncements([]);
       }
       
-      Alert.alert('Erro', `Erro ao carregar dados: ${error.message}`);
+      // Remover alert que pode estar causando problemas
+      console.error('Erro detalhado:', error);
     } finally {
       console.log('🏁 AdminModalities: Finalizando loading...');
       setLoading(false);

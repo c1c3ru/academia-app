@@ -213,16 +213,16 @@ class NotificationService {
     });
   }
 
-  async notifyClassReminder(userId, className, classTime) {
+  async notifyClassReminder(userId, className, classTime, reminderMinutes = 30) {
     const title = 'Lembrete de Aula';
-    const body = `Sua aula de ${className} começa em 30 minutos (${classTime})`;
+    const body = `Sua aula de ${className} começa em ${reminderMinutes} minutos (${classTime})`;
     
     await this.saveNotificationToFirestore({
       userId,
       title,
       message: body,
       type: 'class',
-      data: { className, classTime },
+      data: { className, classTime, reminderMinutes },
       isRead: false,
       createdAt: new Date()
     });
@@ -232,6 +232,52 @@ class NotificationService {
       userId,
       screen: 'Calendário'
     });
+  }
+
+  // Agendar lembretes de aula com múltiplos horários
+  async scheduleClassReminders(userId, className, classDateTime, reminderSettings = [30, 15, 10]) {
+    try {
+      const classDate = new Date(classDateTime);
+      
+      for (const minutes of reminderSettings) {
+        const reminderTime = new Date(classDate.getTime() - (minutes * 60 * 1000));
+        
+        // Só agendar se o horário for no futuro
+        if (reminderTime > new Date()) {
+          await this.scheduleNotification(
+            'Lembrete de Aula',
+            `Sua aula de ${className} começa em ${minutes} minutos`,
+            reminderTime,
+            {
+              type: 'class',
+              userId,
+              className,
+              classTime: classDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+              reminderMinutes: minutes,
+              screen: 'Calendário'
+            }
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao agendar lembretes de aula:', error);
+    }
+  }
+
+  // Cancelar lembretes de uma aula específica
+  async cancelClassReminders(className, classDateTime) {
+    try {
+      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+      
+      for (const notification of scheduledNotifications) {
+        const { data } = notification.content;
+        if (data.type === 'class' && data.className === className) {
+          await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao cancelar lembretes de aula:', error);
+    }
   }
 
   async notifyGraduation(userId, fromLevel, toLevel, modalityName) {

@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { useAuth } from '../../contexts/AuthProvider';
+import SafeCardContent from '../../components/SafeCardContent';
 
 const ChangePasswordScreen = ({ navigation }) => {
   const { user } = useAuth();
