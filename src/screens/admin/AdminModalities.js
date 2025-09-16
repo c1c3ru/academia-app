@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert, Platform } from 'react-native';
 import { 
   Card, 
   Title, 
@@ -32,6 +32,9 @@ const AdminModalities = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [deletingIds, setDeletingIds] = useState(new Set());
+  const [deletingPlanIds, setDeletingPlanIds] = useState(new Set());
+  const [deletingAnnouncementIds, setDeletingAnnouncementIds] = useState(new Set());
   
   // Estados para diálogos
   const [modalityDialogVisible, setModalityDialogVisible] = useState(false);
@@ -166,48 +169,127 @@ const AdminModalities = ({ navigation }) => {
   const handleDeleteModality = (modality) => {
     console.log('🗑️ handleDeleteModality chamado para:', modality);
     
-    Alert.alert(
-      getString('confirmDeletion'),
-      `Tem certeza que deseja excluir a modalidade "${modality.name}"?`,
-      [
-        { text: getString('cancel'), style: 'cancel' },
-        { 
-          text: 'Excluir', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log('=== DEBUG DELETE MODALITY ===');
-              console.log('Modalidade ID:', modality.id);
-              console.log('User UID:', user?.uid);
-              console.log('User Type:', user?.userType);
-              console.log('User Tipo:', user?.tipo);
-              console.log('User Profile:', userProfile);
-              console.log('================================');
-              
-              if (!modality.id) {
-                throw new Error('ID da modalidade não encontrado');
-              }
-              
-              console.log('🗑️ Iniciando exclusão da modalidade:', modality.id);
-              await firestoreService.delete('modalities', modality.id);
-              console.log('✅ Modalidade excluída do Firestore');
-              
-              // Atualizar lista local imediatamente
-              setModalities(prev => prev.filter(m => m.id !== modality.id));
-              console.log('✅ Lista local atualizada');
-              
-              Alert.alert('Sucesso', 'Modalidade excluída com sucesso!');
-            } catch (error) {
-              console.error('❌ Erro detalhado ao excluir modalidade:', error);
-              console.error('Error code:', error.code);
-              console.error('Error message:', error.message);
-              console.error('Error stack:', error.stack);
-              Alert.alert('Erro', `Erro ao excluir modalidade: ${error.message}`);
-            }
+    // Para web, usar window.confirm em vez de Alert.alert
+    if (Platform.OS === 'web') {
+      console.log('🌐 Usando window.confirm para web');
+      const confirmed = window.confirm(`Tem certeza que deseja excluir a modalidade "${modality.name}"?`);
+      
+      if (confirmed) {
+        console.log('✅ Usuário confirmou exclusão via window.confirm');
+        executeDelete(modality);
+      } else {
+        console.log('❌ Exclusão cancelada pelo usuário via window.confirm');
+      }
+    } else {
+      console.log('📱 Usando Alert.alert para mobile');
+      Alert.alert(
+        'Confirmar Exclusão',
+        `Tem certeza que deseja excluir a modalidade "${modality.name}"?`,
+        [
+          { 
+            text: 'Cancelar', 
+            style: 'cancel',
+            onPress: () => console.log('❌ Exclusão cancelada pelo usuário')
+          },
+          { 
+            text: 'Excluir', 
+            style: 'destructive',
+            onPress: () => executeDelete(modality)
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
+  };
+
+  // Função utilitária para mostrar notificações
+  const showNotification = (message, type = 'success') => {
+    if (Platform.OS === 'web') {
+      // Adicionar animações CSS se não existirem
+      if (!document.getElementById('notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+          @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
+      const notification = document.createElement('div');
+      notification.innerHTML = message;
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#4CAF50' : '#F44336'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        animation: slideIn 0.3s ease-out;
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => document.body.removeChild(notification), 300);
+      }, type === 'success' ? 3000 : 4000);
+    } else {
+      Alert.alert(type === 'success' ? 'Sucesso' : 'Erro', message);
+    }
+  };
+
+  const executeDelete = async (modality) => {
+    console.log('✅ Executando exclusão da modalidade:', modality.name);
+    
+    // Adicionar ID à lista de itens sendo excluídos
+    setDeletingIds(prev => new Set([...prev, modality.id]));
+    
+    try {
+      console.log('=== DEBUG DELETE MODALITY ===');
+      console.log('Modalidade ID:', modality.id);
+      console.log('User UID:', user?.uid);
+      console.log('User Type:', user?.userType);
+      console.log('User Tipo:', user?.tipo);
+      console.log('User Profile:', userProfile);
+      console.log('================================');
+      
+      if (!modality.id) {
+        throw new Error('ID da modalidade não encontrado');
+      }
+      
+      console.log('🗑️ Iniciando exclusão da modalidade:', modality.id);
+      await firestoreService.delete('modalities', modality.id);
+      console.log('✅ Modalidade excluída do Firestore');
+      
+      // Atualizar lista local imediatamente
+      setModalities(prev => prev.filter(m => m.id !== modality.id));
+      console.log('✅ Lista local atualizada');
+      
+      showNotification('✅ Modalidade excluída com sucesso!', 'success');
+    } catch (error) {
+      console.error('❌ Erro detalhado ao excluir modalidade:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      showNotification(`❌ Erro: ${error.message}`, 'error');
+    } finally {
+      // Remover ID da lista de itens sendo excluídos
+      setDeletingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(modality.id);
+        return newSet;
+      });
+    }
   };
 
   // Funções para planos
@@ -255,40 +337,76 @@ const AdminModalities = ({ navigation }) => {
   };
 
   const handleDeletePlan = (plan) => {
-    Alert.alert(
-      getString('confirmDeletion'),
-      `Tem certeza que deseja excluir o plano "${plan.name}"?`,
-      [
-        { text: getString('cancel'), style: 'cancel' },
-        { 
-          text: 'Excluir', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log('=== DEBUG DELETE PLAN ===');
-              console.log('Plano ID:', plan.id);
-              console.log('User UID:', user?.uid);
-              console.log('User Type:', user?.userType);
-              console.log('User Tipo:', user?.tipo);
-              console.log('User Profile:', userProfile);
-              console.log('========================');
-              
-              await firestoreService.delete('plans', plan.id);
-              
-              // Atualizar lista local imediatamente
-              setPlans(prev => prev.filter(p => p.id !== plan.id));
-              
-              Alert.alert('Sucesso', 'Plano excluído com sucesso!');
-            } catch (error) {
-              console.error('Erro detalhado ao excluir plano:', error);
-              console.error('Error code:', error.code);
-              console.error('Error message:', error.message);
-              Alert.alert('Erro', `Erro ao excluir plano: ${error.message}`);
-            }
+    console.log('🗑️ handleDeletePlan chamado para:', plan);
+    
+    // Para web, usar window.confirm em vez de Alert.alert
+    if (Platform.OS === 'web') {
+      console.log('🌐 Usando window.confirm para web');
+      const confirmed = window.confirm(`Tem certeza que deseja excluir o plano "${plan.name}"?`);
+      
+      if (confirmed) {
+        console.log('✅ Usuário confirmou exclusão via window.confirm');
+        executeDeletePlan(plan);
+      } else {
+        console.log('❌ Exclusão cancelada pelo usuário via window.confirm');
+      }
+    } else {
+      console.log('📱 Usando Alert.alert para mobile');
+      Alert.alert(
+        'Confirmar Exclusão',
+        `Tem certeza que deseja excluir o plano "${plan.name}"?`,
+        [
+          { 
+            text: 'Cancelar', 
+            style: 'cancel',
+            onPress: () => console.log('❌ Exclusão cancelada pelo usuário')
+          },
+          { 
+            text: 'Excluir', 
+            style: 'destructive',
+            onPress: () => executeDeletePlan(plan)
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
+  };
+
+  const executeDeletePlan = async (plan) => {
+    console.log('✅ Executando exclusão do plano:', plan.name);
+    
+    // Adicionar ID à lista de itens sendo excluídos
+    setDeletingPlanIds(prev => new Set([...prev, plan.id]));
+    
+    try {
+      console.log('=== DEBUG DELETE PLAN ===');
+      console.log('Plano ID:', plan.id);
+      console.log('User UID:', user?.uid);
+      console.log('================================');
+      
+      if (!plan.id) {
+        throw new Error('ID do plano não encontrado');
+      }
+      
+      console.log('🗑️ Iniciando exclusão do plano:', plan.id);
+      await firestoreService.delete('plans', plan.id);
+      console.log('✅ Plano excluído do Firestore');
+      
+      // Atualizar lista local imediatamente
+      setPlans(prev => prev.filter(p => p.id !== plan.id));
+      console.log('✅ Lista local atualizada');
+      
+      showNotification('✅ Plano excluído com sucesso!', 'success');
+    } catch (error) {
+      console.error('❌ Erro detalhado ao excluir plano:', error);
+      showNotification(`❌ Erro: ${error.message}`, 'error');
+    } finally {
+      // Remover ID da lista de itens sendo excluídos
+      setDeletingPlanIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(plan.id);
+        return newSet;
+      });
+    }
   };
 
   // Funções para avisos
@@ -339,40 +457,76 @@ const AdminModalities = ({ navigation }) => {
   };
 
   const handleDeleteAnnouncement = (announcement) => {
-    Alert.alert(
-      getString('confirmDeletion'),
-      `Tem certeza que deseja excluir o aviso "${announcement.title}"?`,
-      [
-        { text: getString('cancel'), style: 'cancel' },
-        { 
-          text: 'Excluir', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log('=== DEBUG DELETE ANNOUNCEMENT ===');
-              console.log('Aviso ID:', announcement.id);
-              console.log('User UID:', user?.uid);
-              console.log('User Type:', user?.userType);
-              console.log('User Tipo:', user?.tipo);
-              console.log('User Profile:', userProfile);
-              console.log('================================');
-              
-              await firestoreService.delete('announcements', announcement.id);
-              
-              // Atualizar lista local imediatamente
-              setAnnouncements(prev => prev.filter(a => a.id !== announcement.id));
-              
-              Alert.alert('Sucesso', 'Aviso excluído com sucesso!');
-            } catch (error) {
-              console.error('Erro detalhado ao excluir aviso:', error);
-              console.error('Error code:', error.code);
-              console.error('Error message:', error.message);
-              Alert.alert('Erro', `Erro ao excluir aviso: ${error.message}`);
-            }
+    console.log('🗑️ handleDeleteAnnouncement chamado para:', announcement);
+    
+    // Para web, usar window.confirm em vez de Alert.alert
+    if (Platform.OS === 'web') {
+      console.log('🌐 Usando window.confirm para web');
+      const confirmed = window.confirm(`Tem certeza que deseja excluir o aviso "${announcement.title}"?`);
+      
+      if (confirmed) {
+        console.log('✅ Usuário confirmou exclusão via window.confirm');
+        executeDeleteAnnouncement(announcement);
+      } else {
+        console.log('❌ Exclusão cancelada pelo usuário via window.confirm');
+      }
+    } else {
+      console.log('📱 Usando Alert.alert para mobile');
+      Alert.alert(
+        'Confirmar Exclusão',
+        `Tem certeza que deseja excluir o aviso "${announcement.title}"?`,
+        [
+          { 
+            text: 'Cancelar', 
+            style: 'cancel',
+            onPress: () => console.log('❌ Exclusão cancelada pelo usuário')
+          },
+          { 
+            text: 'Excluir', 
+            style: 'destructive',
+            onPress: () => executeDeleteAnnouncement(announcement)
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
+  };
+
+  const executeDeleteAnnouncement = async (announcement) => {
+    console.log('✅ Executando exclusão do aviso:', announcement.title);
+    
+    // Adicionar ID à lista de itens sendo excluídos
+    setDeletingAnnouncementIds(prev => new Set([...prev, announcement.id]));
+    
+    try {
+      console.log('=== DEBUG DELETE ANNOUNCEMENT ===');
+      console.log('Aviso ID:', announcement.id);
+      console.log('User UID:', user?.uid);
+      console.log('================================');
+      
+      if (!announcement.id) {
+        throw new Error('ID do aviso não encontrado');
+      }
+      
+      console.log('🗑️ Iniciando exclusão do aviso:', announcement.id);
+      await firestoreService.delete('announcements', announcement.id);
+      console.log('✅ Aviso excluído do Firestore');
+      
+      // Atualizar lista local imediatamente
+      setAnnouncements(prev => prev.filter(a => a.id !== announcement.id));
+      console.log('✅ Lista local atualizada');
+      
+      showNotification('✅ Aviso excluído com sucesso!', 'success');
+    } catch (error) {
+      console.error('❌ Erro detalhado ao excluir aviso:', error);
+      showNotification(`❌ Erro: ${error.message}`, 'error');
+    } finally {
+      // Remover ID da lista de itens sendo excluídos
+      setDeletingAnnouncementIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(announcement.id);
+        return newSet;
+      });
+    }
   };
 
   const formatCurrency = (value) => {
@@ -441,12 +595,17 @@ const AdminModalities = ({ navigation }) => {
                         </Button>
                         <Button 
                           mode="text" 
-                          onPress={() => handleDeleteModality(modality)}
-                          textColor="#F44336"
-                          icon="delete"
+                          onPress={() => {
+                            console.log('🔴 Botão Excluir clicado para modalidade:', modality);
+                            handleDeleteModality(modality);
+                          }}
+                          textColor={deletingIds.has(modality.id) ? "#999" : "#F44336"}
+                          icon={deletingIds.has(modality.id) ? "loading" : "delete"}
                           compact
+                          disabled={deletingIds.has(modality.id)}
+                          loading={deletingIds.has(modality.id)}
                         >
-                          Excluir
+                          {deletingIds.has(modality.id) ? 'Excluindo...' : 'Excluir'}
                         </Button>
                       </View>
                     )}
@@ -499,11 +658,13 @@ const AdminModalities = ({ navigation }) => {
                         <Button 
                           mode="text" 
                           onPress={() => handleDeletePlan(plan)}
-                          textColor="#F44336"
-                          icon="delete"
+                          textColor={deletingPlanIds.has(plan.id) ? "#999" : "#F44336"}
+                          icon={deletingPlanIds.has(plan.id) ? "loading" : "delete"}
                           compact
+                          disabled={deletingPlanIds.has(plan.id)}
+                          loading={deletingPlanIds.has(plan.id)}
                         >
-                          Excluir
+                          {deletingPlanIds.has(plan.id) ? 'Excluindo...' : 'Excluir'}
                         </Button>
                       </View>
                     )}
@@ -556,11 +717,13 @@ const AdminModalities = ({ navigation }) => {
                         <Button 
                           mode="text" 
                           onPress={() => handleDeleteAnnouncement(announcement)}
-                          textColor="#F44336"
-                          icon="delete"
+                          textColor={deletingAnnouncementIds.has(announcement.id) ? "#999" : "#F44336"}
+                          icon={deletingAnnouncementIds.has(announcement.id) ? "loading" : "delete"}
                           compact
+                          disabled={deletingAnnouncementIds.has(announcement.id)}
+                          loading={deletingAnnouncementIds.has(announcement.id)}
                         >
-                          Excluir
+                          {deletingAnnouncementIds.has(announcement.id) ? 'Excluindo...' : 'Excluir'}
                         </Button>
                       </View>
                     )}
