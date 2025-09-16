@@ -1,9 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider, signOut, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import useAuthStore from '../stores/authStore';
 import { normalizeUserProfile } from '../utils/userTypeHelpers';
+
+// Variável global para controlar a inicialização do listener
+let authListenerInitialized = false;
+let authUnsubscribe = null;
 
 // Hook para migrar dados do Context API para Zustand
 export const useAuthMigration = () => {
@@ -105,7 +109,14 @@ export const useAuthMigration = () => {
 
   // Listener do Firebase Auth
   useEffect(() => {
+    // Evitar múltiplas inicializações usando variável global
+    if (authListenerInitialized) {
+      console.log('🔄 useAuthMigration: Listener já inicializado globalmente, pulando...');
+      return;
+    }
+
     console.log('🔄 useAuthMigration: Configurando listener do Firebase Auth');
+    authListenerInitialized = true;
     setLoading(true);
 
     // Timeout de segurança para evitar loading infinito
@@ -114,29 +125,37 @@ export const useAuthMigration = () => {
       setLoading(false);
     }, 5000);
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    authUnsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log('🔄 Auth state changed:', firebaseUser ? 'Logado' : 'Deslogado');
       clearTimeout(loadingTimeout); // Cancelar timeout se auth resolver
       
-      setUser(firebaseUser);
-      
-      if (firebaseUser) {
-        await fetchUserProfile(firebaseUser.uid, firebaseUser);
-      } else {
-        setUserProfile(null);
-        setAcademia(null);
+      try {
+        setUser(firebaseUser);
+        
+        if (firebaseUser) {
+          await fetchUserProfile(firebaseUser.uid, firebaseUser);
+        } else {
+          setUserProfile(null);
+          setAcademia(null);
+        }
+      } catch (error) {
+        console.error('❌ Erro no auth state change:', error);
+      } finally {
+        console.log('🔄 useAuthMigration: Definindo loading como false');
+        setLoading(false);
       }
-      
-      console.log('🔄 useAuthMigration: Definindo loading como false');
-      setLoading(false);
     });
 
     return () => {
       console.log('🔄 useAuthMigration: Removendo listener do Firebase Auth');
       clearTimeout(loadingTimeout);
-      unsubscribe();
+      if (authUnsubscribe) {
+        authUnsubscribe();
+        authUnsubscribe = null;
+      }
+      authListenerInitialized = false;
     };
-  }, []);
+  }, []); // Remover dependências que causam re-renders infinitos
 
   // Funções de login social
   const signInWithGoogle = async () => {

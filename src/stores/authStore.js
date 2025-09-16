@@ -9,7 +9,7 @@ const useAuthStore = create(
       user: null,
       userProfile: null,
       academia: null,
-      loading: true,
+      loading: false, // Iniciar com false para evitar loading infinito
       isAuthenticated: false,
 
       // Ações

@@ -30,89 +30,97 @@ service cloud.firestore {
     // Coleção de usuários - acesso restrito ao próprio usuário
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
-      // Permitir leitura para admins e instrutores (para dashboards e busca de alunos)
-      allow read: if isSignedIn() && (isAdmin() || isInstructor());
-      // Permitir criação, edição e exclusão de usuários por admins e instrutores
-      allow create, update, delete: if isSignedIn() && (isAdmin() || isInstructor());
+      // Permitir leitura apenas para usuários da mesma academia ou admins que criaram a academia
+      allow read: if isSignedIn() && (
+        getUserData().academiaId == resource.data.academiaId ||
+        (isAdmin() && resource.data.academiaId == null) ||
+        exists(/databases/$(database)/documents/gyms/$(resource.data.academiaId)) && get(/databases/$(database)/documents/gyms/$(resource.data.academiaId)).data.adminId == request.auth.uid
+      );
+      // Permitir criação, edição e exclusão apenas dentro da mesma academia
+      allow create, update, delete: if isSignedIn() && (isAdmin() || isInstructor()) && (
+        getUserData().academiaId == resource.data.academiaId ||
+        (isAdmin() && resource.data.academiaId == null) ||
+        exists(/databases/$(database)/documents/gyms/$(resource.data.academiaId)) && get(/databases/$(database)/documents/gyms/$(resource.data.academiaId)).data.adminId == request.auth.uid
+      );
     }
     
     // Coleção de academias (gyms)
     match /gyms/{academiaId} {
-      // Leitura: qualquer usuário autenticado pode ler (para busca e associação)
-      allow read: if isSignedIn();
+      // Leitura: apenas usuários associados à academia ou admins que a criaram
+      allow read: if isSignedIn() && (isMemberOf(academiaId) || resource.data.adminId == request.auth.uid);
       // Criação: Somente usuários autenticados com perfil de instrutor ou administrador podem criar nova academia
       allow create: if isSignedIn() && (isAdmin() || isInstructor());
-      // Atualização/Exclusão: apenas admins membros da academia
-      allow update, delete: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
+      // Atualização/Exclusão: apenas admins membros da academia ou criador da academia
+      allow update, delete: if isSignedIn() && (isMemberOf(academiaId) && isAdmin()) || resource.data.adminId == request.auth.uid;
       
       // Subcoleção de alunos
       match /alunos/{alunoId} {
-        allow read: if isSignedIn() && isMemberOf(academiaId);
-        allow write: if isSignedIn() && isMemberOf(academiaId) && (isAdmin() || isInstructor());
+        allow read: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid);
+        allow write: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid) && (isAdmin() || isInstructor());
       }
       
       // Subcoleção de instrutores
       match /instrutores/{instrutorId} {
-        allow read: if isSignedIn() && isMemberOf(academiaId);
-        allow write: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
+        allow read: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid);
+        allow write: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid) && isAdmin();
       }
       
       // Subcoleção de turmas
       match /turmas/{turmaId} {
-        allow read: if isSignedIn() && isMemberOf(academiaId);
-        allow create, update: if isSignedIn() && isMemberOf(academiaId) && (isAdmin() || isInstructor());
-        allow delete: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
+        allow read: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid);
+        allow create, update: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid) && (isAdmin() || isInstructor());
+        allow delete: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid) && isAdmin();
         
         // Subcoleção de alunos da turma
         match /alunos/{alunoId} {
-          allow read: if isSignedIn() && isMemberOf(academiaId);
-          allow create, update, delete: if isSignedIn() && isMemberOf(academiaId) && (isAdmin() || isInstructor());
+          allow read: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid);
+          allow create, update, delete: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid) && (isAdmin() || isInstructor());
         }
       }
       
       // Subcoleção de pagamentos
       match /pagamentos/{pagamentoId} {
-        allow read: if isSignedIn() && isMemberOf(academiaId) && (isAdmin() || isInstructor());
-        allow write: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
+        allow read: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid) && (isAdmin() || isInstructor());
+        allow write: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid) && isAdmin();
       }
       
       // Subcoleção de check-ins
       match /checkins/{checkinId} {
-        allow read: if isSignedIn() && isMemberOf(academiaId);
-        allow write: if isSignedIn() && isMemberOf(academiaId);
+        allow read: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid);
+        allow write: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid);
       }
       
       // Subcoleção de planos
       match /planos/{planoId} {
-        allow read: if isSignedIn() && isMemberOf(academiaId);
-        allow write: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
+        allow read: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid);
+        allow write: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid) && isAdmin();
       }
       
       // Subcoleção de notificações
       match /notifications/{notificationId} {
-        allow read: if isSignedIn() && isMemberOf(academiaId);
-        allow create: if isSignedIn() && isMemberOf(academiaId) && (isAdmin() || isInstructor());
-        allow update: if isSignedIn() && isMemberOf(academiaId);
-        allow delete: if isSignedIn() && isMemberOf(academiaId) && isAdmin();
+        allow read: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid);
+        allow create: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid) && (isAdmin() || isInstructor());
+        allow update: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid);
+        allow delete: if isSignedIn() && (isMemberOf(academiaId) || get(/databases/$(database)/documents/gyms/$(academiaId)).data.adminId == request.auth.uid) && isAdmin();
       }
     }
     
     // Coleção de modalidades globais - leitura pública para criação de academias
     match /modalities/{modalityId} {
       allow read: if true; // Permite leitura pública para seleção durante criação de academia
-      allow create, update, delete: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
+      allow create, update, delete: if isSignedIn() && (getUserData().tipo == 'admin' || getUserData().userType == 'admin' || getUserData().tipo == 'administrador' || getUserData().userType == 'administrador'); // Admins podem modificar independente de academia
     }
     
     // Coleção de planos globais - leitura pública
     match /plans/{planId} {
       allow read: if true; // Permite leitura pública
-      allow create, update, delete: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
+      allow create, update, delete: if isSignedIn() && (getUserData().tipo == 'admin' || getUserData().userType == 'admin' || getUserData().tipo == 'administrador' || getUserData().userType == 'administrador'); // Admins podem modificar independente de academia
     }
     
     // Coleção de avisos globais - leitura pública
     match /announcements/{announcementId} {
       allow read: if true; // Permite leitura pública
-      allow create, update, delete: if isSignedIn() && isAdmin(); // Apenas admins podem modificar
+      allow create, update, delete: if isSignedIn() && (getUserData().tipo == 'admin' || getUserData().userType == 'admin' || getUserData().tipo == 'administrador' || getUserData().userType == 'administrador'); // Admins podem modificar independente de academia
     }
     
     // Removido: coleção legacy 'usuarios'. O projeto agora usa apenas 'users'.

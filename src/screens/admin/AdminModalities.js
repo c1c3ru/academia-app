@@ -73,52 +73,51 @@ const AdminModalities = ({ navigation }) => {
       console.log('🔄 AdminModalities: Iniciando carregamento de dados...');
       setLoading(true);
       
-      // Timeout para evitar travamento
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout: Carregamento demorou mais de 10 segundos')), 10000)
-      );
+      // Carregar dados de forma mais simples e robusta
+      let modalitiesData = [];
+      let plansData = [];
+      let announcementsData = [];
       
-      // Buscar modalidades
-      console.log('📋 Buscando modalidades...');
-      const modalitiesPromise = firestoreService.getAll('modalities');
-      const modalitiesData = await Promise.race([modalitiesPromise, timeoutPromise]);
-      console.log('✅ Modalidades carregadas:', modalitiesData?.length || 0);
+      try {
+        console.log('📋 Buscando modalidades...');
+        modalitiesData = await firestoreService.getAll('modalities');
+        console.log('✅ Modalidades carregadas:', modalitiesData?.length || 0);
+      } catch (modalitiesError) {
+        console.warn('⚠️ Erro ao carregar modalidades:', modalitiesError);
+        modalitiesData = [];
+      }
+      
+      try {
+        console.log('💰 Buscando planos...');
+        plansData = await firestoreService.getAll('plans');
+        console.log('✅ Planos carregados:', plansData?.length || 0);
+      } catch (plansError) {
+        console.warn('⚠️ Erro ao carregar planos:', plansError);
+        plansData = [];
+      }
+      
+      try {
+        console.log('📢 Buscando avisos...');
+        announcementsData = await firestoreService.getAll('announcements');
+        console.log('✅ Avisos carregados:', announcementsData?.length || 0);
+      } catch (announcementsError) {
+        console.warn('⚠️ Erro ao carregar avisos:', announcementsError);
+        announcementsData = [];
+      }
+      
+      // Atualizar estados
       setModalities(modalitiesData || []);
-      
-      // Buscar planos
-      console.log('💰 Buscando planos...');
-      const plansPromise = firestoreService.getAll('plans');
-      const plansData = await Promise.race([plansPromise, timeoutPromise]);
-      console.log('✅ Planos carregados:', plansData?.length || 0);
       setPlans(plansData || []);
-      
-      // Buscar avisos
-      console.log('📢 Buscando avisos...');
-      const announcementsPromise = firestoreService.getAll('announcements');
-      const announcementsData = await Promise.race([announcementsPromise, timeoutPromise]);
-      console.log('✅ Avisos carregados:', announcementsData?.length || 0);
       setAnnouncements(announcementsData || []);
       
       console.log('✅ AdminModalities: Carregamento concluído com sucesso!');
     } catch (error) {
-      console.error('❌ Erro ao carregar dados:', error);
-      console.error('Error details:', error.message, error.code);
+      console.error('❌ Erro geral ao carregar dados:', error);
       
-      // Se for timeout ou erro de permissão, mostrar dados vazios
-      if (error.message.includes('Timeout') || error.code === 'permission-denied') {
-        console.log('⚠️ Carregando com dados vazios devido ao erro');
-        setModalities([]);
-        setPlans([]);
-        setAnnouncements([]);
-      } else {
-        // Para outros erros, ainda mostrar dados vazios mas sem alert
-        setModalities([]);
-        setPlans([]);
-        setAnnouncements([]);
-      }
-      
-      // Remover alert que pode estar causando problemas
-      console.error('Erro detalhado:', error);
+      // Garantir que sempre temos arrays vazios em caso de erro
+      setModalities([]);
+      setPlans([]);
+      setAnnouncements([]);
     } finally {
       console.log('🏁 AdminModalities: Finalizando loading...');
       setLoading(false);
@@ -165,6 +164,8 @@ const AdminModalities = ({ navigation }) => {
   };
 
   const handleDeleteModality = (modality) => {
+    console.log('🗑️ handleDeleteModality chamado para:', modality);
+    
     Alert.alert(
       getString('confirmDeletion'),
       `Tem certeza que deseja excluir a modalidade "${modality.name}"?`,
@@ -183,16 +184,24 @@ const AdminModalities = ({ navigation }) => {
               console.log('User Profile:', userProfile);
               console.log('================================');
               
+              if (!modality.id) {
+                throw new Error('ID da modalidade não encontrado');
+              }
+              
+              console.log('🗑️ Iniciando exclusão da modalidade:', modality.id);
               await firestoreService.delete('modalities', modality.id);
+              console.log('✅ Modalidade excluída do Firestore');
               
               // Atualizar lista local imediatamente
               setModalities(prev => prev.filter(m => m.id !== modality.id));
+              console.log('✅ Lista local atualizada');
               
               Alert.alert('Sucesso', 'Modalidade excluída com sucesso!');
             } catch (error) {
-              console.error('Erro detalhado ao excluir modalidade:', error);
+              console.error('❌ Erro detalhado ao excluir modalidade:', error);
               console.error('Error code:', error.code);
               console.error('Error message:', error.message);
+              console.error('Error stack:', error.stack);
               Alert.alert('Erro', `Erro ao excluir modalidade: ${error.message}`);
             }
           }
@@ -377,6 +386,16 @@ const AdminModalities = ({ navigation }) => {
     if (!date) return getString('noExpirationDate');
     return new Date(date.seconds ? date.seconds * 1000 : date).toLocaleDateString('pt-BR');
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Carregando modalidades...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -755,6 +774,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
   },
   scrollView: {
     flex: 1,
