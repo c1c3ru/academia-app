@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Migrar Usuários - Custom Claims</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .button { background: #4285f4; color: white; border: none; padding: 10px 20px; margin: 10px; cursor: pointer; border-radius: 4px; }
+        .button:disabled { background: #ccc; cursor: not-allowed; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; white-space: pre-wrap; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Migração de Usuários para Custom Claims</h1>
+    
+    <div>
+        <h3>1. Fazer Login como Admin</h3>
+        <input type="email" id="email" placeholder="Email do admin" style="padding: 8px; margin: 5px;">
+        <input type="password" id="password" placeholder="Senha" style="padding: 8px; margin: 5px;">
+        <button class="button" onclick="login()">Login</button>
+        <button class="button" onclick="logout()">Logout</button>
+    </div>
+
+    <div>
+        <h3>2. Criar Super Admin</h3>
+        <input type="email" id="superEmail" placeholder="Email do Super Admin" style="padding: 8px; margin: 5px;">
+        <input type="password" id="superPassword" placeholder="Senha" style="padding: 8px; margin: 5px;">
+        <input type="text" id="superName" placeholder="Nome" style="padding: 8px; margin: 5px;">
+        <button class="button" onclick="createSuperAdmin()" id="createSuperBtn">Criar Super Admin</button>
+    </div>
+
+    <div>
+        <h3>3. Migrar Usuários Existentes</h3>
+        <button class="button" onclick="migrateUsers()" id="migrateBtn">Migrar Todos os Usuários</button>
+    </div>
+
+    <div>
+        <h3>4. Verificar Claims de um Usuário</h3>
+        <input type="text" id="checkUserId" placeholder="UID do usuário" style="padding: 8px; margin: 5px;">
+        <button class="button" onclick="checkUserClaims()">Verificar Claims</button>
+    </div>
+
+    <div id="log" class="log"></div>
+
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_hzFPt9hUITlMq9BrsJuxAdzycVR3AEI",
+            authDomain: "academia-app-5cf79.firebaseapp.com",
+            projectId: "academia-app-5cf79",
+            storageBucket: "academia-app-5cf79.firebasestorage.app",
+            messagingSenderId: "377489252583",
+            appId: "1:377489252583:android:87f2c3948511325769c242"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const functions = firebase.functions();
+        const db = firebase.firestore();
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                log('Por favor, preencha email e senha', 'error');
+                return;
+            }
+
+            try {
+                const result = await auth.signInWithEmailAndPassword(email, password);
+                log(`✅ Login realizado: ${result.user.email}`, 'success');
+                
+                // Verificar claims atuais
+                const token = await result.user.getIdTokenResult();
+                log(`Claims atuais: ${JSON.stringify(token.claims, null, 2)}`);
+                
+            } catch (error) {
+                log(`❌ Erro no login: ${error.message}`, 'error');
+            }
+        }
+
+        async function logout() {
+            try {
+                await auth.signOut();
+                log('✅ Logout realizado', 'success');
+            } catch (error) {
+                log(`❌ Erro no logout: ${error.message}`, 'error');
+            }
+        }
+
+        async function createSuperAdmin() {
+            const email = document.getElementById('superEmail').value;
+            const password = document.getElementById('superPassword').value;
+            const name = document.getElementById('superName').value;
+
+            if (!email || !password || !name) {
+                log('Por favor, preencha todos os campos do Super Admin', 'error');
+                return;
+            }
+
+            try {
+                document.getElementById('createSuperBtn').disabled = true;
+                log('🚀 Criando Super Admin...');
+
+                const createSuperAdmin = functions.httpsCallable('createSuperAdmin');
+                const result = await createSuperAdmin({ email, password, name });
+
+                log(`✅ Super Admin criado: ${result.data.userId}`, 'success');
+                
+            } catch (error) {
+                log(`❌ Erro ao criar Super Admin: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('createSuperBtn').disabled = false;
+            }
+        }
+
+        async function migrateUsers() {
+            if (!auth.currentUser) {
+                log('❌ Faça login primeiro', 'error');
+                return;
+            }
+
+            try {
+                document.getElementById('migrateBtn').disabled = true;
+                log('🚀 Iniciando migração de usuários...');
+
+                const migrateExistingUsers = functions.httpsCallable('migrateExistingUsers');
+                const result = await migrateExistingUsers();
+
+                log(`✅ Migração concluída: ${result.data.migratedUsers} usuários processados`, 'success');
+                log('⚠️ Os usuários precisarão fazer logout/login para aplicar os novos claims', 'warning');
+                
+            } catch (error) {
+                log(`❌ Erro na migração: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('migrateBtn').disabled = false;
+            }
+        }
+
+        async function checkUserClaims() {
+            const userId = document.getElementById('checkUserId').value;
+            
+            if (!userId) {
+                // Verificar usuário atual se não especificado
+                if (auth.currentUser) {
+                    const token = await auth.currentUser.getIdTokenResult(true); // forçar refresh
+                    log(`Claims do usuário atual (${auth.currentUser.email}):`);
+                    log(JSON.stringify(token.claims, null, 2));
+                } else {
+                    log('❌ Especifique um UID ou faça login', 'error');
+                }
+                return;
+            }
+
+            try {
+                log(`🔍 Verificando claims do usuário: ${userId}`);
+                
+                // Buscar dados do usuário no Firestore
+                const userDoc = await db.collection('users').doc(userId).get();
+                if (userDoc.exists) {
+                    log(`Dados do Firestore: ${JSON.stringify(userDoc.data(), null, 2)}`);
+                } else {
+                    log('❌ Usuário não encontrado no Firestore', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Erro ao verificar usuário: ${error.message}`, 'error');
+            }
+        }
+
+        // Monitorar mudanças de autenticação
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                log(`👤 Usuário logado: ${user.email}`);
+            } else {
+                log('👤 Nenhum usuário logado');
+            }
+        });
+
+        log('🔧 Sistema de migração carregado. Faça login como admin para continuar.');
+    </script>
+</body>
+</html>
