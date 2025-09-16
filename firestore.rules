@@ -9,11 +9,6 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // Função para super-admin da plataforma (não apenas de uma academia)
-    function isSuperAdmin() {
-      return request.auth.token.superAdmin == true;
-    }
-    
     function getUserRole() {
       return request.auth.token.role;
     }
@@ -38,6 +33,11 @@ service cloud.firestore {
       return getUserRole() == 'student' && isMemberOf(academiaId);
     }
     
+    // Função para verificar se o usuário não tem academia associada (para criação de nova academia)
+    function hasNoAcademy() {
+      return getAcademiaId() == null;
+    }
+    
     // ========== COLEÇÃO DE USUÁRIOS ==========
     match /users/{userId} {
       // 1. Um usuário sempre pode ler e atualizar seus próprios dados
@@ -46,10 +46,7 @@ service cloud.firestore {
       // 2. Admins da mesma academia podem ler dados dos usuários
       allow read: if isAdminOf(resource.data.academiaId);
       
-      // 3. Super admins podem ler todos os usuários
-      allow read: if isSuperAdmin();
-      
-      // 4. Bloquear criação e exclusão diretas (devem ser via Auth/Cloud Functions)
+      // 3. Bloquear criação e exclusão diretas (devem ser via Auth/Cloud Functions)
       allow create, delete: if false;
     }
     
@@ -58,8 +55,8 @@ service cloud.firestore {
       // Leitura: apenas membros da academia
       allow read: if isMemberOf(academiaId);
       
-      // Criação: Apenas Super Admins podem criar novas academias
-      allow create: if isSuperAdmin();
+      // Criação: Desabilitada no cliente (será feita via Cloud Function)
+      allow create: if false;
       
       // Atualização/Exclusão: Apenas admins da PRÓPRIA academia
       allow update, delete: if isAdminOf(academiaId);
@@ -111,22 +108,41 @@ service cloud.firestore {
         allow update: if isMemberOf(academiaId);
         allow delete: if isAdminOf(academiaId);
       }
+      
+      // --- Subcoleções que eram globais (agora isoladas por academia) ---
+      match /modalities/{modalityId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if isAdminOf(academiaId);
+      }
+      
+      match /plans/{planId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if isAdminOf(academiaId);
+      }
+      
+      match /announcements/{announcementId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if isAdminOf(academiaId);
+      }
+      
+      match /graduation_levels/{levelId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if isAdminOf(academiaId);
+      }
     }
     
-    // ========== COLEÇÕES GLOBAIS - APENAS SUPER ADMINS ==========
+    // ========== COLEÇÕES GLOBAIS REMOVIDAS ==========
+    // Estas coleções foram movidas para subcoleções dentro de cada academia
     match /modalities/{modalityId} {
-      allow read: if isSignedIn(); // Qualquer usuário logado pode ler
-      allow write: if isSuperAdmin(); // Apenas Super Admins podem modificar
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/modalities
     }
     
     match /plans/{planId} {
-      allow read: if isSignedIn(); // Qualquer usuário logado pode ler
-      allow write: if isSuperAdmin(); // Apenas Super Admins podem modificar
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/plans
     }
     
     match /announcements/{announcementId} {
-      allow read: if isSignedIn(); // Qualquer usuário logado pode ler
-      allow write: if isSuperAdmin(); // Apenas Super Admins podem modificar
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/announcements
     }
     
     
@@ -152,8 +168,7 @@ service cloud.firestore {
     }
     
     match /graduation_levels/{levelId} {
-      allow read: if isSignedIn();
-      allow write: if isSuperAdmin();
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/graduation_levels
     }
   }
 }

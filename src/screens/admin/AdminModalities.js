@@ -20,7 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthProvider';
 import { useAuthMigration } from '../../hooks/useAuthMigration';
 import { useTheme } from '../../contexts/ThemeContext';
-import { firestoreService } from '../../services/firestoreService';
+import academyCollectionsService from '../../services/academyCollectionsService';
 
 const AdminModalities = ({ navigation }) => {
   const { user } = useAuth();
@@ -76,14 +76,21 @@ const AdminModalities = ({ navigation }) => {
       console.log('🔄 AdminModalities: Iniciando carregamento de dados...');
       setLoading(true);
       
+      // Verificar se o usuário tem academiaId
+      if (!userProfile?.academiaId) {
+        console.warn('❌ AdminModalities: Usuário não tem academiaId');
+        setLoading(false);
+        return;
+      }
+      
       // Carregar dados de forma mais simples e robusta
       let modalitiesData = [];
       let plansData = [];
       let announcementsData = [];
       
       try {
-        console.log('📋 Buscando modalidades...');
-        modalitiesData = await firestoreService.getAll('modalities');
+        console.log('📋 Buscando modalidades da academia:', userProfile.academiaId);
+        modalitiesData = await academyCollectionsService.getModalities(userProfile.academiaId);
         console.log('✅ Modalidades carregadas:', modalitiesData?.length || 0);
       } catch (modalitiesError) {
         console.warn('⚠️ Erro ao carregar modalidades:', modalitiesError);
@@ -91,8 +98,8 @@ const AdminModalities = ({ navigation }) => {
       }
       
       try {
-        console.log('💰 Buscando planos...');
-        plansData = await firestoreService.getAll('plans');
+        console.log('💰 Buscando planos da academia:', userProfile.academiaId);
+        plansData = await academyCollectionsService.getPlans(userProfile.academiaId);
         console.log('✅ Planos carregados:', plansData?.length || 0);
       } catch (plansError) {
         console.warn('⚠️ Erro ao carregar planos:', plansError);
@@ -100,8 +107,8 @@ const AdminModalities = ({ navigation }) => {
       }
       
       try {
-        console.log('📢 Buscando avisos...');
-        announcementsData = await firestoreService.getAll('announcements');
+        console.log('📢 Buscando avisos da academia:', userProfile.academiaId);
+        announcementsData = await academyCollectionsService.getAnnouncements(userProfile.academiaId);
         console.log('✅ Avisos carregados:', announcementsData?.length || 0);
       } catch (announcementsError) {
         console.warn('⚠️ Erro ao carregar avisos:', announcementsError);
@@ -141,13 +148,18 @@ const AdminModalities = ({ navigation }) => {
     }
 
     try {
+      if (!userProfile?.academiaId) {
+        Alert.alert(getString('error'), 'Usuário não associado a uma academia');
+        return;
+      }
+
       if (editingModality) {
         // Editar modalidade existente
-        await firestoreService.update('modalities', editingModality.id, newModality);
+        await academyCollectionsService.updateModality(userProfile.academiaId, editingModality.id, newModality);
         Alert.alert(getString('success'), 'Modalidade atualizada com sucesso!');
       } else {
         // Criar nova modalidade
-        await firestoreService.create('modalities', newModality);
+        await academyCollectionsService.createModality(userProfile.academiaId, newModality);
         Alert.alert(getString('success'), getString('modalityCreatedSuccess'));
       }
       
@@ -266,8 +278,12 @@ const AdminModalities = ({ navigation }) => {
         throw new Error('ID da modalidade não encontrado');
       }
       
+      if (!userProfile?.academiaId) {
+        throw new Error('Usuário não associado a uma academia');
+      }
+
       console.log('🗑️ Iniciando exclusão da modalidade:', modality.id);
-      await firestoreService.delete('modalities', modality.id);
+      await academyCollectionsService.deleteModality(userProfile.academiaId, modality.id);
       console.log('✅ Modalidade excluída do Firestore');
       
       // Atualizar lista local imediatamente
@@ -300,6 +316,11 @@ const AdminModalities = ({ navigation }) => {
     }
 
     try {
+      if (!userProfile?.academiaId) {
+        Alert.alert(getString('error'), 'Usuário não associado a uma academia');
+        return;
+      }
+
       const planData = {
         ...newPlan,
         value: parseFloat(newPlan.value),
@@ -308,11 +329,11 @@ const AdminModalities = ({ navigation }) => {
       
       if (editingPlan) {
         // Editar plano existente
-        await firestoreService.update('plans', editingPlan.id, planData);
+        await academyCollectionsService.updatePlan(userProfile.academiaId, editingPlan.id, planData);
         Alert.alert(getString('success'), 'Plano atualizado com sucesso!');
       } else {
         // Criar novo plano
-        await firestoreService.create('plans', planData);
+        await academyCollectionsService.createPlan(userProfile.academiaId, planData);
         Alert.alert(getString('success'), getString('planCreatedSuccess'));
       }
       
@@ -387,8 +408,12 @@ const AdminModalities = ({ navigation }) => {
         throw new Error('ID do plano não encontrado');
       }
       
+      if (!userProfile?.academiaId) {
+        throw new Error('Usuário não associado a uma academia');
+      }
+
       console.log('🗑️ Iniciando exclusão do plano:', plan.id);
-      await firestoreService.delete('plans', plan.id);
+      await academyCollectionsService.deletePlan(userProfile.academiaId, plan.id);
       console.log('✅ Plano excluído do Firestore');
       
       // Atualizar lista local imediatamente
@@ -417,6 +442,11 @@ const AdminModalities = ({ navigation }) => {
     }
 
     try {
+      if (!userProfile?.academiaId) {
+        Alert.alert(getString('error'), 'Usuário não associado a uma academia');
+        return;
+      }
+
       const announcementData = {
         ...newAnnouncement,
         expirationDate: newAnnouncement.expirationDate ? new Date(newAnnouncement.expirationDate) : null,
@@ -428,11 +458,11 @@ const AdminModalities = ({ navigation }) => {
       
       if (editingAnnouncement) {
         // Editar aviso existente
-        await firestoreService.update('announcements', editingAnnouncement.id, announcementData);
+        await academyCollectionsService.updateAnnouncement(userProfile.academiaId, editingAnnouncement.id, announcementData);
         Alert.alert(getString('success'), 'Aviso atualizado com sucesso!');
       } else {
         // Criar novo aviso
-        await firestoreService.create('announcements', announcementData);
+        await academyCollectionsService.createAnnouncement(userProfile.academiaId, announcementData);
         Alert.alert(getString('success'), getString('announcementPublishedSuccess'));
       }
       

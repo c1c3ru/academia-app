@@ -17,6 +17,7 @@ import SharedNavigator from './SharedNavigator';
 import LoadingScreen from '../screens/shared/LoadingScreen';
 import UserTypeSelectionScreen from '../screens/auth/UserTypeSelectionScreen';
 import AcademiaSelectionScreen from '../screens/auth/AcademiaSelectionScreen';
+import AcademyOnboardingScreen from '../screens/onboarding/AcademyOnboardingScreen';
 
 const Stack = createStackNavigator();
 
@@ -110,26 +111,16 @@ const AppNavigator = () => {
     );
   }
 
-  // Se usuário não tem academia associada
+  // Se usuário não tem academia associada, mostrar nova tela de onboarding
   if (!userProfile.academiaId) {
-    // Determinar tipo de usuário para decidir o fluxo
-    const mappedUserType = getFinalUserType(userProfile);
-    
-    // Admins podem operar sem academia associada - permitir acesso ao app principal
-    if (mappedUserType === 'admin') {
-      console.log('🧭 AppNavigator: Admin sem academia, permitindo acesso ao app principal');
-      // Admins podem acessar o app sem academia associada
-      // Eles podem criar uma academia mais tarde se desejarem
-    } else {
-      console.log('🧭 AppNavigator: Usuário sem academia, mostrando seleção');
-      return (
-        <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="AcademiaSelection" component={AcademiaSelectionScreen} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      );
-    }
+    console.log('🧭 AppNavigator: Usuário sem academia, mostrando onboarding');
+    return (
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="AcademyOnboarding" component={AcademyOnboardingScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
   }
 
   // Se tem academia mas dados não carregaram ainda, mostrar loading
@@ -139,21 +130,6 @@ const AppNavigator = () => {
     return <LoadingScreen />;
   }
 
-  // Para admins sem academia, permitir acesso ao app principal
-  const mappedUserType = getFinalUserType(userProfile);
-  if (mappedUserType === 'admin' && !userProfile.academiaId) {
-    console.log('🧭 AppNavigator: Admin sem academia, acessando app principal');
-  }
-  
-  // Se é admin sem academia, permitir acesso ao app para criar academia
-  if (!academia && !userProfile.academiaId) {
-    const mappedUserType = getFinalUserType(userProfile);
-    
-    if (mappedUserType === 'admin') {
-      console.log('🧭 AppNavigator: Admin sem academia, permitindo acesso ao app principal');
-      // Permitir acesso ao app principal para admins sem academia
-    }
-  }
 
   // Determinar tipo de usuário final (normalizado)
   const userType = getFinalUserType(userProfile);

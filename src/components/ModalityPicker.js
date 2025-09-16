@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView } from 'react-native';
 import { Text, Chip, Card, ActivityIndicator } from 'react-native-paper';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { useAuthMigration } from '../hooks/useAuthMigration';
+import academyCollectionsService from '../services/academyCollectionsService';
 
 export default function ModalityPicker({ 
   selectedModalities = [], 
@@ -11,10 +11,13 @@ export default function ModalityPicker({
 }) {
   const [availableModalities, setAvailableModalities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { userProfile } = useAuthMigration();
 
   useEffect(() => {
-    loadModalities();
-  }, []);
+    if (userProfile?.academiaId) {
+      loadModalities();
+    }
+  }, [userProfile?.academiaId]);
 
   const loadModalities = async () => {
     console.time('ModalityPicker.loadModalities');
@@ -23,27 +26,17 @@ export default function ModalityPicker({
     try {
       setLoading(true);
       
-      // Verificar se o Firestore está inicializado
-      if (!db) {
-        console.error('❌ Firestore não inicializado, usando fallback');
-        throw new Error('Firestore não inicializado');
+      // Verificar se o usuário tem academiaId
+      if (!userProfile?.academiaId) {
+        console.warn('❌ ModalityPicker: Usuário não tem academiaId, usando fallback');
+        throw new Error('Usuário não associado a uma academia');
       }
       
-      console.log('🔄 ModalityPicker: Buscando modalidades do Firestore');
+      console.log('🔄 ModalityPicker: Buscando modalidades da academia:', userProfile.academiaId);
       
-      // Buscar modalidades da coleção global com timeout de 8 segundos
-      const modalitiesRef = collection(db, 'modalities');
-      const timeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout ao carregar modalidades')), 8000)
-      );
-      
-      const snapshot = await Promise.race([getDocs(modalitiesRef), timeout]);
-      console.log('✅ ModalityPicker: Dados recebidos do Firestore:', snapshot.docs.length, 'documentos');
-      
-      const modalities = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      // Buscar modalidades usando o novo serviço
+      const modalities = await academyCollectionsService.getModalities(userProfile.academiaId);
+      console.log('✅ ModalityPicker: Modalidades carregadas:', modalities.length);
       
       // Remover duplicatas baseado no ID e nome
       const uniqueModalities = modalities.filter((modality, index, self) => 

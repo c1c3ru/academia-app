@@ -24,8 +24,7 @@ exports.setUserClaims = functions.firestore
       // Definir claims baseados nos dados do usuário
       const claims = {
         role: userData.userType || userData.tipo || 'student',
-        academiaId: userData.academiaId || null,
-        superAdmin: userData.superAdmin === true || false
+        academiaId: userData.academiaId || null
       };
 
       // Normalizar role para valores padronizados
@@ -53,102 +52,221 @@ exports.setUserClaims = functions.firestore
   });
 
 /**
- * Função HTTP para forçar atualização de claims (para admins)
+ * Cloud Function para criar uma nova academia
+ * Apenas usuários autenticados sem academia podem criar uma nova academia
  */
-exports.updateUserClaims = functions.https.onCall(async (data, context) => {
+exports.createAcademy = functions.https.onCall(async (data, context) => {
   // Verificar se o usuário está autenticado
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Usuário não autenticado');
   }
 
-  // Verificar se o usuário é super admin
-  if (!context.auth.token.superAdmin) {
-    throw new functions.https.HttpsError('permission-denied', 'Apenas super admins podem atualizar claims');
+  // Verificar se o usuário não tem academia associada
+  if (context.auth.token.academiaId) {
+    throw new functions.https.HttpsError('permission-denied', 'Usuário já está associado a uma academia');
   }
 
-  const { userId, role, academiaId, superAdmin } = data;
+  const { name, description, address, phone, email } = data;
 
-  if (!userId) {
-    throw new functions.https.HttpsError('invalid-argument', 'userId é obrigatório');
+  if (!name) {
+    throw new functions.https.HttpsError('invalid-argument', 'Nome da academia é obrigatório');
   }
 
   try {
+    const userId = context.auth.uid;
+    
+    // Gerar ID único para a nova academia
+    const academyRef = admin.firestore().collection('gyms').doc();
+    const academyId = academyRef.id;
+
+    // Criar documento da academia
+    await academyRef.set({
+      name: name,
+      description: description || '',
+      address: address || '',
+      phone: phone || '',
+      email: email || '',
+      adminId: userId,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Atualizar claims do usuário para torná-lo admin desta academia
     const claims = {
-      role: role || 'student',
-      academiaId: academiaId || null,
-      superAdmin: superAdmin === true || false
+      role: 'admin',
+      academiaId: academyId
     };
 
     await admin.auth().setCustomUserClaims(userId, claims);
     
     // Atualizar documento do usuário
     await admin.firestore().collection('users').doc(userId).update({
-      userType: role,
-      academiaId: academiaId,
-      superAdmin: superAdmin,
+      userType: 'admin',
+      academiaId: academyId,
       claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    return { success: true, claims };
+    console.log(`Academia criada: ${academyId} por usuário ${userId}`);
+    return { success: true, academyId: academyId, claims };
+
   } catch (error) {
-    console.error('Erro ao atualizar claims:', error);
-    throw new functions.https.HttpsError('internal', 'Erro interno do servidor');
+    console.error('Erro ao criar academia:', error);
+    throw new functions.https.HttpsError('internal', 'Erro ao criar academia');
   }
 });
 
 /**
- * Função para criar o primeiro super admin
+ * Cloud Function para gerar código de convite
+ * Apenas admins podem gerar convites para sua academia
  */
-exports.createSuperAdmin = functions.https.onCall(async (data, context) => {
-  const { email, password, name } = data;
+exports.generateInvite = functions.https.onCall(async (data, context) => {
+  // Verificar se o usuário está autenticado
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Usuário não autenticado');
+  }
 
-  if (!email || !password || !name) {
-    throw new functions.https.HttpsError('invalid-argument', 'Email, senha e nome são obrigatórios');
+  // Verificar se o usuário é admin
+  if (context.auth.token.role !== 'admin') {
+    throw new functions.https.HttpsError('permission-denied', 'Apenas admins podem gerar convites');
+  }
+
+  const academiaId = context.auth.token.academiaId;
+  if (!academiaId) {
+    throw new functions.https.HttpsError('permission-denied', 'Admin deve estar associado a uma academia');
+  }
+
+  const { role, expiresInDays = 7, maxUses = 1 } = data;
+
+  if (!role || !['instructor', 'student'].includes(role)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Role deve ser instructor ou student');
   }
 
   try {
-    // Criar usuário no Authentication
-    const userRecord = await admin.auth().createUser({
-      email: email,
-      password: password,
-      displayName: name,
-      emailVerified: true
-    });
+    // Gerar código único
+    const inviteCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    
+    // Calcular data de expiração
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + expiresInDays);
 
-    // Definir claims de super admin
-    await admin.auth().setCustomUserClaims(userRecord.uid, {
-      role: 'admin',
-      academiaId: null,
-      superAdmin: true
-    });
-
-    // Criar documento do usuário no Firestore
-    await admin.firestore().collection('users').doc(userRecord.uid).set({
-      name: name,
-      email: email,
-      userType: 'admin',
-      superAdmin: true,
-      academiaId: null,
+    // Criar convite no Firestore
+    const inviteRef = admin.firestore().collection('invites').doc();
+    await inviteRef.set({
+      code: inviteCode,
+      academiaId: academiaId,
+      role: role,
+      createdBy: context.auth.uid,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+      expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
+      maxUses: maxUses,
+      usedCount: 0,
+      isActive: true
     });
 
-    console.log(`Super admin criado: ${userRecord.uid}`);
-    return { success: true, userId: userRecord.uid };
+    console.log(`Convite gerado: ${inviteCode} para academia ${academiaId}`);
+    return { success: true, inviteCode: inviteCode, expiresAt: expiresAt.toISOString() };
 
   } catch (error) {
-    console.error('Erro ao criar super admin:', error);
-    throw new functions.https.HttpsError('internal', 'Erro ao criar super admin');
+    console.error('Erro ao gerar convite:', error);
+    throw new functions.https.HttpsError('internal', 'Erro ao gerar convite');
   }
 });
 
 /**
- * Função para migrar usuários existentes (executar uma vez)
+ * Cloud Function para usar código de convite
+ * Usuários autenticados sem academia podem usar convites
+ */
+exports.useInvite = functions.https.onCall(async (data, context) => {
+  // Verificar se o usuário está autenticado
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Usuário não autenticado');
+  }
+
+  // Verificar se o usuário não tem academia associada
+  if (context.auth.token.academiaId) {
+    throw new functions.https.HttpsError('permission-denied', 'Usuário já está associado a uma academia');
+  }
+
+  const { inviteCode } = data;
+
+  if (!inviteCode) {
+    throw new functions.https.HttpsError('invalid-argument', 'Código de convite é obrigatório');
+  }
+
+  try {
+    const userId = context.auth.uid;
+    
+    // Buscar convite
+    const inviteQuery = await admin.firestore()
+      .collection('invites')
+      .where('code', '==', inviteCode)
+      .where('isActive', '==', true)
+      .limit(1)
+      .get();
+
+    if (inviteQuery.empty) {
+      throw new functions.https.HttpsError('not-found', 'Código de convite inválido ou expirado');
+    }
+
+    const inviteDoc = inviteQuery.docs[0];
+    const inviteData = inviteDoc.data();
+
+    // Verificar se o convite não expirou
+    if (inviteData.expiresAt.toDate() < new Date()) {
+      throw new functions.https.HttpsError('permission-denied', 'Código de convite expirado');
+    }
+
+    // Verificar se ainda há usos disponíveis
+    if (inviteData.usedCount >= inviteData.maxUses) {
+      throw new functions.https.HttpsError('permission-denied', 'Código de convite esgotado');
+    }
+
+    // Atualizar claims do usuário
+    const claims = {
+      role: inviteData.role,
+      academiaId: inviteData.academiaId
+    };
+
+    await admin.auth().setCustomUserClaims(userId, claims);
+    
+    // Atualizar documento do usuário
+    await admin.firestore().collection('users').doc(userId).update({
+      userType: inviteData.role,
+      academiaId: inviteData.academiaId,
+      claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Atualizar contador de usos do convite
+    await inviteDoc.ref.update({
+      usedCount: admin.firestore.FieldValue.increment(1),
+      lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastUsedBy: userId
+    });
+
+    // Se atingiu o limite de usos, desativar convite
+    if (inviteData.usedCount + 1 >= inviteData.maxUses) {
+      await inviteDoc.ref.update({ isActive: false });
+    }
+
+    console.log(`Convite usado: ${inviteCode} por usuário ${userId}`);
+    return { success: true, academiaId: inviteData.academiaId, role: inviteData.role };
+
+  } catch (error) {
+    console.error('Erro ao usar convite:', error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError('internal', 'Erro ao usar convite');
+  }
+});
+
+/**
+ * Função para migrar usuários existentes (remover superAdmin)
  */
 exports.migrateExistingUsers = functions.https.onCall(async (data, context) => {
-  // Verificar se o usuário é super admin
-  if (!context.auth || !context.auth.token.superAdmin) {
-    throw new functions.https.HttpsError('permission-denied', 'Apenas super admins podem executar migração');
+  // Esta função pode ser executada por qualquer admin para migrar dados da sua academia
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Usuário não autenticado');
   }
 
   try {
@@ -162,8 +280,7 @@ exports.migrateExistingUsers = functions.https.onCall(async (data, context) => {
 
       const claims = {
         role: userData.userType || userData.tipo || 'student',
-        academiaId: userData.academiaId || null,
-        superAdmin: userData.superAdmin === true || false
+        academiaId: userData.academiaId || null
       };
 
       // Normalizar role
@@ -177,11 +294,16 @@ exports.migrateExistingUsers = functions.https.onCall(async (data, context) => {
 
       await admin.auth().setCustomUserClaims(userId, claims);
       
-      // Atualizar documento
-      batch.update(doc.ref, {
+      // Atualizar documento (remover superAdmin se existir)
+      const updateData = {
         claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-
+      };
+      
+      if (userData.superAdmin !== undefined) {
+        updateData.superAdmin = admin.firestore.FieldValue.delete();
+      }
+      
+      batch.update(doc.ref, updateData);
       count++;
     }
 
