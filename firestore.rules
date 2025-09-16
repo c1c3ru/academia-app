@@ -30,16 +30,14 @@ service cloud.firestore {
     // Coleção de usuários - acesso restrito ao próprio usuário
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
-      // Permitir leitura apenas para usuários da mesma academia ou admins que criaram a academia
+      // Permitir leitura apenas para usuários da mesma academia
       allow read: if isSignedIn() && (
-        getUserData().academiaId == resource.data.academiaId ||
-        (isAdmin() && resource.data.academiaId == null) ||
+        getUserData().academiaId == resource.data.academiaId && resource.data.academiaId != null ||
         exists(/databases/$(database)/documents/gyms/$(resource.data.academiaId)) && get(/databases/$(database)/documents/gyms/$(resource.data.academiaId)).data.adminId == request.auth.uid
       );
       // Permitir criação, edição e exclusão apenas dentro da mesma academia
       allow create, update, delete: if isSignedIn() && (isAdmin() || isInstructor()) && (
-        getUserData().academiaId == resource.data.academiaId ||
-        (isAdmin() && resource.data.academiaId == null) ||
+        getUserData().academiaId == resource.data.academiaId && resource.data.academiaId != null ||
         exists(/databases/$(database)/documents/gyms/$(resource.data.academiaId)) && get(/databases/$(database)/documents/gyms/$(resource.data.academiaId)).data.adminId == request.auth.uid
       );
     }
