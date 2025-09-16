@@ -54,6 +54,11 @@ export default function InviteManagement({ navigation }) {
       return;
     }
 
+    if (!academia || !academia.id) {
+      Alert.alert('Erro', 'Você precisa estar associado a uma academia para enviar convites. Crie ou associe-se a uma academia primeiro.');
+      return;
+    }
+
     try {
       setLoading(true);
       

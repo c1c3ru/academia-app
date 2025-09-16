@@ -115,20 +115,11 @@ const AppNavigator = () => {
     // Determinar tipo de usuário para decidir o fluxo
     const mappedUserType = getFinalUserType(userProfile);
     
-    // Admins devem criar academia, outros usuários devem se associar
+    // Admins podem operar sem academia associada - permitir acesso ao app principal
     if (mappedUserType === 'admin') {
-      console.log('🧭 AppNavigator: Admin sem academia, redirecionando para criação');
-      return (
-        <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen 
-              name="AcademiaSelection" 
-              component={AcademiaSelectionScreen}
-              initialParams={{ forceCreate: true }}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
-      );
+      console.log('🧭 AppNavigator: Admin sem academia, permitindo acesso ao app principal');
+      // Admins podem acessar o app sem academia associada
+      // Eles podem criar uma academia mais tarde se desejarem
     } else {
       console.log('🧭 AppNavigator: Usuário sem academia, mostrando seleção');
       return (
@@ -146,6 +137,12 @@ const AppNavigator = () => {
   if (!academia && userProfile.academiaId) {
     console.log('🧭 AppNavigator: Carregando dados da academia...');
     return <LoadingScreen />;
+  }
+
+  // Para admins sem academia, permitir acesso ao app principal
+  const mappedUserType = getFinalUserType(userProfile);
+  if (mappedUserType === 'admin' && !userProfile.academiaId) {
+    console.log('🧭 AppNavigator: Admin sem academia, acessando app principal');
   }
   
   // Se é admin sem academia, permitir acesso ao app para criar academia
