@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Share, Alert } from 'react-native';
-import { Card, Text, Button, IconButton } from 'react-native-paper';
+import { View, Share, Alert, Platform } from 'react-native';
+import { Card, Text, Button, IconButton, TextInput, Dialog, Portal } from 'react-native-paper';
 import QRCode from 'react-native-qrcode-svg';
 import { useAuth } from '../contexts/AuthProvider';
 
@@ -14,6 +14,11 @@ export default function QRCodeGenerator({ size = 200, showActions = true, academ
   }
   
   const [qrValue, setQrValue] = useState('');
+  const [emailDialogVisible, setEmailDialogVisible] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [copyingLink, setCopyingLink] = useState(false);
+  const [sharingQR, setSharingQR] = useState(false);
 
   // Usar dados passados como props ou do contexto (se disponível)
   const academia = authContext?.academia;
@@ -28,7 +33,54 @@ export default function QRCodeGenerator({ size = 200, showActions = true, academ
     }
   }, [finalAcademiaId]);
 
+  // Função utilitária para mostrar notificações
+  const showNotification = (message, type = 'success') => {
+    if (Platform.OS === 'web') {
+      // Adicionar animações CSS se não existirem
+      if (!document.getElementById('notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+          @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
+      const notification = document.createElement('div');
+      notification.innerHTML = message;
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#4CAF50' : '#F44336'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        animation: slideIn 0.3s ease-out;
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => document.body.removeChild(notification), 300);
+      }, type === 'success' ? 3000 : 4000);
+    } else {
+      Alert.alert(type === 'success' ? 'Sucesso' : 'Erro', message);
+    }
+  };
+
   const shareQRCode = async () => {
+    setSharingQR(true);
     try {
       const message = `Junte-se à ${finalAcademiaNome}!\n\nEscaneie o QR Code ou use este link:\nhttps://academia-app.com/join/${finalAcademiaId}`;
       
@@ -36,21 +88,81 @@ export default function QRCodeGenerator({ size = 200, showActions = true, academ
         message,
         title: `Convite - ${finalAcademiaNome}`,
       });
+      
+      showNotification('✅ Convite compartilhado com sucesso!', 'success');
     } catch (error) {
       console.error('Erro ao compartilhar:', error);
+      showNotification('❌ Erro ao compartilhar convite', 'error');
+    } finally {
+      setSharingQR(false);
     }
   };
 
   const copyInviteLink = async () => {
+    setCopyingLink(true);
     try {
       const inviteUrl = `https://academia-app.com/join/${finalAcademiaId}`;
       // Para React Native Web, usar navigator.clipboard
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(inviteUrl);
       }
-      Alert.alert('Sucesso', 'Link de convite copiado!');
+      showNotification('✅ Link de convite copiado!', 'success');
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível copiar o link');
+      showNotification('❌ Não foi possível copiar o link', 'error');
+    } finally {
+      setCopyingLink(false);
+    }
+  };
+
+  const sendEmailInvite = async () => {
+    if (!recipientEmail.trim()) {
+      showNotification('❌ Por favor, digite um email válido', 'error');
+      return;
+    }
+
+    // Validação básica de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(recipientEmail)) {
+      showNotification('❌ Formato de email inválido', 'error');
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      const inviteUrl = `https://academia-app.com/join/${finalAcademiaId}`;
+      const subject = `Convite para ${finalAcademiaNome}`;
+      const body = `Olá!
+
+Você foi convidado(a) para se juntar à academia ${finalAcademiaNome}.
+
+Para aceitar o convite, clique no link abaixo ou escaneie o QR Code:
+${inviteUrl}
+
+Bem-vindo(a) à nossa comunidade!
+
+---
+Academia App`;
+
+      // Para web, usar mailto
+      if (Platform.OS === 'web') {
+        const mailtoUrl = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.open(mailtoUrl, '_blank');
+        showNotification('✅ Cliente de email aberto! Complete o envio.', 'success');
+      } else {
+        // Para mobile, usar Linking
+        const { Linking } = require('react-native');
+        const mailtoUrl = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        await Linking.openURL(mailtoUrl);
+        showNotification('✅ Cliente de email aberto!', 'success');
+      }
+
+      setEmailDialogVisible(false);
+      setRecipientEmail('');
+    } catch (error) {
+      console.error('Erro ao enviar email:', error);
+      showNotification('❌ Erro ao abrir cliente de email', 'error');
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -73,6 +185,10 @@ export default function QRCodeGenerator({ size = 200, showActions = true, academ
         
         <Text variant="bodySmall" style={styles.subtitle}>
           {finalAcademiaNome}
+        </Text>
+
+        <Text variant="bodySmall" style={styles.academyCode}>
+          Código da Academia: {finalAcademiaId}
         </Text>
 
         <View style={styles.qrContainer}>
@@ -98,22 +214,69 @@ export default function QRCodeGenerator({ size = 200, showActions = true, academ
             <Button 
               mode="outlined" 
               onPress={shareQRCode}
-              icon="share"
+              icon={sharingQR ? "loading" : "share"}
               style={styles.actionButton}
+              loading={sharingQR}
+              disabled={sharingQR}
             >
-              Compartilhar
+              {sharingQR ? 'Compartilhando...' : 'Compartilhar'}
             </Button>
             
             <Button 
               mode="contained" 
               onPress={copyInviteLink}
-              icon="content-copy"
+              icon={copyingLink ? "loading" : "content-copy"}
+              style={styles.actionButton}
+              loading={copyingLink}
+              disabled={copyingLink}
+            >
+              {copyingLink ? 'Copiando...' : 'Copiar Link'}
+            </Button>
+
+            <Button 
+              mode="outlined" 
+              onPress={() => setEmailDialogVisible(true)}
+              icon="email"
               style={styles.actionButton}
             >
-              Copiar Link
+              Enviar Email
             </Button>
           </View>
         )}
+
+        <Portal>
+          <Dialog visible={emailDialogVisible} onDismiss={() => setEmailDialogVisible(false)}>
+            <Dialog.Title>Enviar Convite por Email</Dialog.Title>
+            <Dialog.Content>
+              <Text variant="bodyMedium" style={{ marginBottom: 16 }}>
+                Digite o email da pessoa que você deseja convidar para a academia:
+              </Text>
+              <TextInput
+                label="Email do destinatário"
+                value={recipientEmail}
+                onChangeText={setRecipientEmail}
+                mode="outlined"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholder="exemplo@email.com"
+                left={<TextInput.Icon icon="email" />}
+              />
+            </Dialog.Content>
+            <Dialog.Actions>
+              <Button onPress={() => setEmailDialogVisible(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                mode="contained" 
+                onPress={sendEmailInvite}
+                loading={sendingEmail}
+                disabled={sendingEmail}
+              >
+                {sendingEmail ? 'Enviando...' : 'Enviar Convite'}
+              </Button>
+            </Dialog.Actions>
+          </Dialog>
+        </Portal>
       </Card.Content>
     </Card>
   );
@@ -156,12 +319,22 @@ const styles = {
   },
   actions: {
     flexDirection: 'row',
-    gap: 12,
+    flexWrap: 'wrap',
+    gap: 8,
     width: '100%',
     justifyContent: 'center',
   },
+  academyCode: {
+    textAlign: 'center',
+    opacity: 0.8,
+    marginBottom: 16,
+    fontWeight: 'bold',
+    backgroundColor: '#f0f0f0',
+    padding: 8,
+    borderRadius: 4,
+  },
   actionButton: {
-    flex: 1,
-    maxWidth: 150,
+    minWidth: 120,
+    marginBottom: 8,
   },
 };
