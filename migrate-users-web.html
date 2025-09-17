@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Migrar Usuários - Custom Claims</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .button { background: #4285f4; color: white; border: none; padding: 15px 30px; margin: 10px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .button:hover { background: #3367d6; }
+        .button:disabled { background: #ccc; cursor: not-allowed; }
+        .log { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; font-family: monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+        .success { color: #0f5132; background: #d1e7dd; }
+        .error { color: #842029; background: #f8d7da; }
+        .warning { color: #664d03; background: #fff3cd; }
+        .info { color: #055160; background: #cff4fc; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .step h3 { margin-top: 0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Migração de Usuários - Custom Claims</h1>
+    <p>Esta ferramenta irá configurar os custom claims para todos os usuários existentes no sistema.</p>
+    
+    <div class="step">
+        <h3>Passo 1: Login</h3>
+        <p>Faça login com um usuário admin para executar a migração.</p>
+        <button class="button" onclick="doLogin()" id="loginBtn">🔐 Fazer Login</button>
+        <div id="loginStatus"></div>
+    </div>
+    
+    <div class="step">
+        <h3>Passo 2: Verificar Claims Atuais</h3>
+        <p>Verifique os custom claims do usuário logado.</p>
+        <button class="button" onclick="checkCurrentClaims()" id="checkBtn" disabled>🔍 Verificar Claims</button>
+    </div>
+    
+    <div class="step">
+        <h3>Passo 3: Executar Migração</h3>
+        <p>Execute a migração para configurar claims de todos os usuários.</p>
+        <button class="button" onclick="migrateUsers()" id="migrateBtn" disabled>🚀 Migrar Usuários</button>
+    </div>
+    
+    <div class="step">
+        <h3>Passo 4: Testar Acesso</h3>
+        <p>Teste se o acesso ao Firestore está funcionando.</p>
+        <button class="button" onclick="testFirestoreAccess()" id="testBtn" disabled>🧪 Testar Acesso</button>
+    </div>
+    
+    <div id="log" class="log"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_hzFPt9hUITlMq9BrsJuxAdzycVR3AEI",
+            authDomain: "academia-app-5cf79.firebaseapp.com",
+            projectId: "academia-app-5cf79",
+            storageBucket: "academia-app-5cf79.firebasestorage.app",
+            messagingSenderId: "377489252583",
+            appId: "1:377489252583:android:87f2c3948511325769c242"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const functions = getFunctions(app);
+
+        let currentUser = null;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : type === 'info' ? 'info' : '';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateButtonStates() {
+            const isLoggedIn = !!currentUser;
+            document.getElementById('checkBtn').disabled = !isLoggedIn;
+            document.getElementById('migrateBtn').disabled = !isLoggedIn;
+            document.getElementById('testBtn').disabled = !isLoggedIn;
+            document.getElementById('loginBtn').textContent = isLoggedIn ? '✅ Logado' : '🔐 Fazer Login';
+        }
+
+        // Monitor auth state
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            updateButtonStates();
+            
+            if (user) {
+                document.getElementById('loginStatus').innerHTML = `<div class="success">✅ Logado como: ${user.email}</div>`;
+                log(`✅ Usuário logado: ${user.email}`, 'success');
+            } else {
+                document.getElementById('loginStatus').innerHTML = '';
+            }
+        });
+
+        window.doLogin = async function() {
+            try {
+                if (currentUser) {
+                    log('ℹ️ Usuário já está logado', 'info');
+                    return;
+                }
+
+                const email = prompt('Email do usuário admin:', 'admin@example.com');
+                const password = prompt('Senha:');
+                
+                if (!email || !password) {
+                    log('❌ Email ou senha não fornecidos', 'error');
+                    return;
+                }
+
+                log('🔐 Fazendo login...');
+                await signInWithEmailAndPassword(auth, email, password);
+                log('✅ Login realizado com sucesso!', 'success');
+                
+            } catch (error) {
+                log(`❌ Erro no login: ${error.message}`, 'error');
+                log('💡 Verifique se o email e senha estão corretos', 'warning');
+            }
+        };
+
+        window.checkCurrentClaims = async function() {
+            try {
+                if (!currentUser) {
+                    log('❌ Usuário não está logado', 'error');
+                    return;
+                }
+
+                log('🔍 Verificando custom claims...');
+                const idTokenResult = await currentUser.getIdTokenResult(true);
+                
+                log(`📋 Claims atuais:`, 'info');
+                log(`   UID: ${currentUser.uid}`);
+                log(`   Email: ${currentUser.email}`);
+                log(`   Role: ${idTokenResult.claims.role || 'não definido'}`);
+                log(`   Academia ID: ${idTokenResult.claims.academiaId || 'não definido'}`);
+                
+                const hasValidClaims = !!(idTokenResult.claims.role && idTokenResult.claims.academiaId);
+                
+                if (hasValidClaims) {
+                    log('✅ Claims estão configurados!', 'success');
+                } else {
+                    log('⚠️ Claims não estão completamente configurados', 'warning');
+                    log('💡 Execute a migração para configurar os claims', 'info');
+                }
+                
+            } catch (error) {
+                log(`❌ Erro ao verificar claims: ${error.message}`, 'error');
+            }
+        };
+
+        window.migrateUsers = async function() {
+            try {
+                if (!currentUser) {
+                    log('❌ Usuário não está logado', 'error');
+                    return;
+                }
+
+                log('🚀 Iniciando migração de usuários...');
+                log('⏳ Esta operação pode levar alguns minutos...', 'warning');
+                
+                const migrateFunction = httpsCallable(functions, 'migrateExistingUsers');
+                const result = await migrateFunction();
+                
+                log(`✅ Migração concluída com sucesso!`, 'success');
+                log(`📊 Usuários migrados: ${result.data.migratedUsers}`, 'success');
+                log('🔄 Aguarde 30 segundos para que os tokens sejam atualizados...', 'info');
+                
+                // Auto-check claims after migration
+                setTimeout(() => {
+                    log('🔄 Verificando claims após migração...', 'info');
+                    checkCurrentClaims();
+                }, 2000);
+                
+            } catch (error) {
+                log(`❌ Erro na migração: ${error.message}`, 'error');
+                log('💡 Verifique se o usuário tem permissões adequadas', 'warning');
+            }
+        };
+
+        window.testFirestoreAccess = async function() {
+            try {
+                if (!currentUser) {
+                    log('❌ Usuário não está logado', 'error');
+                    return;
+                }
+
+                log('🧪 Testando acesso ao Firestore...');
+                
+                // Test access to user document
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                    if (userDoc.exists()) {
+                        log('✅ Acesso ao documento do usuário: OK', 'success');
+                        const userData = userDoc.data();
+                        log(`   Nome: ${userData.name || 'não definido'}`);
+                        log(`   Tipo: ${userData.userType || userData.tipo || 'não definido'}`);
+                        log(`   Academia ID: ${userData.academiaId || 'não definido'}`);
+                    } else {
+                        log('⚠️ Documento do usuário não encontrado', 'warning');
+                    }
+                } catch (userError) {
+                    log(`❌ Erro ao acessar documento do usuário: ${userError.message}`, 'error');
+                }
+                
+                // Test access to gyms collection
+                try {
+                    const gymsSnapshot = await getDocs(collection(db, 'gyms'));
+                    log(`✅ Acesso à coleção gyms: OK (${gymsSnapshot.size} academias)`, 'success');
+                } catch (gymsError) {
+                    log(`❌ Erro ao acessar coleção gyms: ${gymsError.message}`, 'error');
+                }
+                
+                log('🎉 Teste de acesso concluído!', 'success');
+                
+            } catch (error) {
+                log(`❌ Erro no teste: ${error.message}`, 'error');
+            }
+        };
+
+        // Initialize
+        log('🚀 Ferramenta de migração carregada');
+        log('📋 Siga os passos na ordem: Login → Verificar → Migrar → Testar');
+        updateButtonStates();
+    </script>
+</body>
+</html>

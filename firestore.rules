@@ -52,8 +52,11 @@ service cloud.firestore {
     
     // ========== COLEÇÃO DE ACADEMIAS ==========
     match /gyms/{academiaId} {
-      // Leitura: apenas membros da academia
+      // Leitura: membros da academia podem ler sua própria academia
       allow read: if isMemberOf(academiaId);
+      
+      // Admins podem listar academias (para casos específicos)
+      allow list: if getUserRole() == 'admin';
       
       // Criação: Desabilitada no cliente (será feita via Cloud Function)
       allow create: if false;

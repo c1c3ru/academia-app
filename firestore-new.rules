@@ -1,0 +1,297 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ========== FUNÇÕES AUXILIARES COM CUSTOM CLAIMS ==========
+    // Estas funções leem do token do usuário, não do banco. Custo ZERO.
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return request.auth.token.role;
+    }
+    
+    function getAcademiaId() {
+      return request.auth.token.academiaId;
+    }
+    
+    function isMemberOf(academiaId) {
+      return getAcademiaId() == academiaId;
+    }
+    
+    function isAdminOf(academiaId) {
+      return getUserRole() == 'admin' && isMemberOf(academiaId);
+    }
+    
+    function isInstructorOf(academiaId) {
+      return getUserRole() == 'instructor' && isMemberOf(academiaId);
+    }
+    
+    function isStudentOf(academiaId) {
+      return getUserRole() == 'student' && isMemberOf(academiaId);
+    }
+    
+    // ========== MAIN COLLECTION: USERS ==========
+    match /users/{userId} {
+      // Users can read and update their own data
+      allow read, update: if request.auth.uid == userId;
+      
+      // Admins can read users from their academy
+      allow read: if isAdminOf(resource.data.academiaId);
+      
+      // Block direct creation/deletion (handled via Auth/Cloud Functions)
+      allow create, delete: if false;
+    }
+    
+    // ========== MAIN COLLECTION: GYMS ==========
+    match /gyms/{academiaId} {
+      // Reading: only academy members can read their academy
+      allow read: if isMemberOf(academiaId);
+      
+      // Admins can list academies (for specific cases)
+      allow list: if getUserRole() == 'admin';
+      
+      // Creation: disabled on client (handled via Cloud Functions)
+      allow create: if false;
+      
+      // Update/Delete: only admins of the SAME academy
+      allow update, delete: if isAdminOf(academiaId);
+      
+      // ========== SUBCOLLECTIONS ==========
+      
+      // Students
+      match /students/{studentId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+      }
+      
+      // Instructors
+      match /instructors/{instructorId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if isAdminOf(academiaId);
+      }
+      
+      // Classes
+      match /classes/{classId} {
+        allow read: if isMemberOf(academiaId);
+        allow create: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+        allow update: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+        allow delete: if isAdminOf(academiaId);
+        
+        // Class students
+        match /students/{studentId} {
+          allow read: if isMemberOf(academiaId);
+          allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+        }
+      }
+      
+      // Payments
+      match /payments/{paymentId} {
+        // Admins and instructors can read all payments
+        allow read: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+        // Students can read their own payments
+        allow read: if isStudentOf(academiaId) && resource.data.studentId == request.auth.uid;
+        // Only admins can create/edit/delete payments
+        allow write: if isAdminOf(academiaId);
+      }
+      
+      // Plans
+      match /plans/{planId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if isAdminOf(academiaId);
+      }
+      
+      // Modalities
+      match /modalities/{modalityId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if isAdminOf(academiaId);
+      }
+      
+      // Announcements
+      match /announcements/{announcementId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if isAdminOf(academiaId);
+      }
+      
+      // Graduation Levels
+      match /graduation_levels/{levelId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if isAdminOf(academiaId);
+      }
+      
+      // Graduations
+      match /graduations/{graduationId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+      }
+      
+      // Evaluations
+      match /evaluations/{evaluationId} {
+        // Base read permission for academy members
+        allow read: if isMemberOf(academiaId);
+        // Instructors can read evaluations they created
+        allow read: if isInstructorOf(academiaId) && resource.data.instructorId == request.auth.uid;
+        // Students can read only their own evaluations
+        allow read: if isStudentOf(academiaId) && resource.data.studentId == request.auth.uid;
+        // Only instructors and admins can create/edit evaluations
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+      }
+      
+      // Evaluation Schedules
+      match /evaluation_schedules/{scheduleId} {
+        // Base read permission for academy members
+        allow read: if isMemberOf(academiaId);
+        // Students can read only their own schedules
+        allow read: if isStudentOf(academiaId) && resource.data.studentId == request.auth.uid;
+        // Instructors can read schedules they created
+        allow read: if isInstructorOf(academiaId) && resource.data.instructorId == request.auth.uid;
+        // Only instructors and admins can create/edit schedules
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+      }
+      
+      // Events
+      match /events/{eventId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+      }
+      
+      // Event Registrations
+      match /event_registrations/{registrationId} {
+        allow read: if isMemberOf(academiaId);
+        // Students can register for events
+        allow create: if isStudentOf(academiaId) && request.resource.data.studentId == request.auth.uid;
+        // Admins and instructors can manage all registrations
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+      }
+      
+      // Notifications
+      match /notifications/{notificationId} {
+        allow read: if isMemberOf(academiaId);
+        // Only admins and instructors can create notifications
+        allow create: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+        // Users can mark notifications as read (limited update)
+        allow update: if isMemberOf(academiaId) &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy', 'updatedAt']);
+        // Only admins can delete notifications
+        allow delete: if isAdminOf(academiaId);
+      }
+      
+      // Injuries
+      match /injuries/{injuryId} {
+        // Base read permission for academy members
+        allow read: if isMemberOf(academiaId);
+        // Students can read only their own injuries
+        allow read: if isStudentOf(academiaId) && resource.data.studentId == request.auth.uid;
+        // Instructors and admins can create/edit injuries
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+        // Students can report their own injuries
+        allow create: if isStudentOf(academiaId) && request.resource.data.studentId == request.auth.uid;
+      }
+      
+      // Check-ins
+      match /checkins/{checkinId} {
+        allow read: if isMemberOf(academiaId);
+        // Any member can check-in, but only themselves
+        allow create: if isMemberOf(academiaId) && request.resource.data.studentId == request.auth.uid;
+        // Instructors and admins can create check-ins for any student
+        allow create: if (isInstructorOf(academiaId) || isAdminOf(academiaId));
+        // Only admins can update/delete check-ins
+        allow update, delete: if isAdminOf(academiaId);
+      }
+      
+      // Audit Logs (append-only with strict access)
+      match /audit_logs/{logId} {
+        // Only admins can read audit logs
+        allow read: if isAdminOf(academiaId);
+        // System can create logs with strict validation
+        allow create: if isSignedIn() &&
+                        request.resource.data.keys().hasAll(['academiaId', 'operation', 'userId', 'timestamp']) &&
+                        request.resource.data.academiaId == academiaId &&
+                        request.resource.data.userId == request.auth.uid;
+        // Logs are strictly append-only - NEVER can be edited or deleted
+        allow update, delete: if false;
+      }
+    }
+    
+    // ========== GLOBAL COLLECTION: INVITES ==========
+    match /invites/{inviteId} {
+      allow read: if isSignedIn();
+      allow create: if getUserRole() == 'admin';
+      allow update: if isSignedIn();
+    }
+    
+    // ========== DISABLED LEGACY COLLECTIONS ==========
+    // These collections are disabled - use subcollections under gyms instead
+    
+    match /modalities/{modalityId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/modalities
+    }
+    
+    match /plans/{planId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/plans
+    }
+    
+    match /announcements/{announcementId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/announcements
+    }
+    
+    match /classes/{classId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/classes
+    }
+    
+    match /payments/{paymentId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/payments
+    }
+    
+    match /graduations/{graduationId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/graduations
+    }
+    
+    match /graduation_levels/{levelId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/graduation_levels
+    }
+    
+    match /evaluations/{evaluationId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/evaluations
+    }
+    
+    match /evaluation_schedules/{scheduleId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/evaluation_schedules
+    }
+    
+    match /notifications/{notificationId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/notifications
+    }
+    
+    match /injuries/{injuryId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/injuries
+    }
+    
+    match /audit_logs/{logId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/audit_logs
+    }
+    
+    // Legacy Portuguese collections (disabled)
+    match /alunos/{alunoId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/students
+    }
+    
+    match /instrutores/{instrutorId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/instructors
+    }
+    
+    match /turmas/{turmaId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/classes
+    }
+    
+    match /pagamentos/{pagamentoId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/payments
+    }
+    
+    match /planos/{planoId} {
+      allow read, write: if false; // Use /gyms/{academiaId}/plans
+    }
+  }
+}

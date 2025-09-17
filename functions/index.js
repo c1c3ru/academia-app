@@ -273,46 +273,166 @@ exports.migrateExistingUsers = functions.https.onCall(async (data, context) => {
     const usersSnapshot = await admin.firestore().collection('users').get();
     const batch = admin.firestore().batch();
     let count = 0;
+    let errors = 0;
 
     for (const doc of usersSnapshot.docs) {
       const userData = doc.data();
       const userId = doc.id;
 
-      const claims = {
-        role: userData.userType || userData.tipo || 'student',
-        academiaId: userData.academiaId || null
-      };
+      try {
+        // Verificar se o usuário existe no Authentication antes de definir claims
+        const userRecord = await admin.auth().getUser(userId);
+        
+        const claims = {
+          role: userData.userType || userData.tipo || 'student',
+          academiaId: userData.academiaId || null
+        };
 
-      // Normalizar role
-      if (claims.role === 'administrador' || claims.role === 'admin') {
-        claims.role = 'admin';
-      } else if (claims.role === 'instrutor' || claims.role === 'instructor') {
-        claims.role = 'instructor';
-      } else if (claims.role === 'aluno' || claims.role === 'student') {
-        claims.role = 'student';
-      }
+        // Normalizar role
+        if (claims.role === 'administrador' || claims.role === 'admin') {
+          claims.role = 'admin';
+        } else if (claims.role === 'instrutor' || claims.role === 'instructor') {
+          claims.role = 'instructor';
+        } else if (claims.role === 'aluno' || claims.role === 'student') {
+          claims.role = 'student';
+        }
 
-      await admin.auth().setCustomUserClaims(userId, claims);
-      
-      // Atualizar documento (remover superAdmin se existir)
-      const updateData = {
-        claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
-      };
-      
-      if (userData.superAdmin !== undefined) {
-        updateData.superAdmin = admin.firestore.FieldValue.delete();
+        await admin.auth().setCustomUserClaims(userId, claims);
+        
+        // Atualizar documento (remover superAdmin se existir)
+        const updateData = {
+          claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+        
+        if (userData.superAdmin !== undefined) {
+          updateData.superAdmin = admin.firestore.FieldValue.delete();
+        }
+        
+        batch.update(doc.ref, updateData);
+        count++;
+        
+        console.log(`Claims definidos para ${userRecord.email}: ${JSON.stringify(claims)}`);
+        
+      } catch (authError) {
+        if (authError.code === 'auth/user-not-found') {
+          console.log(`Usuário ${userId} não encontrado no Authentication, pulando...`);
+          errors++;
+        } else {
+          console.error(`Erro ao processar usuário ${userId}:`, authError);
+          errors++;
+        }
       }
-      
-      batch.update(doc.ref, updateData);
-      count++;
     }
 
     await batch.commit();
-    console.log(`Migração concluída: ${count} usuários processados`);
-    return { success: true, migratedUsers: count };
+    console.log(`Migração concluída: ${count} usuários processados, ${errors} erros`);
+    return { success: true, migratedUsers: count, errors: errors };
 
   } catch (error) {
     console.error('Erro na migração:', error);
     throw new functions.https.HttpsError('internal', 'Erro na migração');
+  }
+});
+
+/**
+ * Cloud Function para migrar coleções para nova estrutura
+ */
+exports.migrateCollections = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Usuário não autenticado');
+  }
+
+  if (context.auth.token.role !== 'admin') {
+    throw new functions.https.HttpsError('permission-denied', 'Apenas admins podem executar migração');
+  }
+
+  const { dryRun = true } = data;
+
+  try {
+    const collectionMappings = {
+      'alunos': 'students',
+      'instrutores': 'instructors', 
+      'turmas': 'classes',
+      'pagamentos': 'payments',
+      'planos': 'plans',
+      'eventRegistrations': 'event_registrations'
+    };
+
+    console.log(`🚀 Iniciando migração de coleções (dryRun: ${dryRun})...`);
+    
+    const gymsSnapshot = await admin.firestore().collection('gyms').get();
+    console.log(`📊 Encontradas ${gymsSnapshot.size} academias para migrar`);
+    
+    let totalMigrated = 0;
+    let totalErrors = 0;
+    const migrationReport = [];
+    
+    for (const gymDoc of gymsSnapshot.docs) {
+      const gymId = gymDoc.id;
+      const gymData = gymDoc.data();
+      
+      console.log(`🏢 Processando academia: ${gymData.name || gymId}`);
+      
+      for (const [oldName, newName] of Object.entries(collectionMappings)) {
+        try {
+          const oldCollectionRef = admin.firestore().collection('gyms').doc(gymId).collection(oldName);
+          const oldDocsSnapshot = await oldCollectionRef.get();
+          
+          if (oldDocsSnapshot.empty) {
+            continue;
+          }
+          
+          console.log(`📁 ${oldName} -> ${newName}: ${oldDocsSnapshot.size} documentos`);
+          
+          if (!dryRun) {
+            const newCollectionRef = admin.firestore().collection('gyms').doc(gymId).collection(newName);
+            const batch = admin.firestore().batch();
+            
+            oldDocsSnapshot.docs.forEach(doc => {
+              const newDocRef = newCollectionRef.doc(doc.id);
+              batch.set(newDocRef, doc.data());
+            });
+            
+            await batch.commit();
+            console.log(`✅ Migrados ${oldDocsSnapshot.size} documentos de ${oldName} para ${newName}`);
+          }
+          
+          totalMigrated += oldDocsSnapshot.size;
+          migrationReport.push({
+            gym: gymData.name || gymId,
+            collection: `${oldName} -> ${newName}`,
+            documents: oldDocsSnapshot.size,
+            status: dryRun ? 'simulated' : 'migrated'
+          });
+          
+        } catch (error) {
+          console.error(`❌ Erro ao migrar ${oldName}:`, error.message);
+          totalErrors++;
+          migrationReport.push({
+            gym: gymData.name || gymId,
+            collection: `${oldName} -> ${newName}`,
+            documents: 0,
+            status: 'error',
+            error: error.message
+          });
+        }
+      }
+    }
+    
+    console.log(`🎉 Migração ${dryRun ? 'simulada' : 'real'} concluída!`);
+    console.log(`📊 Total de documentos: ${totalMigrated}`);
+    console.log(`❌ Total de erros: ${totalErrors}`);
+    
+    return { 
+      success: true, 
+      dryRun,
+      totalDocuments: totalMigrated, 
+      errors: totalErrors,
+      report: migrationReport
+    };
+
+  } catch (error) {
+    console.error('❌ Erro geral na migração:', error);
+    throw new functions.https.HttpsError('internal', 'Erro na migração de coleções');
   }
 });
