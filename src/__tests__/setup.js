@@ -128,8 +128,8 @@ jest.mock('react-native-calendars', () => ({
 }));
 
 // Mock Firestore Service
-jest.mock('../services/firestoreService', () => ({
-  firestoreService: {
+jest.mock('../services/firestoreService', () => {
+  const mockFirestoreService = {
     addDocument: jest.fn(),
     updateDocument: jest.fn(),
     getDocument: jest.fn(),
@@ -137,16 +137,28 @@ jest.mock('../services/firestoreService', () => ({
     deleteDocument: jest.fn(),
     subscribeToDocument: jest.fn(),
     subscribeToCollection: jest.fn()
-  }
-}));
+  };
+  
+  return {
+    firestoreService: mockFirestoreService,
+    default: mockFirestoreService
+  };
+});
 
 // Mock Notifications
-jest.mock('../services/notificationService', () => ({
-  scheduleClassReminders: jest.fn(),
-  sendLocalNotification: jest.fn(),
-  requestPermissions: jest.fn(),
-  notifyPaymentDue: jest.fn()
-}));
+jest.mock('../services/notificationService', () => {
+  const mockNotificationService = {
+    scheduleClassReminders: jest.fn(),
+    sendLocalNotification: jest.fn(),
+    requestPermissions: jest.fn(),
+    notifyPaymentDue: jest.fn()
+  };
+  
+  return {
+    default: mockNotificationService,
+    ...mockNotificationService
+  };
+});
 
 // Global test utilities
 global.mockFirebaseUser = {
