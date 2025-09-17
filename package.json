@@ -12,7 +12,18 @@
     "build:android:apk": "node scripts/build-android.js production-apk",
     "build:test": "node scripts/test-build.js",
     "build:preview": "node scripts/build-android.js preview",
-    "prebuild": "expo prebuild --clean"
+    "prebuild": "expo prebuild --clean",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false",
+    "test:unit": "jest --testPathPattern=src/",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:e2e": "detox test",
+    "test:e2e:build": "detox build",
+    "test:e2e:android": "detox test --configuration android.emu.debug",
+    "test:e2e:ios": "detox test --configuration ios.sim.debug",
+    "lint:test": "eslint src/**/*.test.js e2e/**/*.test.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
@@ -60,7 +71,15 @@
     "@react-native-community/cli": "^20.0.1",
     "@types/react": "~19.0.10",
     "babel-plugin-transform-define": "^2.1.4",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "@testing-library/react-native": "^12.4.2",
+    "@testing-library/jest-native": "^5.4.3",
+    "jest": "^29.7.0",
+    "react-test-renderer": "19.0.0",
+    "detox": "^20.13.5",
+    "@types/jest": "^29.5.8",
+    "eslint-plugin-testing-library": "^6.2.0",
+    "jest-environment-node": "^29.7.0"
   },
   "private": true
 }
