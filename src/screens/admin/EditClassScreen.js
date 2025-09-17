@@ -85,7 +85,14 @@ const EditClassScreen = ({ route, navigation }) => {
   // Carregar modalidades do Firestore
   const loadModalities = async () => {
     try {
-      const list = await firestoreService.getAll('modalities');
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
+      const list = await firestoreService.getAll(`gyms/${academiaId}/modalities`);
       const normalized = (list || []).map((m) => ({ id: m.id || m.name, name: m.name }));
       setModalities(normalized);
     } catch (error) {

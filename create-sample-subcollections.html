@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Subcoleções - Academia App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        #log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 5px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏗️ Criar Subcoleções com Dados de Exemplo</h1>
+        
+        <div class="status info">
+            <strong>ℹ️ Informação:</strong> Este script criará subcoleções organizadas por academia com dados de exemplo.
+        </div>
+
+        <div class="form-group">
+            <label for="academiaId">ID da Academia:</label>
+            <input type="text" id="academiaId" placeholder="Ex: gym_123" required>
+        </div>
+
+        <div class="form-group">
+            <label for="academiaName">Nome da Academia:</label>
+            <input type="text" id="academiaName" placeholder="Ex: Academia Força Total" required>
+        </div>
+
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="createSubcollections()">🚀 Criar Subcoleções</button>
+        </div>
+
+        <h3>Log de Execução:</h3>
+        <div id="log"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_hzFPt9hUITlMq9BrsJuxAdzycVR3AEI",
+            authDomain: "academia-app-5cf79.firebaseapp.com",
+            projectId: "academia-app-5cf79",
+            storageBucket: "academia-app-5cf79.firebasestorage.app",
+            messagingSenderId: "377489252583",
+            appId: "1:377489252583:android:87f2c3948511325769c242"
+        };
+
+        // Função para fazer login com email/senha
+        async function signInUser() {
+            const email = prompt('Digite seu email de admin:');
+            const password = prompt('Digite sua senha:');
+            
+            if (!email || !password) {
+                throw new Error('Email e senha são obrigatórios');
+            }
+            
+            try {
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Aguardar o token ser atualizado com custom claims
+                await user.getIdToken(true);
+                
+                log(`✅ Logado como: ${user.email}`, 'success');
+                return user;
+            } catch (error) {
+                throw new Error(`Erro no login: ${error.message}`);
+            }
+        }
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            logElement.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        // 30 modalidades de artes marciais mais praticadas no mundo
+        const sampleModalities = [
+            { 
+                name: "Karate", 
+                description: "Arte marcial japonesa focada em golpes lineares e bloqueios",
+                graduationLevels: ["Branca", "Amarela", "Laranja", "Verde", "Roxa", "Marrom", "Preta 1º Dan", "Preta 2º Dan", "Preta 3º Dan"],
+                monthlyPrice: 150,
+                isActive: true
+            },
+            { 
+                name: "Taekwondo", 
+                description: "Arte marcial coreana especializada em chutes altos e acrobáticos",
+                graduationLevels: ["Branca", "Amarela", "Verde", "Azul", "Vermelha", "Preta 1º Dan", "Preta 2º Dan", "Preta 3º Dan"],
+                monthlyPrice: 150,
+                isActive: true
+            },
+            { 
+                name: "Jiu-Jitsu Brasileiro", 
+                description: "Arte marcial brasileira focada em técnicas de solo e submissão",
+                graduationLevels: ["Branca", "Azul", "Roxa", "Marrom", "Preta", "Coral", "Vermelha"],
+                monthlyPrice: 180,
+                isActive: true
+            },
+            { 
+                name: "Judô", 
+                description: "Arte marcial japonesa focada em técnicas de projeção e imobilização",
+                graduationLevels: ["Branca", "Amarela", "Laranja", "Verde", "Azul", "Marrom", "Preta"],
+                monthlyPrice: 150,
+                isActive: true
+            },
+            { 
+                name: "Muay Thai", 
+                description: "Arte marcial tailandesa conhecida como 'a arte das oito armas'",
+                graduationLevels: ["Iniciante", "Básico", "Intermediário", "Avançado", "Instrutor", "Professor"],
+                monthlyPrice: 160,
+                isActive: true
+            },
+            { 
+                name: "Boxing", 
+                description: "Esporte de combate usando apenas os punhos",
+                graduationLevels: ["Iniciante", "Amador", "Semi-Profissional", "Profissional"],
+                monthlyPrice: 140,
+                isActive: true
+            },
+            { 
+                name: "MMA", 
+                description: "Artes marciais mistas combinando várias disciplinas",
+                graduationLevels: ["Iniciante", "Básico", "Intermediário", "Avançado", "Semi-Pro", "Profissional"],
+                monthlyPrice: 200,
+                isActive: true
+            },
+            { 
+                name: "Kung Fu", 
+                description: "Arte marcial chinesa com diversos estilos e filosofias",
+                graduationLevels: ["Branca", "Amarela", "Verde", "Azul", "Marrom", "Preta 1º Grau", "Preta 2º Grau"],
+                monthlyPrice: 150,
+                isActive: true
+            },
+            { 
+                name: "Aikido", 
+                description: "Arte marcial japonesa focada em neutralizar ataques usando a força do oponente",
+                graduationLevels: ["6º Kyu", "5º Kyu", "4º Kyu", "3º Kyu", "2º Kyu", "1º Kyu", "1º Dan", "2º Dan"],
+                monthlyPrice: 150,
+                isActive: true
+            },
+            { 
+                name: "Krav Maga", 
+                description: "Sistema de combate israelense para autodefesa",
+                graduationLevels: ["P1", "P2", "P3", "P4", "P5", "G1", "G2", "G3"],
+                monthlyPrice: 170,
+                isActive: true
+            },
+            { 
+                name: "Capoeira", 
+                description: "Arte marcial brasileira que combina luta, dança e música",
+                graduationLevels: ["Crua", "Batizado", "Graduado", "Formado", "Professor", "Contramestre", "Mestre"],
+                monthlyPrice: 120,
+                isActive: true
+            },
+            { 
+                name: "Kickboxing", 
+                description: "Esporte de combate que combina boxe com chutes",
+                graduationLevels: ["Iniciante", "Básico", "Intermediário", "Avançado"],
+                monthlyPrice: 150,
+                isActive: true
+            },
+            { 
+                name: "Wing Chun", 
+                description: "Estilo de Kung Fu focado em combate de curta distância",
+                graduationLevels: ["Siu Nim Tao", "Chum Kiu", "Biu Jee", "Muk Jong", "Luk Dim Boon Kwun", "Bart Cham Dao"],
+                monthlyPrice: 160,
+                isActive: true
+            },
+            { 
+                name: "Hapkido", 
+                description: "Arte marcial coreana que combina técnicas de defesa e ataque",
+                graduationLevels: ["Branca", "Amarela", "Verde", "Azul", "Vermelha", "Preta 1º Dan", "Preta 2º Dan"],
+                monthlyPrice: 150,
+                isActive: true
+            },
+            { 
+                name: "Kyokushin", 
+                description: "Estilo de karate conhecido por seu condicionamento físico intenso",
+                graduationLevels: ["Branca", "Laranja", "Azul", "Amarela", "Verde", "Marrom", "Preta"],
+                monthlyPrice: 160,
+                isActive: true
+            },
+            { 
+                name: "Savate", 
+                description: "Arte marcial francesa que utiliza chutes e socos",
+                graduationLevels: ["Azul", "Verde", "Vermelha", "Branca", "Amarela", "Prata"],
+                monthlyPrice: 150,
+                isActive: true
+            },
+            { 
+                name: "Escrima", 
+                description: "Arte marcial filipina focada em armas e combate próximo",
+                graduationLevels: ["Branca", "Amarela", "Laranja", "Verde", "Azul", "Marrom", "Preta"],
+                monthlyPrice: 160,
+                isActive: true
+            },
+            { 
+                name: "Sambo", 
+                description: "Arte marcial russa que combina judo e luta livre",
+                graduationLevels: ["Branca", "Azul", "Vermelha"],
+                monthlyPrice: 150,
+                isActive: true
+            },
+            { 
+                name: "Luta Livre", 
+                description: "Modalidade de luta que permite pegadas nas pernas",
+                graduationLevels: ["Iniciante", "Básico", "Intermediário", "Avançado", "Competidor"],
+                monthlyPrice: 150,
+                isActive: true
+            },
+            { 
+                name: "Greco-Romana", 
+                description: "Estilo de luta olímpica sem uso das pernas para ataques",
+                graduationLevels: ["Iniciante", "Básico", "Intermediário", "Avançado", "Competidor"],
+                monthlyPrice: 150,
+                isActive: true
+            }
+        ];
+
+        // Dados de exemplo para planos
+        const samplePlans = [
+            {
+                name: "Plano Mensal",
+                value: 150.00,
+                duration: 1,
+                description: "Acesso completo por 1 mês"
+            },
+            {
+                name: "Plano Trimestral",
+                value: 400.00,
+                duration: 3,
+                description: "Acesso completo por 3 meses com desconto"
+            },
+            {
+                name: "Plano Semestral",
+                value: 750.00,
+                duration: 6,
+                description: "Acesso completo por 6 meses com maior desconto"
+            },
+            {
+                name: "Plano Anual",
+                value: 1400.00,
+                duration: 12,
+                description: "Acesso completo por 1 ano com máximo desconto"
+            }
+        ];
+
+        // Dados de exemplo para avisos
+        const sampleAnnouncements = [
+            {
+                title: "Novo Sistema de Check-in",
+                content: "Agora você pode fazer check-in nas aulas usando geolocalização. Certifique-se de estar na academia!",
+                targetAudience: "students",
+                authorId: "system",
+                priority: "high",
+                isActive: true
+            },
+            {
+                title: "Horários de Funcionamento",
+                content: "Segunda a Sexta: 6h às 22h | Sábado: 8h às 18h | Domingo: 8h às 14h",
+                targetAudience: "all",
+                authorId: "system",
+                priority: "medium",
+                isActive: true
+            },
+            {
+                title: "Aviso aos Instrutores",
+                content: "Reunião mensal de instrutores na próxima sexta-feira às 19h.",
+                targetAudience: "instructors",
+                authorId: "system",
+                priority: "high",
+                isActive: true
+            }
+        ];
+
+        // Dados de exemplo para instrutores
+        const sampleInstructors = [
+            {
+                name: "João Silva",
+                email: "joao.silva@example.com",
+                phone: "(85) 99999-1111",
+                specialties: ["Karate", "Taekwondo"],
+                isActive: true,
+                hireDate: new Date(2023, 0, 15)
+            },
+            {
+                name: "Maria Santos",
+                email: "maria.santos@example.com", 
+                phone: "(85) 99999-2222",
+                specialties: ["Jiu-Jitsu Brasileiro", "MMA"],
+                isActive: true,
+                hireDate: new Date(2023, 2, 10)
+            },
+            {
+                name: "Carlos Oliveira",
+                email: "carlos.oliveira@example.com",
+                phone: "(85) 99999-3333", 
+                specialties: ["Muay Thai", "Boxing"],
+                isActive: true,
+                hireDate: new Date(2023, 5, 20)
+            }
+        ];
+
+        // Dados de exemplo para alunos
+        const sampleStudents = [
+            {
+                name: "Ana Costa",
+                email: "ana.costa@example.com",
+                phone: "(85) 98888-1111",
+                birthDate: new Date(1995, 5, 15),
+                emergencyContact: "Pedro Costa - (85) 98888-1112",
+                modalities: ["Karate"],
+                isActive: true,
+                registrationDate: new Date(2024, 0, 10)
+            },
+            {
+                name: "Bruno Lima",
+                email: "bruno.lima@example.com",
+                phone: "(85) 98888-2222",
+                birthDate: new Date(1988, 8, 22),
+                emergencyContact: "Carla Lima - (85) 98888-2223",
+                modalities: ["Jiu-Jitsu Brasileiro", "MMA"],
+                isActive: true,
+                registrationDate: new Date(2024, 1, 5)
+            },
+            {
+                name: "Carla Mendes",
+                email: "carla.mendes@example.com",
+                phone: "(85) 98888-3333",
+                birthDate: new Date(1992, 11, 8),
+                emergencyContact: "Roberto Mendes - (85) 98888-3334",
+                modalities: ["Muay Thai"],
+                isActive: true,
+                registrationDate: new Date(2024, 2, 12)
+            }
+        ];
+
+        // Dados de exemplo para turmas
+        const sampleClasses = [
+            {
+                name: "Karate Iniciante",
+                modality: "Karate",
+                instructor: "João Silva",
+                schedule: "Segunda, Quarta, Sexta - 19:00-20:00",
+                maxStudents: 20,
+                currentStudents: 15,
+                isActive: true
+            },
+            {
+                name: "Jiu-Jitsu Intermediário",
+                modality: "Jiu-Jitsu Brasileiro", 
+                instructor: "Maria Santos",
+                schedule: "Terça, Quinta - 20:00-21:30",
+                maxStudents: 15,
+                currentStudents: 12,
+                isActive: true
+            },
+            {
+                name: "Muay Thai Avançado",
+                modality: "Muay Thai",
+                instructor: "Carlos Oliveira",
+                schedule: "Segunda, Quarta, Sexta - 20:30-21:30",
+                maxStudents: 18,
+                currentStudents: 10,
+                isActive: true
+            }
+        ];
+
+        // Dados de exemplo para pagamentos
+        const samplePayments = [
+            {
+                studentName: "Ana Costa",
+                planName: "Plano Mensal",
+                amount: 120.00,
+                dueDate: new Date(2024, 8, 10),
+                paidDate: new Date(2024, 8, 8),
+                status: "paid",
+                paymentMethod: "pix"
+            },
+            {
+                studentName: "Bruno Lima",
+                planName: "Plano Trimestral",
+                amount: 320.00,
+                dueDate: new Date(2024, 8, 15),
+                paidDate: null,
+                status: "pending",
+                paymentMethod: null
+            },
+            {
+                studentName: "Carla Mendes",
+                planName: "Plano Mensal",
+                amount: 120.00,
+                dueDate: new Date(2024, 8, 20),
+                paidDate: new Date(2024, 8, 18),
+                status: "paid",
+                paymentMethod: "card"
+            }
+        ];
+
+        // Dados de exemplo para graduações
+        const sampleGraduations = [
+            {
+                studentName: "Ana Costa",
+                modality: "Karate",
+                currentLevel: "Amarela",
+                instructor: "João Silva",
+                graduationDate: new Date(2024, 5, 15),
+                certificate: "CERT-KAR-001",
+                notes: "Excelente desempenho técnico"
+            },
+            {
+                studentName: "Bruno Lima", 
+                modality: "Jiu-Jitsu Brasileiro",
+                currentLevel: "Azul",
+                instructor: "Maria Santos",
+                graduationDate: new Date(2024, 7, 10),
+                certificate: "CERT-JJB-002",
+                notes: "Boa evolução no ground game"
+            }
+        ];
+
+        // Dados de exemplo para convites
+        const sampleInvites = [
+            {
+                email: "instrutor1@example.com",
+                tipo: "instrutor",
+                status: "pending",
+                inviteToken: generateInviteToken(),
+                createdBy: "system",
+                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 dias
+            },
+            {
+                email: "instrutor2@example.com", 
+                tipo: "instrutor",
+                status: "pending",
+                inviteToken: generateInviteToken(),
+                createdBy: "system",
+                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 dias
+            },
+            {
+                email: "aluno1@example.com",
+                tipo: "aluno", 
+                status: "pending",
+                inviteToken: generateInviteToken(),
+                createdBy: "system",
+                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 dias
+            }
+        ];
+
+        // Função para gerar token de convite
+        function generateInviteToken() {
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            let token = '';
+            for (let i = 0; i < 19; i++) {
+                token += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return token;
+        }
+
+        // Sistema de graduações por modalidade
+        const graduationSystems = {
+            "Karate": ["Branca", "Amarela", "Laranja", "Verde", "Roxa", "Marrom", "Preta 1º Dan", "Preta 2º Dan", "Preta 3º Dan"],
+            "Taekwondo": ["Branca", "Amarela", "Verde", "Azul", "Vermelha", "Preta 1º Dan", "Preta 2º Dan", "Preta 3º Dan"],
+            "Jiu-Jitsu Brasileiro": ["Branca", "Azul", "Roxa", "Marrom", "Preta", "Coral", "Vermelha"],
+            "Judo": ["Branca", "Amarela", "Laranja", "Verde", "Azul", "Marrom", "Preta 1º Dan", "Preta 2º Dan"],
+            "Muay Thai": ["Iniciante", "Básico", "Intermediário", "Avançado", "Instrutor", "Professor"],
+            "Boxing": ["Iniciante", "Amador", "Semi-Profissional", "Profissional"],
+            "MMA": ["Iniciante", "Básico", "Intermediário", "Avançado", "Semi-Pro", "Profissional"],
+            "Kung Fu": ["Branca", "Amarela", "Verde", "Azul", "Marrom", "Preta 1º Grau", "Preta 2º Grau"],
+            "Aikido": ["6º Kyu", "5º Kyu", "4º Kyu", "3º Kyu", "2º Kyu", "1º Kyu", "1º Dan", "2º Dan"],
+            "Krav Maga": ["P1", "P2", "P3", "P4", "P5", "G1", "G2", "G3"],
+            "Capoeira": ["Crua", "Batizado", "Graduado", "Formado", "Professor", "Contramestre", "Mestre"]
+        };
+
+        async function createSubcollections() {
+            const academiaId = document.getElementById('academiaId').value.trim();
+            const academiaName = document.getElementById('academiaName').value.trim();
+            
+            if (!academiaId || !academiaName) {
+                log('Por favor, preencha o ID e nome da academia', 'error');
+                return;
+            }
+
+            log('🔐 Fazendo login...');
+            
+            try {
+                // Fazer login primeiro
+                const user = await signInUser();
+                
+                // Aguardar um pouco para garantir que os custom claims foram aplicados
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Verificar custom claims
+                const token = await user.getIdTokenResult();
+                log(`🔍 Custom Claims: ${JSON.stringify(token.claims)}`, 'info');
+                
+                if (!token.claims.role || !token.claims.academiaId) {
+                    log('⚠️ Usuário não possui custom claims necessários (role e academiaId)', 'warning');
+                    log('💡 Solução: Execute o script fix-claims-direct.js para adicionar custom claims', 'info');
+                    return;
+                }
+                
+                log('🚀 Iniciando criação de subcoleções...');
+            
+            try {
+                // 1. Criar modalidades
+                log('📋 Criando modalidades...');
+                for (const modality of sampleModalities) {
+                    const modalityData = {
+                        name: modality.name,
+                        description: modality.description,
+                        graduationLevels: modality.graduationLevels,
+                        monthlyPrice: modality.monthlyPrice,
+                        isActive: modality.isActive,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+                    
+                    await db.collection(`gyms/${academiaId}/modalities`).add(modalityData);
+                    log(`✅ Modalidade criada: ${modality.name}`, 'success');
+                }
+
+                // 2. Não criar graduações separadas - elas já estão no graduationLevels das modalidades
+                log('ℹ️ Graduações incluídas nas modalidades como graduationLevels', 'info');
+
+                // 3. Criar planos
+                log('💰 Criando planos...');
+                for (const plan of samplePlans) {
+                    const planData = {
+                        ...plan,
+                        academiaId: academiaId,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+                    
+                    await db.collection(`gyms/${academiaId}/plans`).add(planData);
+                    log(`✅ Plano criado: ${plan.name}`, 'success');
+                }
+
+                // 4. Criar avisos
+                log('📢 Criando avisos...');
+                for (const announcement of sampleAnnouncements) {
+                    const announcementData = {
+                        title: announcement.title,
+                        content: announcement.content,
+                        targetAudience: announcement.targetAudience,
+                        authorId: announcement.authorId,
+                        priority: announcement.priority,
+                        isActive: announcement.isActive,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+                    
+                    await db.collection(`gyms/${academiaId}/announcements`).add(announcementData);
+                    log(`✅ Aviso criado: ${announcement.title}`, 'success');
+                }
+
+                // 5. Criar instrutores
+                log('👨‍🏫 Criando instrutores...');
+                for (const instructor of sampleInstructors) {
+                    const instructorData = {
+                        name: instructor.name,
+                        email: instructor.email,
+                        phone: instructor.phone,
+                        specialties: instructor.specialties,
+                        isActive: instructor.isActive,
+                        hireDate: instructor.hireDate,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+                    
+                    await db.collection(`gyms/${academiaId}/instructors`).add(instructorData);
+                    log(`✅ Instrutor criado: ${instructor.name}`, 'success');
+                }
+
+                // 6. Criar alunos
+                log('👨‍🎓 Criando alunos...');
+                for (const student of sampleStudents) {
+                    const studentData = {
+                        name: student.name,
+                        email: student.email,
+                        phone: student.phone,
+                        birthDate: student.birthDate,
+                        emergencyContact: student.emergencyContact,
+                        modalities: student.modalities,
+                        isActive: student.isActive,
+                        registrationDate: student.registrationDate,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+                    
+                    await db.collection(`gyms/${academiaId}/students`).add(studentData);
+                    log(`✅ Aluno criado: ${student.name}`, 'success');
+                }
+
+                // 7. Criar turmas
+                log('📚 Criando turmas...');
+                for (const classData of sampleClasses) {
+                    const classDoc = {
+                        name: classData.name,
+                        modality: classData.modality,
+                        instructor: classData.instructor,
+                        schedule: classData.schedule,
+                        maxStudents: classData.maxStudents,
+                        currentStudents: classData.currentStudents,
+                        isActive: classData.isActive,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+                    
+                    await db.collection(`gyms/${academiaId}/classes`).add(classDoc);
+                    log(`✅ Turma criada: ${classData.name}`, 'success');
+                }
+
+                // 8. Criar pagamentos
+                log('💳 Criando pagamentos...');
+                for (const payment of samplePayments) {
+                    const paymentData = {
+                        studentName: payment.studentName,
+                        planName: payment.planName,
+                        amount: payment.amount,
+                        dueDate: payment.dueDate,
+                        paidDate: payment.paidDate,
+                        status: payment.status,
+                        paymentMethod: payment.paymentMethod,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+                    
+                    await db.collection(`gyms/${academiaId}/payments`).add(paymentData);
+                    log(`✅ Pagamento criado: ${payment.studentName} - ${payment.planName}`, 'success');
+                }
+
+                // 9. Criar graduações
+                log('🥋 Criando graduações...');
+                for (const graduation of sampleGraduations) {
+                    const graduationData = {
+                        studentName: graduation.studentName,
+                        modality: graduation.modality,
+                        currentLevel: graduation.currentLevel,
+                        instructor: graduation.instructor,
+                        graduationDate: graduation.graduationDate,
+                        certificate: graduation.certificate,
+                        notes: graduation.notes,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+                    
+                    await db.collection(`gyms/${academiaId}/graduations`).add(graduationData);
+                    log(`✅ Graduação criada: ${graduation.studentName} - ${graduation.currentLevel}`, 'success');
+                }
+
+                // 10. Criar convites
+                log('📧 Criando convites...');
+                for (const invite of sampleInvites) {
+                    const inviteData = {
+                        academiaId: academiaId,
+                        email: invite.email,
+                        tipo: invite.tipo,
+                        status: invite.status,
+                        inviteToken: invite.inviteToken,
+                        createdBy: invite.createdBy,
+                        createdAt: new Date(),
+                        expiresAt: invite.expiresAt
+                    };
+                    
+                    await db.collection(`gyms/${academiaId}/invites`).add(inviteData);
+                    log(`✅ Convite criado: ${invite.email} (${invite.tipo})`, 'success');
+                }
+
+                // 6. Criar documento da academia (se não existir)
+                log('🏢 Criando/atualizando documento da academia...');
+                const gymData = {
+                    id: academiaId,
+                    name: academiaName,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    active: true
+                };
+                
+                await db.collection('gyms').doc(academiaId).set(gymData, { merge: true });
+                log(`✅ Academia criada/atualizada: ${academiaName}`, 'success');
+
+                log('🎉 Todas as subcoleções foram criadas com sucesso!', 'success');
+                log(`📊 Resumo: ${sampleModalities.length} modalidades, ${Object.values(graduationSystems).flat().length} graduações, ${samplePlans.length} planos, ${sampleAnnouncements.length} avisos`, 'info');
+                log('📱 Agora você pode testar a aplicação e ver as modalidades, planos e avisos.', 'info');
+                
+            } catch (error) {
+                log(`❌ Erro durante a criação: ${error.message}`, 'error');
+                console.error('Erro detalhado:', error);
+            }
+            
+            } catch (loginError) {
+                log(`❌ Erro no login: ${loginError.message}`, 'error');
+                console.error('Erro de login:', loginError);
+            }
+        }
+    </script>
+</body>
+</html>

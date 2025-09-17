@@ -18,8 +18,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';
 
 const AddGraduationScreen = ({ route, navigation }) => {
-  const { studentId, studentName } = route.params || {};
-  const { user } = useAuth();
+  const { studentId, studentName } = route.params;
+  const { user, userProfile, academia } = useAuth();
   const { getString } = useTheme();
   
   const [formData, setFormData] = useState({
@@ -64,7 +64,14 @@ const AddGraduationScreen = ({ route, navigation }) => {
 
   const loadInitialData = async () => {
     try {
-      const modalitiesData = await firestoreService.getAll('modalities');
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
+      const modalitiesData = await firestoreService.getAll(`gyms/${academiaId}/modalities`);
       setModalities(modalitiesData || []);
       
       setGraduationLevels(defaultGraduationLevels);

@@ -16,7 +16,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { firestoreService } from '../../services/firestoreService';
-import { useAuth } from '../../contexts/auth';
+import { useAuth } from '../../contexts/AuthProvider';
 
 const { width } = Dimensions.get('window');
 

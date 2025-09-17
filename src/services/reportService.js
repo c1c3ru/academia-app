@@ -81,9 +81,13 @@ class ReportService {
   }
 
   // Relatório financeiro
-  async generateFinancialReport(startDate, endDate) {
+  async generateFinancialReport(startDate, endDate, academiaId) {
     try {
-      const payments = await firestoreService.getDocumentsWithFilters('payments', [
+      if (!academiaId) {
+        throw new Error('Academia ID é obrigatório');
+      }
+      
+      const payments = await firestoreService.getDocumentsWithFilters(`gyms/${academiaId}/payments`, [
         { field: 'dueDate', operator: '>=', value: startDate },
         { field: 'dueDate', operator: '<=', value: endDate }
       ]);
@@ -196,15 +200,19 @@ class ReportService {
   }
 
   // Relatório de graduações
-  async generateGraduationsReport(startDate, endDate) {
+  async generateGraduationsReport(startDate, endDate, academiaId) {
     try {
-      const graduations = await firestoreService.getDocumentsWithFilters('graduations', [
+      if (!academiaId) {
+        throw new Error('Academia ID é obrigatório');
+      }
+      
+      const graduations = await firestoreService.getDocumentsWithFilters(`gyms/${academiaId}/graduations`, [
         { field: 'date', operator: '>=', value: startDate },
         { field: 'date', operator: '<=', value: endDate }
       ]);
 
-      const students = await firestoreService.getCollection('users');
-      const modalities = await firestoreService.getCollection('modalities');
+      const students = await firestoreService.getCollection(`gyms/${academiaId}/students`);
+      const modalities = await firestoreService.getCollection(`gyms/${academiaId}/modalities`);
 
       const report = {
         period: { startDate, endDate },

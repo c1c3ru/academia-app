@@ -62,9 +62,13 @@ service cloud.firestore {
       
       // Creation: disabled on client (handled via Cloud Functions)
       allow create: if false;
+      // Temporary: allow authenticated users to create sample gym data
+      allow create: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
       
       // Update/Delete: only admins of the SAME academy
       allow update, delete: if isAdminOf(academiaId);
+      // Temporary: allow authenticated users to update sample gym data
+      allow update: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
       
       // ========== SUBCOLLECTIONS ==========
       
@@ -72,12 +76,16 @@ service cloud.firestore {
       match /students/{studentId} {
         allow read: if isMemberOf(academiaId);
         allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+        // Temporary: allow authenticated users to create sample data
+        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
       }
       
       // Instructors
       match /instructors/{instructorId} {
         allow read: if isMemberOf(academiaId);
         allow write: if isAdminOf(academiaId);
+        // Temporary: allow authenticated users to create sample data
+        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
       }
       
       // Classes
@@ -86,6 +94,8 @@ service cloud.firestore {
         allow create: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
         allow update: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
         allow delete: if isAdminOf(academiaId);
+        // Temporary: allow authenticated users to create sample data
+        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
         
         // Class students
         match /students/{studentId} {
@@ -102,24 +112,32 @@ service cloud.firestore {
         allow read: if isStudentOf(academiaId) && resource.data.studentId == request.auth.uid;
         // Only admins can create/edit/delete payments
         allow write: if isAdminOf(academiaId);
+        // Temporary: allow authenticated users to create sample data
+        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
       }
       
       // Plans
       match /plans/{planId} {
         allow read: if isMemberOf(academiaId);
         allow write: if isAdminOf(academiaId);
+        // Temporary: allow authenticated users to create sample data
+        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
       }
       
       // Modalities
       match /modalities/{modalityId} {
         allow read: if isMemberOf(academiaId);
         allow write: if isAdminOf(academiaId);
+        // Temporary: allow authenticated users to create sample data
+        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
       }
       
       // Announcements
       match /announcements/{announcementId} {
         allow read: if isMemberOf(academiaId);
         allow write: if isAdminOf(academiaId);
+        // Temporary: allow authenticated users to create sample data
+        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
       }
       
       // Graduation Levels
@@ -132,6 +150,8 @@ service cloud.firestore {
       match /graduations/{graduationId} {
         allow read: if isMemberOf(academiaId);
         allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+        // Temporary: allow authenticated users to create sample data
+        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
       }
       
       // Evaluations
@@ -206,6 +226,14 @@ service cloud.firestore {
         allow create: if (isInstructorOf(academiaId) || isAdminOf(academiaId));
         // Only admins can update/delete check-ins
         allow update, delete: if isAdminOf(academiaId);
+      }
+      
+      // Invites
+      match /invites/{inviteId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if isAdminOf(academiaId);
+        // Temporary: allow authenticated users to create sample data
+        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
       }
       
       // Audit Logs (append-only with strict access)

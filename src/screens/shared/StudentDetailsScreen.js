@@ -20,7 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthProvider';
 
 const StudentDetailsScreen = ({ route, navigation }) => {
   const { studentId } = route.params;
@@ -136,20 +136,20 @@ const StudentDetailsScreen = ({ route, navigation }) => {
         {/* Informações do Aluno */}
         <Card style={styles.card}>
           <View style={styles.studentHeader}>
-            <Avatar 
+            <Avatar.Text 
               size={80} 
-              title={studentInfo?.name?.charAt(0) || 'A'}
-              containerStyle={styles.avatar}
-              titleStyle={styles.avatarText}
+              label={studentInfo?.name?.charAt(0) || 'A'}
+              style={styles.avatar}
             />
             <View style={styles.studentInfo}>
-              <Text h3 style={styles.studentName}>{studentInfo?.name || 'Aluno'}</Text>
+              <Text variant="headlineSmall" style={styles.studentName}>{studentInfo?.name || 'Aluno'}</Text>
               <Text style={styles.studentEmail}>{studentInfo?.email}</Text>
-              <Badge 
-                value={studentInfo?.isActive ? 'Ativo' : 'Inativo'}
-                status={studentInfo?.isActive ? 'success' : 'error'}
-                containerStyle={styles.statusBadge}
-              />
+              <Text style={[
+                styles.statusBadge,
+                { color: studentInfo?.isActive ? '#4CAF50' : '#F44336' }
+              ]}>
+                {studentInfo?.isActive ? 'Ativo' : 'Inativo'}
+              </Text>
             </View>
           </View>
           
@@ -180,15 +180,15 @@ const StudentDetailsScreen = ({ route, navigation }) => {
         </Card>
 
         {/* Turmas Matriculadas */}
-        <Card containerStyle={styles.card}>
+        <Card style={styles.card}>
           <View style={styles.cardHeader}>
             <Ionicons name="school" size={24} color="#2196F3" />
-            <Text h4 style={styles.cardTitle}>Turmas Matriculadas</Text>
+            <Text variant="titleMedium" style={styles.cardTitle}>Turmas Matriculadas</Text>
           </View>
           
           {studentClasses.length > 0 ? (
             studentClasses.map((classItem, index) => (
-              <Card.Content key={classItem.id || index} style={styles.listItem}>
+              <Card.Content key={classItem.id || index}>
                 <View style={styles.listItemContent}>
                   <View style={styles.listItemLeft}>
                     <Ionicons name="fitness" size={20} color="#666" style={styles.listIcon} />
@@ -218,15 +218,15 @@ const StudentDetailsScreen = ({ route, navigation }) => {
         </Card>
 
         {/* Histórico de Pagamentos */}
-        <Card containerStyle={styles.card}>
+        <Card style={styles.card}>
           <View style={styles.cardHeader}>
             <Ionicons name="card" size={24} color="#4CAF50" />
-            <Text h4 style={styles.cardTitle}>Histórico de Pagamentos</Text>
+            <Text variant="titleMedium" style={styles.cardTitle}>Histórico de Pagamentos</Text>
           </View>
           
           {payments.length > 0 ? (
             payments.slice(0, 5).map((payment, index) => (
-              <Card.Content key={payment.id || index} style={styles.listItem}>
+              <Card.Content key={payment.id || index}>
                 <View style={styles.listItemContent}>
                   <View style={styles.listItemLeft}>
                     <Ionicons name="receipt" size={20} color="#666" style={styles.listIcon} />
@@ -239,14 +239,12 @@ const StudentDetailsScreen = ({ route, navigation }) => {
                       </Text>
                     </View>
                   </View>
-                  <Badge 
-                    style={{
-                      backgroundColor: getPaymentStatusColor(payment.status) === 'success' ? '#4CAF50' : 
-                                     getPaymentStatusColor(payment.status) === 'warning' ? '#FF9800' : '#F44336'
-                    }}
-                  >
+                  <Text style={{
+                    color: getPaymentStatusColor(payment.status),
+                    fontWeight: 'bold'
+                  }}>
                     {getPaymentStatusText(payment.status)}
-                  </Badge>
+                  </Text>
                 </View>
               </Card.Content>
             ))
@@ -258,38 +256,43 @@ const StudentDetailsScreen = ({ route, navigation }) => {
           
           {payments.length > 5 && (
             <Button
-              title="Ver Todos os Pagamentos"
-              type="outline"
+              mode="outlined"
               onPress={() => navigation.navigate('StudentPayments', { studentId })}
-              buttonStyle={styles.viewAllButton}
-            />
+              style={styles.viewAllButton}
+            >
+              Ver Todos os Pagamentos
+            </Button>
           )}
         </Card>
 
         {/* Ações */}
-        <Card containerStyle={styles.card}>
-          <Text h4 style={styles.cardTitle}>Ações</Text>
+        <Card style={styles.card}>
+          <Text variant="titleMedium" style={styles.cardTitle}>Ações</Text>
           
           <View style={styles.actionsContainer}>
             <Button
-              title="Editar Aluno"
+              mode="contained"
               onPress={() => navigation.navigate('EditStudent', { 
                 studentId, 
                 studentData: studentInfo 
               })}
-              buttonStyle={[styles.actionButton, { backgroundColor: '#2196F3' }]}
-              icon={<Ionicons name="create" size={20} color="white" />}
-            />
+              style={[styles.actionButton, { backgroundColor: '#2196F3' }]}
+              icon="pencil"
+            >
+              Editar Aluno
+            </Button>
             
             <Button
-              title={getString('addGraduation')}
+              mode="contained"
               onPress={() => navigation.navigate('AddGraduation', { 
                 studentId, 
                 studentName: studentInfo?.name 
               })}
-              buttonStyle={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
-              icon={<Ionicons name="trophy" size={20} color="white" />}
-            />
+              style={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
+              icon="trophy"
+            >
+              {getString('addGraduation')}
+            </Button>
           </View>
         </Card>
       </ScrollView>

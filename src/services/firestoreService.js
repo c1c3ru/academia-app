@@ -291,8 +291,12 @@ export const classService = {
 };
 
 export const paymentService = {
-  getPaymentsByStudent: async (studentId) => {
-    return await firestoreService.getWhere('payments', 'studentId', '==', studentId);
+  getPaymentsByStudent: async (studentId, academiaId) => {
+    if (!academiaId) {
+      console.warn('academiaId não fornecido para getPaymentsByStudent');
+      return [];
+    }
+    return await firestoreService.getWhere(`gyms/${academiaId}/payments`, 'studentId', '==', studentId);
   },
 
   registerPayment: async (studentId, paymentData) => {

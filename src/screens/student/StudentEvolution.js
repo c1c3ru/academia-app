@@ -19,7 +19,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';
 
 const StudentEvolution = ({ navigation }) => {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, academia } = useAuth();
   const { getString } = useTheme();
   const [graduations, setGraduations] = useState([]);
   const [stats, setStats] = useState({
@@ -39,9 +39,18 @@ const StudentEvolution = ({ navigation }) => {
     try {
       setLoading(true);
       
-      // Buscar dados do usuário com graduações
-      const userData = await firestoreService.getById('users', user.uid);
-      const userGraduations = userData?.graduations || [];
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
+      // Buscar graduações do aluno na academia
+      const allGraduations = await firestoreService.getAll(`gyms/${academiaId}/graduations`);
+      const userGraduations = allGraduations.filter(graduation => 
+        graduation.studentId === user.uid
+      );
       
       // Ordenar graduações por data (mais recente primeiro)
       const sortedGraduations = userGraduations.sort((a, b) => 

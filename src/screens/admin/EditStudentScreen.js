@@ -21,7 +21,7 @@ import { useAuth } from '../../contexts/AuthProvider';
 import { firestoreService } from '../../services/firestoreService';
 
 const EditStudentScreen = ({ navigation, route }) => {
-  const { user } = useAuth();
+  const { user, userProfile, academia } = useAuth();
   const { studentId } = route.params;
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -52,7 +52,15 @@ const EditStudentScreen = ({ navigation, route }) => {
   const loadStudentData = async () => {
     try {
       setLoadingData(true);
-      const studentData = await firestoreService.getById('users', studentId);
+      
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        throw new Error('Academia ID não encontrado');
+      }
+      
+      // Buscar aluno na subcoleção da academia
+      const studentData = await firestoreService.getById(`gyms/${academiaId}/students`, studentId);
       
       if (studentData) {
         setFormData({
@@ -135,7 +143,14 @@ const EditStudentScreen = ({ navigation, route }) => {
         updatedBy: user.uid
       };
 
-      await firestoreService.update('users', studentId, studentData);
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        throw new Error('Academia ID não encontrado');
+      }
+      
+      // Atualizar aluno na subcoleção da academia
+      await firestoreService.update(`gyms/${academiaId}/students`, studentId, studentData);
 
       setSnackbarMessage('Aluno atualizado com sucesso!');
       setSnackbarType('success');

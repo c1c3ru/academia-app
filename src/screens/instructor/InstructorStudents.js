@@ -23,7 +23,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { studentService, firestoreService } from '../../services/firestoreService';
 
 const InstructorStudents = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user, userProfile, academia } = useAuth();
   const { getString } = useTheme();
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
@@ -101,7 +101,11 @@ const InstructorStudents = ({ navigation }) => {
       // Load modalities (for filter options) with error handling
       let allModalities = [];
       try {
-        allModalities = await firestoreService.getAll('modalities');
+        // Obter ID da academia
+        const academiaId = userProfile?.academiaId || academia?.id;
+        if (academiaId) {
+          allModalities = await firestoreService.getAll(`gyms/${academiaId}/modalities`);
+        }
         console.log(getString('modalitiesLoaded').replace('{count}', allModalities.length));
       } catch (modalityError) {
         console.warn(getString('errorSearchingModalities'), modalityError);

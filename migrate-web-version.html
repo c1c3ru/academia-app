@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migração de Dados - Academia App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .danger {
+            background-color: #dc3545;
+        }
+        .danger:hover {
+            background-color: #c82333;
+        }
+        #log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 5px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Migração de Dados para Subcoleções</h1>
+        
+        <div class="status info">
+            <strong>ℹ️ Informação:</strong> Este script migrará os dados das coleções globais para subcoleções organizadas por academia.
+        </div>
+
+        <div class="status warning">
+            <strong>⚠️ Atenção:</strong> Faça backup dos dados antes de executar a migração!
+        </div>
+
+        <h3>Coleções a serem migradas:</h3>
+        <ul>
+            <li>classes → gyms/{academiaId}/classes</li>
+            <li>graduations → gyms/{academiaId}/graduations</li>
+            <li>invites → gyms/{academiaId}/invites</li>
+            <li>modalities → gyms/{academiaId}/modalities</li>
+            <li>payments → gyms/{academiaId}/payments</li>
+            <li>plans → gyms/{academiaId}/plans</li>
+        </ul>
+
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="startMigration()">🚀 Iniciar Migração</button>
+            <button onclick="deleteGlobalCollections()" class="danger" id="deleteBtn" disabled>
+                🗑️ Deletar Coleções Globais
+            </button>
+        </div>
+
+        <h3>Log de Execução:</h3>
+        <div id="log"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Configuração do Firebase - SUBSTITUA PELA SUA CONFIGURAÇÃO REAL
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_hzFPt9hUITlMq9BrsJuxAdzycVR3AEI",
+            authDomain: "academia-app-5cf79.firebaseapp.com", 
+            projectId: "academia-app-5cf79",
+            storageBucket: "academia-app-5cf79.firebasestorage.app",
+            messagingSenderId: "377489252583",
+            appId: "1:377489252583:android:87f2c3948511325769c242"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            logElement.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        async function migrateCollection(collectionName, getAcademiaId) {
+            log(`Iniciando migração da coleção: ${collectionName}`);
+            
+            try {
+                const snapshot = await db.collection(collectionName).get();
+                
+                if (snapshot.empty) {
+                    log(`Coleção ${collectionName} está vazia`, 'warning');
+                    return;
+                }
+
+                let migratedCount = 0;
+                let errorCount = 0;
+                
+                for (const doc of snapshot.docs) {
+                    try {
+                        const data = doc.data();
+                        const academiaId = getAcademiaId(data);
+                        
+                        if (!academiaId) {
+                            log(`Documento ${doc.id} não tem academiaId válido`, 'warning');
+                            errorCount++;
+                            continue;
+                        }
+
+                        // Criar documento na subcoleção
+                        await db.collection(`gyms/${academiaId}/${collectionName}`).doc(doc.id).set(data);
+                        
+                        log(`Migrado ${doc.id} para gyms/${academiaId}/${collectionName}`, 'success');
+                        migratedCount++;
+                        
+                        // Pequena pausa para evitar rate limiting
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                    } catch (error) {
+                        log(`Erro ao migrar documento ${doc.id}: ${error.message}`, 'error');
+                        errorCount++;
+                    }
+                }
+                
+                log(`Resumo da migração de ${collectionName}: ✅ ${migratedCount} migrados, ❌ ${errorCount} erros`);
+                
+            } catch (error) {
+                log(`Erro ao migrar coleção ${collectionName}: ${error.message}`, 'error');
+            }
+        }
+
+        async function startMigration() {
+            log('🚀 Iniciando migração de coleções para subcoleções...');
+            
+            try {
+                // 1. Migrar classes
+                await migrateCollection('classes', (data) => {
+                    return data.academiaId || data.gymId;
+                });
+                
+                // 2. Migrar graduations
+                await migrateCollection('graduations', (data) => {
+                    return data.academiaId || data.gymId;
+                });
+                
+                // 3. Migrar invites
+                await migrateCollection('invites', (data) => {
+                    return data.academiaId || data.gymId;
+                });
+                
+                // 4. Migrar modalities
+                await migrateCollection('modalities', (data) => {
+                    return data.academiaId || data.gymId;
+                });
+                
+                // 5. Migrar payments
+                await migrateCollection('payments', (data) => {
+                    return data.academiaId || data.gymId;
+                });
+                
+                // 6. Migrar plans
+                await migrateCollection('plans', (data) => {
+                    return data.academiaId || data.gymId;
+                });
+                
+                log('✅ Migração concluída!', 'success');
+                log('⚠️ IMPORTANTE: Verifique os dados migrados antes de deletar as coleções globais.', 'warning');
+                
+                // Habilitar botão de deletar
+                document.getElementById('deleteBtn').disabled = false;
+                
+            } catch (error) {
+                log(`Erro durante a migração: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteGlobalCollection(collectionName) {
+            log(`Deletando coleção global: ${collectionName}`);
+            
+            try {
+                const snapshot = await db.collection(collectionName).get();
+                
+                if (snapshot.empty) {
+                    log(`Coleção ${collectionName} já está vazia`, 'warning');
+                    return;
+                }
+
+                const batch = db.batch();
+                let deleteCount = 0;
+                
+                snapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                    deleteCount++;
+                });
+                
+                await batch.commit();
+                log(`Deletados ${deleteCount} documentos da coleção ${collectionName}`, 'success');
+                
+            } catch (error) {
+                log(`Erro ao deletar coleção ${collectionName}: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteGlobalCollections() {
+            if (!confirm('⚠️ ATENÇÃO: Esta ação irá deletar permanentemente as coleções globais. Tem certeza?')) {
+                return;
+            }
+            
+            log('🗑️ Deletando coleções globais...');
+            
+            await deleteGlobalCollection('classes');
+            await deleteGlobalCollection('graduations');
+            await deleteGlobalCollection('invites');
+            await deleteGlobalCollection('modalities');
+            await deleteGlobalCollection('payments');
+            await deleteGlobalCollection('plans');
+            
+            log('✅ Coleções globais deletadas!', 'success');
+        }
+    </script>
+</body>
+</html>

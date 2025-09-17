@@ -60,7 +60,7 @@ const AdminStudents = ({ navigation }) => {
       const studentsWithPayments = await Promise.all(
         studentUsers.map(async (student) => {
           try {
-            const payments = await paymentService.getPaymentsByStudent(student.id);
+            const payments = await paymentService.getPaymentsByStudent(student.id, academiaId);
             const latestPayment = payments[0];
             return {
               ...student,

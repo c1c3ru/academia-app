@@ -14,11 +14,12 @@ import {
   Portal,
   Snackbar
 } from 'react-native-paper';
-import { collection, query, where, getDocs, doc, getDoc, addDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { useAuth } from '../../contexts/AuthProvider';
-import { useTheme } from '../../contexts/ThemeContext';
-import { InviteService } from '../../services/inviteService';
+import { useAuth } from '../../contexts/AuthContext';
+import { updateAcademiaAssociation } from '../../services/userService';
+import { getString } from '../../services/languageService';
+import { initializeAcademySubcollections } from '../../services/academyInitializationService';
 import { isAdmin, getCanonicalUserType } from '../../utils/userTypeHelpers';
 import QRCodeScanner from '../../components/QRCodeScanner';
 import CountryStatePicker from '../../components/CountryStatePicker';
@@ -305,6 +306,10 @@ export default function AcademiaSelectionScreen({ navigation, route }) {
         
         // Associar usuário à academia criada
         await updateAcademiaAssociation(academiaRef.id);
+        
+        // Inicializar subcoleções básicas da academia
+        console.log('🚀 Inicializando subcoleções da academia...');
+        await initializeAcademySubcollections(academiaRef.id);
         
         // Mostrar o código da academia criada
         Alert.alert(

@@ -111,24 +111,37 @@ const AddClassScreen = ({ navigation }) => {
       console.warn('Aviso: falha ao buscar instrutores em users (permissões?):', error?.message || error);
     }
 
-    // 2) Tentar buscar em subcoleção 'gyms/{academiaId}/instructors' se houver academia
-    if (userProfile?.academiaId) {
+    // 2) Fallback: buscar na coleção global users APENAS se não encontrou instrutores na subcoleção
+    if (userInstructors.length === 0) {
       try {
-        const sub = await firestoreService.getAll(`gyms/${userProfile.academiaId}/instructors`);
-        subInstructors = (sub || []).map(i => ({
-          id: i.id || i.uid,
-          name: i.name || i.displayName || i.fullName || i.email || 'Instrutor',
-          email: i.email || null,
-          academiaId: userProfile.academiaId
-        }));
+        const users = await firestoreService.getAll('users');
+        const globalInstructors = users
+          .filter(u => (
+            u?.userType === 'instructor' ||
+            u?.tipo === 'instrutor' ||
+            u?.tipo === 'instructor'
+          ))
+          .filter(u => {
+            if (!userProfile?.academiaId) return true;
+            return !u?.academiaId || u.academiaId === userProfile.academiaId;
+          })
+          .map(u => ({
+            id: u.id,
+            name: u.name || u.displayName || u.fullName || u.email || 'Instrutor',
+            email: u.email || null,
+            academiaId: u.academiaId || null
+          }));
+        
+        userInstructors = globalInstructors;
+        console.log('⚠️ Usando fallback para coleção global users:', userInstructors.length, 'instrutores');
       } catch (e) {
-        console.warn('Aviso: falha ao buscar instrutores na subcoleção da academia:', e?.message || e);
+        console.warn('Aviso: falha ao buscar instrutores na coleção users:', e?.message || e);
       }
     }
 
     // 3) Mesclar e remover duplicados por id
     const map = new Map();
-    [...userInstructors, ...subInstructors].forEach((inst) => {
+    [...userInstructors].forEach((inst) => {
       if (!inst?.id) return;
       if (!map.has(inst.id)) {
         map.set(inst.id, inst);
@@ -141,7 +154,14 @@ const AddClassScreen = ({ navigation }) => {
 
   const loadModalities = async () => {
     try {
-      const list = await firestoreService.getAll('modalities');
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
+      const list = await firestoreService.getAll(`gyms/${academiaId}/modalities`);
       // Normalizar: garantir pelo menos name
       const normalized = (list || []).map((m) => ({ id: m.id || m.name, name: m.name }));
       setModalities(normalized);
