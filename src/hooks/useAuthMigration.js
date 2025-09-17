@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import useAuthStore from '../stores/authStore';
 import { normalizeUserProfile } from '../utils/userTypeHelpers';
+import { getUserClaims, refreshUserToken } from '../utils/customClaimsHelper';
 
 // Variável global para controlar a inicialização do listener
 let authListenerInitialized = false;
@@ -15,17 +16,41 @@ export const useAuthMigration = () => {
     setUser,
     setUserProfile,
     setAcademia,
+    setCustomClaims,
     setLoading,
     login,
     logout,
     user,
     userProfile,
     academia,
+    customClaims,
     loading,
     isAuthenticated,
     getUserType,
-    isComplete
+    isComplete,
+    hasValidClaims
   } = useAuthStore();
+
+  // Função para carregar Custom Claims
+  const loadCustomClaims = async (firebaseUser) => {
+    try {
+      console.log('🔍 loadCustomClaims: Carregando claims para:', firebaseUser.email);
+      const claims = await getUserClaims();
+      setCustomClaims(claims);
+      
+      console.log('📋 loadCustomClaims: Claims carregados:', {
+        role: claims?.role,
+        academiaId: claims?.academiaId,
+        hasValidClaims: !!(claims?.role && claims?.academiaId)
+      });
+      
+      return claims;
+    } catch (error) {
+      console.error('❌ loadCustomClaims: Erro ao carregar claims:', error);
+      setCustomClaims(null);
+      return null;
+    }
+  };
 
   // Função para buscar dados da academia
   const fetchAcademiaData = async (academiaId) => {
@@ -75,8 +100,10 @@ export const useAuthMigration = () => {
         const profileData = { id: userId, ...userDoc.data() };
         setUserProfile(profileData);
         
-        // Buscar dados da academia se o usuário tiver uma associada
+        // Buscar dados da academia se o usuário tiver uma associada no perfil
+        // Os claims serão verificados separadamente após serem carregados
         if (profileData.academiaId) {
+          console.log('🏢 fetchUserProfile: Buscando academia do perfil:', profileData.academiaId);
           await fetchAcademiaData(profileData.academiaId);
         }
       } else {
@@ -133,10 +160,24 @@ export const useAuthMigration = () => {
         setUser(firebaseUser);
         
         if (firebaseUser) {
+          // Carregar Custom Claims primeiro
+          const claims = await loadCustomClaims(firebaseUser);
+          
+          // Depois carregar perfil do usuário
           await fetchUserProfile(firebaseUser.uid, firebaseUser);
+          
+          // Se claims têm academia mas perfil não tem, buscar dados da academia dos claims
+          const currentProfile = useAuthStore.getState().userProfile;
+          const currentAcademia = useAuthStore.getState().academia;
+          
+          if (claims?.academiaId && !currentProfile?.academiaId && !currentAcademia) {
+            console.log('🏢 Auth: Claims têm academia mas perfil não, buscando academia dos claims:', claims.academiaId);
+            await fetchAcademiaData(claims.academiaId);
+          }
         } else {
           setUserProfile(null);
           setAcademia(null);
+          setCustomClaims(null);
         }
       } catch (error) {
         console.error('❌ Erro no auth state change:', error);
@@ -367,6 +408,32 @@ export const useAuthMigration = () => {
     }
   };
 
+  // Função para atualizar claims após operações das Cloud Functions
+  const refreshClaimsAndProfile = async () => {
+    try {
+      console.log('🔄 refreshClaimsAndProfile: Atualizando claims e perfil...');
+      
+      if (!user) {
+        console.log('⚠️ refreshClaimsAndProfile: Nenhum usuário logado');
+        return;
+      }
+      
+      // Forçar refresh do token para obter claims atualizados
+      await refreshUserToken();
+      
+      // Recarregar claims
+      await loadCustomClaims(user);
+      
+      // Recarregar perfil do usuário
+      await fetchUserProfile(user.uid, user);
+      
+      console.log('✅ refreshClaimsAndProfile: Claims e perfil atualizados');
+    } catch (error) {
+      console.error('❌ refreshClaimsAndProfile: Erro na atualização:', error);
+      throw error;
+    }
+  };
+
   // Função de logout
   const logoutUser = async () => {
     try {
@@ -389,18 +456,23 @@ export const useAuthMigration = () => {
     user,
     userProfile,
     academia,
+    customClaims,
     loading,
     isAuthenticated,
     getUserType,
     isComplete: isComplete(),
+    hasValidClaims: hasValidClaims(),
     login,
     logout: logoutUser,
     signIn,
     setUser,
     setUserProfile,
     setAcademia,
+    setCustomClaims,
     fetchUserProfile,
     fetchAcademiaData,
+    loadCustomClaims,
+    refreshClaimsAndProfile,
     updateUserProfile,
     updateAcademiaAssociation,
     signInWithGoogle,

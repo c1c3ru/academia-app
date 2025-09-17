@@ -9,6 +9,7 @@ const useAuthStore = create(
       user: null,
       userProfile: null,
       academia: null,
+      customClaims: null,
       loading: false, // Iniciar com false para evitar loading infinito
       isAuthenticated: false,
 
@@ -21,6 +22,8 @@ const useAuthStore = create(
       setUserProfile: (userProfile) => set({ userProfile }),
 
       setAcademia: (academia) => set({ academia }),
+
+      setCustomClaims: (customClaims) => set({ customClaims }),
 
       setLoading: (loading) => set({ loading }),
 
@@ -37,6 +40,7 @@ const useAuthStore = create(
         user: null,
         userProfile: null,
         academia: null,
+        customClaims: null,
         isAuthenticated: false,
         loading: false
       }),
@@ -62,8 +66,16 @@ const useAuthStore = create(
       },
 
       isComplete: () => {
-        const { user, userProfile, academia } = get();
-        return !!(user && userProfile && academia);
+        const { user, userProfile, academia, customClaims } = get();
+        // Consider complete if user has profile and either academia or valid claims
+        const hasAcademiaAssociation = academia || customClaims?.academiaId;
+        return !!(user && userProfile && hasAcademiaAssociation);
+      },
+
+      // Check if user has valid custom claims
+      hasValidClaims: () => {
+        const { customClaims } = get();
+        return !!(customClaims?.role && customClaims?.academiaId);
       }
     }),
     {

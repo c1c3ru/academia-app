@@ -56,7 +56,7 @@ const MainNavigator = ({ userType }) => {
 
 // Navegador Principal da Aplicação
 const AppNavigator = () => {
-  const { user, userProfile, academia, customClaims, loading } = useAuth();
+  const { user, userProfile, academia, customClaims, loading, hasValidClaims } = useAuth();
 
   // Memoizar o estado para evitar re-renderizações desnecessárias
   const navigationState = React.useMemo(() => ({
@@ -71,8 +71,8 @@ const AppNavigator = () => {
     finalUserType: userProfile?.userType || userProfile?.tipo || 'student',
     academiaId: userProfile?.academiaId || customClaims?.academiaId,
     claimsRole: customClaims?.role,
-    hasValidClaims: !!(customClaims?.role && customClaims?.academiaId)
-  }), [loading, user, userProfile, academia, customClaims]);
+    hasValidClaims: hasValidClaims || !!(customClaims?.role && customClaims?.academiaId)
+  }), [loading, user, userProfile, academia, customClaims, hasValidClaims]);
 
   console.log('🧭 AppNavigator: Estado atual:', navigationState);
   console.log('🧭 AppNavigator: Loading:', loading);
@@ -130,8 +130,9 @@ const AppNavigator = () => {
 
   // Se tem academia mas dados não carregaram ainda, mostrar loading
   // EXCETO para admins que podem não ter academia ainda
-  if (!academia && userProfile.academiaId) {
-    console.log('🧭 AppNavigator: Carregando dados da academia...');
+  const academiaId = userProfile.academiaId || customClaims?.academiaId;
+  if (!academia && academiaId) {
+    console.log('🧭 AppNavigator: Carregando dados da academia...', academiaId);
     return <LoadingScreen />;
   }
 
@@ -144,8 +145,11 @@ const AppNavigator = () => {
     tipo: userProfile.tipo,
     userType: userProfile.userType,
     finalUserType: userType,
-    academiaId: userProfile.academiaId,
-    academiaName: academia?.nome
+    academiaId: userProfile.academiaId || customClaims?.academiaId,
+    academiaName: academia?.nome,
+    hasValidClaims: navigationState.hasValidClaims,
+    claimsRole: customClaims?.role,
+    claimsAcademiaId: customClaims?.academiaId
   });
   
   return (

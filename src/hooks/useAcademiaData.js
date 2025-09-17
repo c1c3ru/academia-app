@@ -174,13 +174,21 @@ export function useAcademiaDocument(collectionName, itemId) {
 
 /**
  * Hooks específicos para cada tipo de dados
+ * Updated to use standardized English collection names
  */
-export const useAlunos = (options) => useAcademiaCollection('alunos', options);
-export const useInstrutores = (options) => useAcademiaCollection('instrutores', options);
-export const useTurmas = (options) => useAcademiaCollection('turmas', options);
-export const usePagamentos = (options) => useAcademiaCollection('pagamentos', options);
+export const useAlunos = (options) => useAcademiaCollection('students', options);
+export const useInstrutores = (options) => useAcademiaCollection('instructors', options);
+export const useTurmas = (options) => useAcademiaCollection('classes', options);
+export const usePagamentos = (options) => useAcademiaCollection('payments', options);
 export const useCheckins = (options) => useAcademiaCollection('checkins', options);
-export const usePlanos = (options) => useAcademiaCollection('planos', options);
+export const usePlanos = (options) => useAcademiaCollection('plans', options);
+
+// Backward compatibility aliases (deprecated - use English names)
+export const useStudents = (options) => useAcademiaCollection('students', options);
+export const useInstructors = (options) => useAcademiaCollection('instructors', options);
+export const useClasses = (options) => useAcademiaCollection('classes', options);
+export const usePayments = (options) => useAcademiaCollection('payments', options);
+export const usePlans = (options) => useAcademiaCollection('plans', options);
 
 /**
  * Hook para estatísticas da academia
