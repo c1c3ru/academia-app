@@ -127,11 +127,25 @@ jest.mock('react-native-calendars', () => ({
   }
 }));
 
+// Mock Firestore Service
+jest.mock('../services/firestoreService', () => ({
+  firestoreService: {
+    addDocument: jest.fn(),
+    updateDocument: jest.fn(),
+    getDocument: jest.fn(),
+    getDocumentsWithFilters: jest.fn(),
+    deleteDocument: jest.fn(),
+    subscribeToDocument: jest.fn(),
+    subscribeToCollection: jest.fn()
+  }
+}));
+
 // Mock Notifications
 jest.mock('../services/notificationService', () => ({
   scheduleClassReminders: jest.fn(),
   sendLocalNotification: jest.fn(),
-  requestPermissions: jest.fn()
+  requestPermissions: jest.fn(),
+  notifyPaymentDue: jest.fn()
 }));
 
 // Global test utilities

@@ -59,6 +59,8 @@ describe('PaymentService', () => {
     };
 
     it('should process card payment successfully', async () => {
+      // Mock Math.random to ensure approval (return value < 0.1 means denied, > 0.1 means approved)
+      jest.spyOn(Math, 'random').mockReturnValue(0.5);
       jest.spyOn(paymentService, 'confirmPayment').mockResolvedValue(true);
 
       const result = await paymentService.processCardPayment(mockPaymentData, mockCardData);
@@ -66,6 +68,9 @@ describe('PaymentService', () => {
       expect(result.success).toBe(true);
       expect(result.transactionId).toBeDefined();
       expect(result.message).toBe('Pagamento processado com sucesso');
+      
+      // Restore Math.random
+      Math.random.mockRestore();
     });
 
     it('should reject payment with invalid card number', async () => {
@@ -96,9 +101,11 @@ describe('PaymentService', () => {
   describe('confirmPayment', () => {
     it('should confirm payment and send notification', async () => {
       const mockPayment = { id: 'payment-123', amount: 150.00 };
-      firestoreService.updateDocument = jest.fn().mockResolvedValue();
-      firestoreService.getDocument = jest.fn().mockResolvedValue(mockPayment);
-      notificationService.sendLocalNotification = jest.fn().mockResolvedValue();
+      
+      // Reset and configure mocks
+      firestoreService.updateDocument.mockResolvedValue();
+      firestoreService.getDocument.mockResolvedValue(mockPayment);
+      notificationService.sendLocalNotification.mockResolvedValue();
 
       const paidAt = new Date();
       const result = await paymentService.confirmPayment('payment-123', {
