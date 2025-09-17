@@ -13,8 +13,8 @@ describe('PaymentService', () => {
 
   describe('createPixPayment', () => {
     it('should create PIX payment successfully', async () => {
-      firestoreService.addDocument = jest.fn().mockResolvedValue('payment-id-123');
-      notificationService.notifyPaymentDue = jest.fn().mockResolvedValue();
+      firestoreService.addDocument.mockResolvedValue('payment-id-123');
+      notificationService.notifyPaymentDue.mockResolvedValue();
 
       const result = await paymentService.createPixPayment(
         'student-123',
@@ -36,7 +36,7 @@ describe('PaymentService', () => {
     });
 
     it('should throw error when creation fails', async () => {
-      firestoreService.addDocument = jest.fn().mockRejectedValue(new Error('Database error'));
+      firestoreService.addDocument.mockRejectedValue(new Error('Database error'));
 
       await expect(
         paymentService.createPixPayment('student-123', 150.00, 'Test', new Date())
@@ -148,7 +148,7 @@ describe('PaymentService', () => {
         { id: 'payment2', studentId: 'student-123', status: 'pending', dueDate: { toDate: () => new Date('2024-02-01') } }
       ];
 
-      firestoreService.getDocumentsWithFilters = jest.fn().mockResolvedValue(mockPayments);
+      firestoreService.getDocumentsWithFilters.mockResolvedValue(mockPayments);
 
       const result = await paymentService.getStudentPayments('student-123', { status: 'paid' });
 
@@ -170,9 +170,9 @@ describe('PaymentService', () => {
         { id: 'payment2', amount: 200, studentId: 'student-456' }
       ];
 
-      firestoreService.getDocumentsWithFilters = jest.fn().mockResolvedValue(mockOverduePayments);
-      firestoreService.updateDocument = jest.fn().mockResolvedValue();
-      notificationService.sendLocalNotification = jest.fn().mockResolvedValue();
+      firestoreService.getDocumentsWithFilters.mockResolvedValue(mockOverduePayments);
+      firestoreService.updateDocument.mockResolvedValue();
+      notificationService.sendLocalNotification.mockResolvedValue();
 
       const result = await paymentService.checkOverduePayments();
 
@@ -184,7 +184,7 @@ describe('PaymentService', () => {
 
   describe('createRecurringPayment', () => {
     it('should create 12 monthly payments', async () => {
-      firestoreService.addDocument = jest.fn()
+      firestoreService.addDocument
         .mockResolvedValueOnce('payment1')
         .mockResolvedValueOnce('payment2')
         .mockResolvedValue('payment-n');
