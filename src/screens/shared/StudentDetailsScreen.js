@@ -134,7 +134,7 @@ const StudentDetailsScreen = ({ route, navigation }) => {
         }
       >
         {/* Informações do Aluno */}
-        <Card containerStyle={styles.card}>
+        <Card style={styles.card}>
           <View style={styles.studentHeader}>
             <Avatar 
               size={80} 
