@@ -1,14 +1,26 @@
+// Mock the services before import
+jest.mock('../firestoreService');
+jest.mock('../notificationService');
+
 import paymentService from '../paymentService';
 import { firestoreService } from '../firestoreService';
 import notificationService from '../notificationService';
 
-// Mock dependencies
-jest.mock('../firestoreService');
-jest.mock('../notificationService');
-
 describe('PaymentService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Reset all mocks to their default implementations
+    firestoreService.addDocument.mockResolvedValue('mock-id');
+    firestoreService.updateDocument.mockResolvedValue();
+    firestoreService.getDocument.mockResolvedValue({});
+    firestoreService.getDocumentsWithFilters.mockResolvedValue([]);
+    firestoreService.deleteDocument.mockResolvedValue();
+    
+    notificationService.scheduleClassReminders.mockResolvedValue();
+    notificationService.sendLocalNotification.mockResolvedValue();
+    notificationService.requestPermissions.mockResolvedValue();
+    notificationService.notifyPaymentDue.mockResolvedValue();
   });
 
   describe('createPixPayment', () => {
@@ -102,12 +114,13 @@ describe('PaymentService', () => {
     it('should confirm payment and send notification', async () => {
       const mockPayment = { id: 'payment-123', amount: 150.00 };
       
-      // Reset and configure mocks
-      firestoreService.updateDocument.mockResolvedValue();
-      firestoreService.getDocument.mockResolvedValue(mockPayment);
-      notificationService.sendLocalNotification.mockResolvedValue();
+      // Configure mocks
+      firestoreService.updateDocument = jest.fn().mockResolvedValue();
+      firestoreService.getDocument = jest.fn().mockResolvedValue(mockPayment);
+      notificationService.sendLocalNotification = jest.fn().mockResolvedValue();
 
       const paidAt = new Date();
+      
       const result = await paymentService.confirmPayment('payment-123', {
         paidAt,
         method: 'credit_card',
@@ -116,19 +129,24 @@ describe('PaymentService', () => {
       });
 
       expect(result).toBe(true);
+      expect(firestoreService.updateDocument).toHaveBeenCalledTimes(1);
       expect(firestoreService.updateDocument).toHaveBeenCalledWith(
         'payments',
         'payment-123',
         expect.objectContaining({
           status: 'paid',
-          transactionId: 'txn-123',
           method: 'credit_card',
-          paidDate: paidAt,
+          transactionId: 'txn-123',
           authorizationCode: 'AUTH_123',
+          paidDate: paidAt,
           updatedAt: expect.any(Date)
         })
       );
+      
+      expect(firestoreService.getDocument).toHaveBeenCalledTimes(1);
       expect(firestoreService.getDocument).toHaveBeenCalledWith('payments', 'payment-123');
+      
+      expect(notificationService.sendLocalNotification).toHaveBeenCalledTimes(1);
       expect(notificationService.sendLocalNotification).toHaveBeenCalledWith(
         'Pagamento Confirmado! ✅',
         'Seu pagamento de R$ 150.00 foi processado com sucesso.',

@@ -143,18 +143,16 @@ export const firestoreService = {
       let q = collection(db, collectionName);
       
       // Aplicar filtros
-      if (filters && filters.length > 0) {
-        filters.forEach(filter => {
-          q = query(q, where(filter.field, filter.operator, filter.value));
-        });
-      }
+      filters.forEach(filter => {
+        q = query(q, where(filter.field, filter.operator, filter.value));
+      });
       
-      // Aplicar ordenação
+      // Aplicar ordenação se especificada
       if (orderByConfig) {
-        q = query(q, orderBy(orderByConfig.field, orderByConfig.direction || 'desc'));
+        q = query(q, orderBy(orderByConfig.field, orderByConfig.direction || 'asc'));
       }
       
-      // Aplicar limite
+      // Aplicar limite se especificado
       if (limitCount) {
         q = query(q, limit(limitCount));
       }
@@ -165,36 +163,58 @@ export const firestoreService = {
         ...doc.data()
       }));
     } catch (error) {
-      console.error(`Erro ao buscar documentos em ${collectionName}:`, error);
+      console.error(`Erro ao buscar documentos de ${collectionName}:`, error);
       throw error;
     }
   },
 
-  // Escutar mudanças em tempo real
-  listen: (collectionName, callback, filters = []) => {
-    try {
-      let q = collection(db, collectionName);
-      
-      // Aplicar filtros se fornecidos
-      if (filters.length > 0) {
-        filters.forEach(filter => {
-          q = query(q, where(filter.field, filter.operator, filter.value));
-        });
+  // Listener para mudanças em tempo real
+  subscribeToDocument: (collectionName, id, callback) => {
+    const docRef = doc(db, collectionName, id);
+    return onSnapshot(docRef, (doc) => {
+      if (doc.exists()) {
+        callback({ id: doc.id, ...doc.data() });
+      } else {
+        callback(null);
       }
-      
-      q = query(q, orderBy('createdAt', 'desc'));
-      
-      return onSnapshot(q, (querySnapshot) => {
-        const documents = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        callback(documents);
-      });
-    } catch (error) {
-      console.error(`Erro ao escutar mudanças em ${collectionName}:`, error);
-      throw error;
-    }
+    });
+  },
+
+  subscribeToCollection: (collectionName, callback, filters = []) => {
+    let q = collection(db, collectionName);
+    
+    filters.forEach(filter => {
+      q = query(q, where(filter.field, filter.operator, filter.value));
+    });
+    
+    return onSnapshot(q, (querySnapshot) => {
+      const docs = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      callback(docs);
+    });
+  },
+
+  // Compatibility methods for paymentService
+  addDocument: async (collectionName, data) => {
+    return await firestoreService.create(collectionName, data);
+  },
+
+  updateDocument: async (collectionName, id, data) => {
+    return await firestoreService.update(collectionName, id, data);
+  },
+
+  getDocument: async (collectionName, id) => {
+    return await firestoreService.getById(collectionName, id);
+  },
+
+  getDocumentsWithFilters: async (collectionName, filters) => {
+    return await firestoreService.getDocuments(collectionName, filters);
+  },
+
+  deleteDocument: async (collectionName, id) => {
+    return await firestoreService.delete(collectionName, id);
   }
 };
 

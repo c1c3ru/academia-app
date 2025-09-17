@@ -33,7 +33,7 @@ module.exports = {
     '^@utils/(.*)$': '<rootDir>/src/utils/$1'
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|react-native-paper|react-native-vector-icons|@react-navigation|react-native-calendars|expo|@expo)/)'
+    'node_modules/(?!(react-native|@react-native|react-native-paper|react-native-vector-icons|@react-navigation|react-native-calendars|expo|@expo|expo-notifications|expo-device|expo-modules-core)/)'
   ],
   testEnvironment: 'node',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node']

@@ -127,23 +127,7 @@ jest.mock('react-native-calendars', () => ({
   }
 }));
 
-// Mock Firestore Service
-jest.mock('../services/firestoreService', () => {
-  const mockFirestoreService = {
-    addDocument: jest.fn(),
-    updateDocument: jest.fn(),
-    getDocument: jest.fn(),
-    getDocumentsWithFilters: jest.fn(),
-    deleteDocument: jest.fn(),
-    subscribeToDocument: jest.fn(),
-    subscribeToCollection: jest.fn()
-  };
-  
-  return {
-    firestoreService: mockFirestoreService,
-    default: mockFirestoreService
-  };
-});
+// Mock Firestore Service - removed to allow individual test mocks
 
 // Mock Notifications
 jest.mock('../services/notificationService', () => {
