@@ -1,0 +1,322 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ========== FUNÇÕES AUXILIARES COM CUSTOM CLAIMS ==========
+    // Estas funções leem do token do usuário, não do banco. Custo ZERO.
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return request.auth.token.role;
+    }
+    
+    function getAcademiaId() {
+      return request.auth.token.academiaId;
+    }
+    
+    function isMemberOf(academiaId) {
+      return getAcademiaId() == academiaId;
+    }
+    
+    function isAdminOf(academiaId) {
+      return getUserRole() == 'admin' && isMemberOf(academiaId);
+    }
+    
+    function isInstructorOf(academiaId) {
+      return getUserRole() == 'instructor' && isMemberOf(academiaId);
+    }
+    
+    function isStudentOf(academiaId) {
+      return getUserRole() == 'student' && isMemberOf(academiaId);
+    }
+    
+    // Função para verificar se o usuário não tem academia associada (para criação de nova academia)
+    function hasNoAcademy() {
+      return getAcademiaId() == null;
+    }
+    
+    // ========== COLEÇÃO DE USUÁRIOS ==========
+    match /users/{userId} {
+      // 1. Um usuário sempre pode ler e atualizar seus próprios dados
+      allow read, update: if request.auth.uid == userId;
+      
+      // 2. Admins da mesma academia podem ler dados dos usuários
+      allow read: if isAdminOf(resource.data.academiaId);
+      
+      // 3. Bloquear criação e exclusão diretas (devem ser via Auth/Cloud Functions)
+      allow create, delete: if false;
+    }
+    
+    // ========== COLEÇÃO DE ACADEMIAS ==========
+    match /gyms/{academiaId} {
+      // Leitura: membros da academia podem ler sua própria academia
+      allow read: if isMemberOf(academiaId);
+      
+      // Admins podem listar academias (para casos específicos)
+      allow list: if getUserRole() == 'admin';
+      
+      // Criação: Desabilitada no cliente (será feita via Cloud Function)
+      allow create: if false;
+      
+      // Atualização/Exclusão: Apenas admins da PRÓPRIA academia
+      allow update, delete: if isAdminOf(academiaId);
+      
+      // --- Subcoleções ---
+      match /alunos/{alunoId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                       request.resource.data.academiaId == academiaId;
+      }
+      
+      match /instrutores/{instrutorId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        allow write: if isAdminOf(academiaId) && request.resource.data.academiaId == academiaId;
+      }
+      
+      match /turmas/{turmaId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        allow create: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                        request.resource.data.academiaId == academiaId;
+        allow update: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                        resource.data.academiaId == academiaId;
+        allow delete: if isAdminOf(academiaId) && resource.data.academiaId == academiaId;
+        
+        match /alunos/{alunoId} {
+          allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+          allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                         request.resource.data.academiaId == academiaId;
+        }
+      }
+      
+      match /pagamentos/{pagamentoId} {
+        // Admin ou instrutor pode ler todos os pagamentos da academia
+        allow read: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                      resource.data.academiaId == academiaId;
+        // O aluno dono do pagamento também pode lê-lo
+        allow read: if isStudentOf(academiaId) && resource.data.alunoId == request.auth.uid && 
+                      resource.data.academiaId == academiaId;
+        // Apenas admins podem criar/editar pagamentos
+        allow write: if isAdminOf(academiaId) && request.resource.data.academiaId == academiaId;
+      }
+      
+      match /planos/{planoId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        allow write: if isAdminOf(academiaId) && request.resource.data.academiaId == academiaId;
+      }
+      
+      // --- Subcoleções que eram globais (agora isoladas por academia) ---
+      match /modalities/{modalityId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        allow write: if isAdminOf(academiaId) && request.resource.data.academiaId == academiaId;
+      }
+      
+      match /plans/{planId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        allow write: if isAdminOf(academiaId) && request.resource.data.academiaId == academiaId;
+      }
+      
+      match /announcements/{announcementId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        allow write: if isAdminOf(academiaId) && request.resource.data.academiaId == academiaId;
+      }
+      
+      match /graduation_levels/{levelId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        allow write: if isAdminOf(academiaId) && request.resource.data.academiaId == academiaId;
+      }
+
+      // --- Novas coleções migradas ---
+      match /classes/{classId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        allow create: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                        request.resource.data.academiaId == academiaId;
+        allow update: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                        resource.data.academiaId == academiaId;
+        allow delete: if isAdminOf(academiaId) && resource.data.academiaId == academiaId;
+      }
+
+      match /payments/{paymentId} {
+        // Admin ou instrutor pode ler todos os pagamentos da academia
+        allow read: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                      resource.data.academiaId == academiaId;
+        // O aluno dono do pagamento também pode lê-lo
+        allow read: if isStudentOf(academiaId) && resource.data.studentId == request.auth.uid && 
+                      resource.data.academiaId == academiaId;
+        // Apenas admins podem criar/editar/deletar pagamentos
+        allow write: if isAdminOf(academiaId) && request.resource.data.academiaId == academiaId;
+      }
+
+      match /checkins/{checkinId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        // Qualquer membro pode fazer check-in, mas apenas de si mesmo
+        allow create: if isMemberOf(academiaId) && request.resource.data.studentId == request.auth.uid && 
+                        request.resource.data.academiaId == academiaId;
+        // Instrutores e admins podem criar check-ins para qualquer aluno
+        allow create: if (isInstructorOf(academiaId) || isAdminOf(academiaId)) && 
+                        request.resource.data.academiaId == academiaId;
+        // Apenas admins podem atualizar/deletar check-ins
+        allow update, delete: if isAdminOf(academiaId) && resource.data.academiaId == academiaId;
+      }
+
+      match /graduations/{graduationId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        // Apenas admins e instrutores podem criar/editar graduações
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                       request.resource.data.academiaId == academiaId;
+      }
+
+      match /evaluations/{evaluationId} {
+        // Base read permission for academy members
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        // Instrutores podem ler avaliações que eles criaram
+        allow read: if isInstructorOf(academiaId) && resource.data.instructorId == request.auth.uid && 
+                      resource.data.academiaId == academiaId;
+        // Alunos podem ler apenas suas próprias avaliações
+        allow read: if isStudentOf(academiaId) && resource.data.studentId == request.auth.uid && 
+                      resource.data.academiaId == academiaId;
+        // Apenas instrutores e admins podem criar/editar avaliações
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                       request.resource.data.academiaId == academiaId;
+      }
+
+      match /evaluation_schedules/{scheduleId} {
+        // Base read permission for academy members
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        // Alunos podem ler apenas seus próprios agendamentos
+        allow read: if isStudentOf(academiaId) && resource.data.studentId == request.auth.uid && 
+                      resource.data.academiaId == academiaId;
+        // Instrutores podem ler agendamentos que eles criaram
+        allow read: if isInstructorOf(academiaId) && resource.data.instructorId == request.auth.uid && 
+                      resource.data.academiaId == academiaId;
+        // Apenas instrutores e admins podem criar/editar agendamentos
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                       request.resource.data.academiaId == academiaId;
+      }
+
+      match /events/{eventId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                       request.resource.data.academiaId == academiaId;
+      }
+
+      match /eventRegistrations/{registrationId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        // Alunos podem se registrar em eventos
+        allow create: if isStudentOf(academiaId) && request.resource.data.studentId == request.auth.uid && 
+                        request.resource.data.academiaId == academiaId;
+        // Admins e instrutores podem gerenciar todas as inscrições
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                       request.resource.data.academiaId == academiaId;
+      }
+
+      // --- Notificações ---
+      match /notifications/{notificationId} {
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        // Apenas admins e instrutores podem criar notificações
+        allow create: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                        request.resource.data.academiaId == academiaId;
+        // Usuários podem marcar notificações como lidas (update limitado)
+        allow update: if isMemberOf(academiaId) && resource.data.academiaId == academiaId &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy', 'updatedAt']);
+        // Apenas admins podem deletar notificações
+        allow delete: if isAdminOf(academiaId) && resource.data.academiaId == academiaId;
+      }
+
+      // --- Lesões/Injuries ---
+      match /injuries/{injuryId} {
+        // Base read permission for academy members
+        allow read: if isMemberOf(academiaId) && resource.data.academiaId == academiaId;
+        // Alunos podem ler apenas suas próprias lesões
+        allow read: if isStudentOf(academiaId) && resource.data.studentId == request.auth.uid && 
+                      resource.data.academiaId == academiaId;
+        // Instrutores e admins podem criar/editar lesões
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId)) && 
+                       request.resource.data.academiaId == academiaId;
+        // Alunos podem reportar suas próprias lesões
+        allow create: if isStudentOf(academiaId) && request.resource.data.studentId == request.auth.uid && 
+                        request.resource.data.academiaId == academiaId;
+      }
+
+      // --- Logs de auditoria (acesso restrito e append-only) ---
+      match /audit_logs/{logId} {
+        // Apenas admins podem ler logs de auditoria
+        allow read: if isAdminOf(academiaId) && resource.data.academiaId == academiaId;
+        // Sistema pode criar logs com validações rígidas
+        allow create: if isSignedIn() &&
+                        request.resource.data.keys().hasAll(['academiaId', 'operation', 'userId', 'timestamp']) &&
+                        request.resource.data.academiaId == academiaId &&
+                        request.resource.data.userId == request.auth.uid;
+        // Logs são estritamente append-only - NUNCA podem ser editados ou deletados
+        allow update, delete: if false;
+      }
+
+      match /critical_audit_backup/{backupId} {
+        // Acesso extremamente restrito - apenas para recuperação de dados críticos
+        allow read, write: if false; // Acesso apenas via Cloud Functions ou ferramentas admin
+      }
+    }
+    
+    // ========== COLEÇÕES GLOBAIS REMOVIDAS ==========
+    // Estas coleções foram movidas para subcoleções dentro de cada academia
+    match /modalities/{modalityId} {
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/modalities
+    }
+    
+    match /plans/{planId} {
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/plans
+    }
+    
+    match /announcements/{announcementId} {
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/announcements
+    }
+    
+    
+    // ========== COLEÇÕES LEGADAS - DESABILITADAS POR SEGURANÇA ==========
+    match /classes/{classId} {
+      allow read, write: if false; // Desabilitado até migração completa
+    }
+    
+    match /payments/{paymentId} {
+      allow read, write: if false; // Desabilitado até migração completa
+    }
+    
+    // ========== OUTRAS COLEÇÕES ==========
+    match /invites/{inviteId} {
+      allow read: if isSignedIn();
+      allow create: if getUserRole() == 'admin';
+      allow update: if isSignedIn();
+    }
+    
+    match /graduations/{graduationId} {
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/graduations
+    }
+    
+    match /graduation_levels/{levelId} {
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/graduation_levels
+    }
+    
+    // ========== NOVAS COLEÇÕES MIGRADAS - GLOBAIS DESABILITADAS ==========
+    match /evaluations/{evaluationId} {
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/evaluations
+    }
+    
+    match /evaluation_schedules/{scheduleId} {
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/evaluation_schedules
+    }
+    
+    match /notifications/{notificationId} {
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/notifications
+    }
+    
+    match /injuries/{injuryId} {
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/injuries
+    }
+    
+    match /audit_logs/{logId} {
+      allow read, write: if false; // Desabilitado - usar /gyms/{academiaId}/audit_logs
+    }
+  }
+}

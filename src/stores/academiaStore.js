@@ -83,7 +83,7 @@ const useAcademiaStore = create((set, get) => ({
   getStudentsByClass: (classId) => {
     const { students } = get();
     return students.filter(student => 
-      student.turmas && student.turmas.includes(classId)
+      student.classIds && student.classIds.includes(classId)
     );
   },
 

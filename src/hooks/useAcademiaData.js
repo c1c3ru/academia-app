@@ -194,22 +194,22 @@ export const usePlans = (options) => useAcademiaCollection('plans', options);
  * Hook para estatísticas da academia
  */
 export function useAcademiaStats() {
-  const { data: alunos, loading: loadingAlunos } = useAlunos();
-  const { data: turmas, loading: loadingTurmas } = useTurmas();
-  const { data: pagamentos, loading: loadingPagamentos } = usePagamentos();
+  const { data: students, loading: loadingStudents } = useStudents();
+  const { data: classes, loading: loadingClasses } = useClasses();
+  const { data: payments, loading: loadingPayments } = usePayments();
 
-  const loading = loadingAlunos || loadingTurmas || loadingPagamentos;
+  const loading = loadingStudents || loadingClasses || loadingPayments;
 
   const stats = {
-    totalAlunos: alunos?.length || 0,
-    totalTurmas: turmas?.length || 0,
-    alunosAtivos: alunos?.filter(aluno => aluno.status === 'ativo')?.length || 0,
-    turmasAtivas: turmas?.filter(turma => turma.status === 'ativa')?.length || 0,
-    receitaMensal: pagamentos?.reduce((total, pagamento) => {
-      const pagamentoDate = pagamento.createdAt?.toDate?.() || new Date(pagamento.createdAt);
-      const isCurrentMonth = pagamentoDate.getMonth() === new Date().getMonth() && 
-                            pagamentoDate.getFullYear() === new Date().getFullYear();
-      return isCurrentMonth ? total + (pagamento.valor || 0) : total;
+    totalStudents: students?.length || 0,
+    totalClasses: classes?.length || 0,
+    activeStudents: students?.filter(student => student.status === 'ativo')?.length || 0,
+    activeClasses: classes?.filter(classItem => classItem.status === 'ativa')?.length || 0,
+    monthlyRevenue: payments?.reduce((total, payment) => {
+      const paymentDate = payment.createdAt?.toDate?.() || new Date(payment.createdAt);
+      const isCurrentMonth = paymentDate.getMonth() === new Date().getMonth() && 
+                            paymentDate.getFullYear() === new Date().getFullYear();
+      return isCurrentMonth ? total + (payment.valor || payment.amount || 0) : total;
     }, 0) || 0
   };
 
