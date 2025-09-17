@@ -5,7 +5,62 @@ import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/asy
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 
 // Mock React Native modules
-jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
+jest.mock('react-native', () => {
+  return {
+    Platform: {
+      OS: 'ios',
+      select: jest.fn((obj) => obj.ios || obj.default),
+      Version: 25
+    },
+    Dimensions: {
+      get: jest.fn(() => ({ width: 375, height: 667 })),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn()
+    },
+    StyleSheet: {
+      create: jest.fn((styles) => styles),
+      flatten: jest.fn((style) => style)
+    },
+    View: 'View',
+    Text: 'Text',
+    TextInput: 'TextInput',
+    TouchableOpacity: 'TouchableOpacity',
+    TouchableHighlight: 'TouchableHighlight',
+    ScrollView: 'ScrollView',
+    FlatList: 'FlatList',
+    Image: 'Image',
+    Alert: {
+      alert: jest.fn()
+    },
+    Animated: {
+      timing: jest.fn(() => ({
+        start: jest.fn()
+      })),
+      Value: jest.fn(() => ({
+        setValue: jest.fn(),
+        interpolate: jest.fn(() => ({
+          addListener: jest.fn(),
+          removeListener: jest.fn(),
+          removeAllListeners: jest.fn(),
+        }))
+      })),
+      createAnimatedComponent: jest.fn(() => jest.fn()),
+      View: 'Animated.View',
+      Text: 'Animated.Text',
+      ScrollView: 'Animated.ScrollView'
+    },
+    Easing: {
+      linear: jest.fn(),
+      ease: jest.fn(),
+      quad: jest.fn(),
+      cubic: jest.fn(),
+      bezier: jest.fn(() => jest.fn()),
+      in: jest.fn(() => jest.fn()),
+      out: jest.fn(() => jest.fn()),
+      inOut: jest.fn(() => jest.fn())
+    }
+  };
+});
 
 // Mock Firebase
 jest.mock('../services/firebase', () => ({

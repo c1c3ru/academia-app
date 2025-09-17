@@ -293,18 +293,18 @@ class AcademyEvaluationService {
 
       if (evaluations.length > 0) {
         // Calcular média geral
-        const totalScore = evaluations.reduce((sum, eval) => sum + eval.overallScore, 0);
+        const totalScore = evaluations.reduce((sum, evaluation) => sum + evaluation.overallScore, 0);
         report.averageScore = Math.round((totalScore / evaluations.length) * 100) / 100;
 
         // Última avaliação
         report.lastEvaluation = evaluations[0];
 
         // Histórico de avaliações
-        report.evaluationHistory = evaluations.map(eval => ({
-          date: eval.date.toDate(),
-          type: eval.type,
-          score: eval.overallScore,
-          comments: eval.comments
+        report.evaluationHistory = evaluations.map(evaluation => ({
+          date: evaluation.date.toDate(),
+          type: evaluation.type,
+          score: evaluation.overallScore,
+          comments: evaluation.comments
         }));
 
         // Analisar tendência de progresso

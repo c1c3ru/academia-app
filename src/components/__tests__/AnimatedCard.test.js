@@ -10,23 +10,7 @@ const TestWrapper = ({ children }) => (
   </PaperProvider>
 );
 
-// Mock Animated.timing
-jest.mock('react-native', () => {
-  const RN = jest.requireActual('react-native');
-  return {
-    ...RN,
-    Animated: {
-      ...RN.Animated,
-      timing: jest.fn(() => ({
-        start: jest.fn()
-      })),
-      Value: jest.fn(() => ({
-        setValue: jest.fn(),
-        interpolate: jest.fn()
-      }))
-    }
-  };
-});
+// Animated is already mocked in setup.js
 
 describe('AnimatedCard', () => {
   beforeEach(() => {
