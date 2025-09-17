@@ -64,16 +64,23 @@ const EnhancedCalendarScreen = ({ navigation }) => {
     try {
       let userClasses = [];
       
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
       if (userProfile?.userType === 'admin') {
-        // Admin vê todas as turmas
-        userClasses = await firestoreService.getAll('classes');
+        // Admin vê todas as turmas da academia
+        userClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
       } else if (userProfile?.userType === 'instructor') {
-        // Instrutor vê suas turmas
-        const allClasses = await firestoreService.getAll('classes');
+        // Instrutor vê suas turmas da academia
+        const allClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
         userClasses = allClasses.filter(cls => cls.instructorId === user.uid);
       } else {
-        // Aluno vê suas turmas matriculadas
-        const allClasses = await firestoreService.getAll('classes');
+        // Aluno vê suas turmas matriculadas da academia
+        const allClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
         userClasses = allClasses.filter(cls => 
           userProfile?.classIds && userProfile.classIds.includes(cls.id)
         );

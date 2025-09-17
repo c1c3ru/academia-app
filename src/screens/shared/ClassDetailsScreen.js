@@ -16,11 +16,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { firestoreService } from '../../services/firestoreService';
+import { useAuth } from '../../contexts/auth';
 
 const { width } = Dimensions.get('window');
 
 const ClassDetailsScreen = ({ route, navigation }) => {
-  const { classId, classData } = route.params || {};
+  const { classId } = route.params;
+  const { user, userProfile, academia } = useAuth();
   const [classInfo, setClassInfo] = useState(classData || null);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(!classData);
@@ -39,14 +41,26 @@ const ClassDetailsScreen = ({ route, navigation }) => {
       setLoading(true);
       
       if (!classData) {
-        const classDetails = await firestoreService.getById('classes', classId);
+        // Obter ID da academia para buscar a turma
+        const academiaId = userProfile?.academiaId || academia?.id;
+        if (!academiaId) {
+          console.error('Academia ID não encontrado');
+          return;
+        }
+        const classDetails = await firestoreService.getById(`gyms/${academiaId}/classes`, classId);
         setClassInfo(classDetails);
       }
       
-      // Buscar alunos da turma
-      const allStudents = await firestoreService.getAll('users');
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
+      // Buscar alunos da turma na academia
+      const allStudents = await firestoreService.getAll(`gyms/${academiaId}/students`);
       const classStudents = allStudents.filter(student => 
-        student.userType === 'student' && 
         student.classIds && 
         student.classIds.includes(classId)
       );

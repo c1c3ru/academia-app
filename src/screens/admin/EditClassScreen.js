@@ -13,9 +13,9 @@ import { useAuth } from '../../contexts/AuthProvider';
 import { firestoreService, classService } from '../../services/firestoreService';
 import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';
 
-const EditClassScreen = ({ navigation, route }) => {
-  const { user } = useAuth();
+const EditClassScreen = ({ route, navigation }) => {
   const { classId } = route.params;
+  const { user, userProfile, academia } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [instructors, setInstructors] = useState([]);
@@ -136,9 +136,15 @@ const EditClassScreen = ({ navigation, route }) => {
 
   const loadInstructors = async () => {
     try {
-      const users = await firestoreService.getAll('users');
-      const instructorsList = users.filter(user => user.userType === 'instructor');
-      setInstructors(instructorsList);
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
+      const instructorsData = await firestoreService.getAll(`gyms/${academiaId}/instructors`);
+      setInstructors(instructorsData);
     } catch (error) {
       console.error('Erro ao carregar instrutores:', error);
     }

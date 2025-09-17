@@ -67,15 +67,22 @@ const AdminDashboard = ({ navigation }) => {
     try {
       setLoading(true);
       
-      // Buscar todos os alunos
-      const students = await firestoreService.getAll('users');
-      const activeStudents = students.filter(s => s.userType === 'student' && s.isActive !== false);
+      // Buscar todos os alunos da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+
+      // Buscar alunos da academia usando subcoleção
+      const students = await firestoreService.getAll(`gyms/${academiaId}/students`);
+      const activeStudents = students.filter(s => s.isActive !== false);
       
-      // Buscar todas as turmas
-      const classes = await firestoreService.getAll('classes');
+      // Buscar turmas da academia usando subcoleção
+      const classes = await firestoreService.getAll(`gyms/${academiaId}/classes`);
       
-      // Buscar pagamentos
-      const payments = await firestoreService.getAll('payments');
+      // Buscar pagamentos da academia usando subcoleção
+      const payments = await firestoreService.getAll(`gyms/${academiaId}/payments`);
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
       
@@ -113,8 +120,11 @@ const AdminDashboard = ({ navigation }) => {
         }
       ];
 
+      // Buscar instrutores da academia usando subcoleção
+      const instructors = await firestoreService.getAll(`gyms/${academiaId}/instructors`);
+
       setDashboardData({
-        totalStudents: students.filter(s => s.userType === 'student').length,
+        totalStudents: students.length,
         activeStudents: activeStudents.length,
         totalClasses: classes.length,
         monthlyRevenue,
@@ -122,7 +132,7 @@ const AdminDashboard = ({ navigation }) => {
         overduePayments,
         recentActivities,
         quickStats: {
-          instructors: students.filter(s => s.userType === 'instructor').length,
+          instructors: instructors.length,
           modalities: [...new Set(classes.map(c => c.modality))].length
         }
       });

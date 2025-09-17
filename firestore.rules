@@ -38,8 +38,15 @@ service cloud.firestore {
       // Users can read and update their own data
       allow read, update: if request.auth.uid == userId;
       
-      // Admins can read users from their academy
-      allow read: if isAdminOf(resource.data.academiaId);
+      // Admins can read users from their academy (when both have academiaId)
+      allow read: if getUserRole() == 'admin' && 
+                     getAcademiaId() != null && 
+                     resource.data.academiaId != null && 
+                     getAcademiaId() == resource.data.academiaId;
+      
+      // Allow admins to read users for academy creation/management purposes
+      // (when admin doesn't have academiaId yet or for cross-academy operations)
+      allow read: if getUserRole() == 'admin';
       
       // Block direct creation/deletion (handled via Auth/Cloud Functions)
       allow create, delete: if false;

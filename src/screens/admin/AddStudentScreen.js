@@ -135,10 +135,15 @@ const AddStudentScreen = ({ navigation, route }) => {
       };
 
       // Garantir associação com a academia do instrutor/admin
-      studentData.academiaId = userProfile?.academiaId || academia?.id || null;
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        throw new Error('Academia ID não encontrado');
+      }
       
-      console.log('✅ Criando aluno:', studentData);
-      const newStudentId = await firestoreService.create('users', studentData);
+      studentData.academiaId = academiaId;
+      
+      console.log('✅ Criando aluno na academia:', academiaId, studentData);
+      const newStudentId = await firestoreService.create(`gyms/${academiaId}/students`, studentData);
       console.log('✅ Aluno criado com ID:', newStudentId);
 
       showSnackbar(`Aluno "${formData.name.trim()}" cadastrado com sucesso!`, 'success');

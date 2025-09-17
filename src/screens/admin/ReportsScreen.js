@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthProvider';
 import { firestoreService } from '../../services/firestoreService';
 
 const ReportsScreen = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user, userProfile, academia } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalStudents: 0,
@@ -39,17 +39,23 @@ const ReportsScreen = ({ navigation }) => {
     try {
       setLoading(true);
       
-      // Carregar dados dos alunos
-      const students = await firestoreService.getAll('users');
-      const studentsList = students.filter(user => user.userType === 'student');
-      const activeStudents = studentsList.filter(student => student.status === 'active');
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
+      // Carregar dados dos alunos da academia
+      const students = await firestoreService.getAll(`gyms/${academiaId}/students`);
+      const activeStudents = students.filter(student => student.isActive !== false);
 
-      // Carregar dados das turmas
-      const classes = await firestoreService.getAll('classes');
+      // Carregar dados das turmas da academia
+      const classes = await firestoreService.getAll(`gyms/${academiaId}/classes`);
       const activeClasses = classes.filter(cls => cls.status === 'active');
 
-      // Carregar dados de pagamentos
-      const payments = await firestoreService.getAll('payments');
+      // Carregar dados de pagamentos da academia
+      const payments = await firestoreService.getAll(`gyms/${academiaId}/payments`);
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
       

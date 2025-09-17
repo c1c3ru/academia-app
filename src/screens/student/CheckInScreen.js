@@ -75,8 +75,15 @@ const CheckInScreen = ({ navigation }) => {
 
   const loadAvailableClasses = async () => {
     try {
-      // Buscar turmas do aluno
-      const allClasses = await firestoreService.getAll('classes');
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
+      // Buscar turmas do aluno na academia
+      const allClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
       const userClasses = allClasses.filter(cls => 
         userProfile?.classIds && userProfile.classIds.includes(cls.id)
       );

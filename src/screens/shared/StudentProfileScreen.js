@@ -20,14 +20,14 @@ import { firestoreService } from '../../services/firestoreService';
 import SafeCardContent from '../../components/SafeCardContent';
 
 const StudentProfileScreen = ({ route, navigation }) => {
-  const { studentId, studentData } = route.params || {};
-  const { user } = useAuth();
+  const { studentId } = route.params;
+  const { user, userProfile, academia } = useAuth();
   const { getString } = useTheme();
-  const [studentInfo, setStudentInfo] = useState(studentData || null);
+  const [studentInfo, setStudentInfo] = useState(null);
   const [studentClasses, setStudentClasses] = useState([]);
   const [payments, setPayments] = useState([]);
   const [graduations, setGraduations] = useState([]);
-  const [loading, setLoading] = useState(!studentData);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -46,15 +46,22 @@ const StudentProfileScreen = ({ route, navigation }) => {
         setStudentInfo(details);
       }
       
-      // Buscar turmas do aluno
-      const allClasses = await firestoreService.getAll('classes');
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
+      // Buscar turmas do aluno na academia
+      const allClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
       const userClasses = allClasses.filter(cls => 
         studentInfo?.classIds && studentInfo.classIds.includes(cls.id)
       );
       setStudentClasses(userClasses);
       
-      // Buscar pagamentos
-      const allPayments = await firestoreService.getAll('payments');
+      // Buscar pagamentos do aluno na academia
+      const allPayments = await firestoreService.getAll(`gyms/${academiaId}/payments`);
       const userPayments = allPayments.filter(payment => 
         payment.userId === studentId
       ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -62,7 +69,7 @@ const StudentProfileScreen = ({ route, navigation }) => {
       
       // Buscar graduações com tratamento robusto de erros
       try {
-        const allGraduations = await firestoreService.getAll('graduations');
+        const allGraduations = await firestoreService.getAll(`gyms/${academiaId}/graduations`);
         const userGraduations = allGraduations.filter(graduation => 
           graduation.studentId === studentId
         ).sort((a, b) => new Date(b.date) - new Date(a.date));

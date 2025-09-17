@@ -23,7 +23,7 @@ import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';
 import StudentDisassociationDialog from '../../components/StudentDisassociationDialog';
 
 const AdminStudents = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user, userProfile, academia } = useAuth();
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,9 +46,15 @@ const AdminStudents = ({ navigation }) => {
     try {
       setLoading(true);
       
-      // Buscar todos os usuários do tipo student
-      const allUsers = await firestoreService.getAll('users');
-      const studentUsers = allUsers.filter(user => user.userType === 'student');
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
+      // Buscar alunos da academia usando subcoleção
+      const studentUsers = await firestoreService.getAll(`gyms/${academiaId}/students`);
       
       // Buscar informações de pagamento para cada aluno
       const studentsWithPayments = await Promise.all(

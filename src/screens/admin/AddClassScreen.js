@@ -10,8 +10,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthProvider';
 import { firestoreService, classService } from '../../services/firestoreService';
 
-const AddClassScreen = ({ navigation, route }) => {
-  const { user, userProfile } = useAuth();
+const AddClassScreen = ({ navigation }) => {
+  const { user, userProfile, academia } = useAuth();
   const [loading, setLoading] = useState(false);
   const [instructors, setInstructors] = useState([]);
   const [modalities, setModalities] = useState([]);
@@ -90,19 +90,17 @@ const AddClassScreen = ({ navigation, route }) => {
     let userInstructors = [];
     let subInstructors = [];
 
-    // 1) Tentar buscar instrutores na coleção principal 'users'
+    // Obter ID da academia
+    const academiaId = userProfile?.academiaId || academia?.id;
+    if (!academiaId) {
+      console.error('Academia ID não encontrado');
+      return;
+    }
+
+    // 1) Buscar instrutores na subcoleção da academia
     try {
-      const users = await firestoreService.getAll('users');
-      userInstructors = users
-        .filter(u => (
-          u?.userType === 'instructor' ||
-          u?.tipo === 'instrutor' ||
-          u?.tipo === 'instructor'
-        ))
-        .filter(u => {
-          if (!userProfile?.academiaId) return true;
-          return !u?.academiaId || u.academiaId === userProfile.academiaId;
-        })
+      const instructorsData = await firestoreService.getAll(`gyms/${academiaId}/instructors`);
+      userInstructors = instructorsData
         .map(u => ({
           id: u.id,
           name: u.name || u.displayName || u.fullName || u.email || 'Instrutor',

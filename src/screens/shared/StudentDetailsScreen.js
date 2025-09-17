@@ -20,14 +20,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { firestoreService } from '../../services/firestoreService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const StudentDetailsScreen = ({ route, navigation }) => {
-  const { studentId, studentData } = route.params || {};
+  const { studentId } = route.params;
+  const { user, userProfile, academia } = useAuth();
   const { getString } = useTheme();
-  const [studentInfo, setStudentInfo] = useState(studentData || null);
+  const [studentInfo, setStudentInfo] = useState(route.params.studentData || null);
   const [studentClasses, setStudentClasses] = useState([]);
   const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(!studentData);
+  const [loading, setLoading] = useState(!route.params.studentData);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -45,15 +47,22 @@ const StudentDetailsScreen = ({ route, navigation }) => {
         setStudentInfo(details);
       }
       
-      // Buscar turmas do aluno
-      const allClasses = await firestoreService.getAll('classes');
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
+      // Buscar turmas do aluno na academia
+      const allClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
       const userClasses = allClasses.filter(cls => 
         studentInfo?.classIds && studentInfo.classIds.includes(cls.id)
       );
       setStudentClasses(userClasses);
       
-      // Buscar pagamentos
-      const allPayments = await firestoreService.getAll('payments');
+      // Buscar pagamentos do aluno na academia
+      const allPayments = await firestoreService.getAll(`gyms/${academiaId}/payments`);
       const userPayments = allPayments.filter(payment => 
         payment.userId === studentId
       ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

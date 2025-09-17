@@ -23,7 +23,7 @@ import { firestoreService, classService, studentService } from '../../services/f
 import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';
 
 const AdminClasses = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user, userProfile, academia } = useAuth();
   const { getString } = useTheme();
   const [classes, setClasses] = useState([]);
   const [filteredClasses, setFilteredClasses] = useState([]);
@@ -52,8 +52,15 @@ const AdminClasses = ({ navigation }) => {
     try {
       setLoading(true);
       
-      // Buscar todas as turmas
-      const allClasses = await firestoreService.getAll('classes');
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
+      // Buscar turmas da academia usando subcoleção
+      const allClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
       
       // Buscar informações adicionais para cada turma
       const classesWithDetails = await Promise.all(
@@ -62,9 +69,9 @@ const AdminClasses = ({ navigation }) => {
             // Buscar alunos da turma
             const students = await studentService.getStudentsByClass(classItem.id);
             
-            // Buscar dados do instrutor
+            // Buscar dados do instrutor na subcoleção de instrutores
             const instructor = classItem.instructorId ? 
-              await firestoreService.getById('users', classItem.instructorId) : null;
+              await firestoreService.getById(`gyms/${academiaId}/instructors`, classItem.instructorId) : null;
             
             return {
               ...classItem,
@@ -85,7 +92,7 @@ const AdminClasses = ({ navigation }) => {
       
       setClasses(classesWithDetails);
     } catch (error) {
-      console.error(getString('logoutError'), error);
+      console.error('Erro ao carregar turmas:', error);
       Alert.alert(getString('error'), getString('errorLoadingClasses'));
     } finally {
       setLoading(false);
