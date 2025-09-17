@@ -38,22 +38,21 @@ try {
   // Inicializar Auth com configurações específicas da plataforma
   auth = getAuth(app);
   
-  // Configurações específicas para web
-  if (isWeb) {
-    // Configurar persistência para web
-    auth.settings = {
-      appVerificationDisabledForTesting: false,
-    };
-  }
-  
   console.log('✅ Firebase Auth inicializado');
   
-  // Inicializar Firestore com configurações para React Native/Web
-  db = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: true,
-    useFetchStreams: false
-  });
-  console.log('✅ Firebase Firestore inicializado com long-polling');
+  // Inicializar Firestore com configurações específicas da plataforma
+  if (isWeb) {
+    // Para web, usar a configuração padrão otimizada
+    db = getFirestore(app);
+    console.log('✅ Firebase Firestore inicializado para web');
+  } else {
+    // Para React Native, usar configurações específicas
+    db = initializeFirestore(app, {
+      experimentalAutoDetectLongPolling: true,
+      useFetchStreams: false
+    });
+    console.log('✅ Firebase Firestore inicializado para mobile com long-polling');
+  }
   
   console.log('🎉 Firebase inicializado com sucesso para', Platform.OS);
 } catch (error) {

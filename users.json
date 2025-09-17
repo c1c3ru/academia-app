@@ -1,0 +1,61 @@
+{"users": [
+{
+  "localId": "0vwu3bJjKThZZ1xE3vRd5lHk7C82",
+  "email": "test@example.com",
+  "emailVerified": false,
+  "passwordHash": "SlBMBZoCV2n9R+jlCfLzI/fi1Yn62QPWMUCBm1sSviMXO6FIcMmSePUYWvqV/YWO24VLaRGguwEhvDQoEUKgeA==",
+  "salt": "jm4m8uE4ohHW2A==",
+  "lastSignedInAt": "1756754000843",
+  "createdAt": "1756754000843",
+  "providerUserInfo": []
+},
+{
+  "localId": "42GBYVThzkedlBWyr8ILp1Y6ytf2",
+  "email": "cicero.silva@ifce.edu.br",
+  "emailVerified": false,
+  "passwordHash": "6f/3ZiyOThLgGYdR9BMh1/mz7K/mP8JBCZha504ajjoAOQ4HtNgpZtWnh90yMImQtnE0rueV4jcNhELoz8vrsg==",
+  "salt": "Lr8gJ7t+Sr1FOA==",
+  "lastSignedInAt": "1758044553991",
+  "createdAt": "1756579352084",
+  "providerUserInfo": []
+},
+{
+  "localId": "EXjQ5utfSGRBd9pQJVFmts5DxtC3",
+  "email": "cti.maracanau@ifce.edu.br",
+  "emailVerified": false,
+  "passwordHash": "QhEk1t0X/6yhK3kdR67lYJTu/1kV23J+AiP233qwA0aT9Rnbp77d7xdQlb+7gVHC+m3qmP/WqlXtosjaPp1ZDg==",
+  "salt": "N3y0DDcB8jsTww==",
+  "lastSignedInAt": "1758047956759",
+  "createdAt": "1756665310632",
+  "customAttributes": "{\"role\":\"admin\",\"academiaId\":\"Tgg6tZynnTbQUxeAFJAB\"}",
+  "providerUserInfo": []
+},
+{
+  "localId": "Hpbb1h1lEeesJ4NefoZ6aYUpn7A3",
+  "email": "deppi.maracanau@ifce.edu.br",
+  "emailVerified": false,
+  "passwordHash": "FN2V1UGZwuJFr0i4+YoQXQaQHqFw5ul+1E7j2DBTgIcUcgkLTPwgf2IAgBBGqVlkVDXLaycHj8YheXKYSKJLig==",
+  "salt": "MpPqhNNmkEmY+A==",
+  "lastSignedInAt": "1758045008490",
+  "createdAt": "1756685123837",
+  "providerUserInfo": []
+},
+{
+  "localId": "rnrDk4ZCuERLDlSNAiYmMGS431T2",
+  "email": "cicerosilva.ifce@gmail.com",
+  "emailVerified": true,
+  "displayName": "cicero silva",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocJxVFlPTwWG0A39mbY0_5gH2E7QT2aONQ00H89_OzfeOdnerDAm=s96-c",
+  "lastSignedInAt": "1757941006091",
+  "createdAt": "1756579060533",
+  "customAttributes": "{\"role\":\"admin\",\"academiaId\":\"Tgg6tZynnTbQUxeAFJAB\"}",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "106378680799167065265",
+      "email": "cicerosilva.ifce@gmail.com",
+      "displayName": "cicero silva",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocJxVFlPTwWG0A39mbY0_5gH2E7QT2aONQ00H89_OzfeOdnerDAm=s96-c"
+    }
+  ]
+}]}

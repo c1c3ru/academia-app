@@ -34,7 +34,6 @@
     "expo-sharing": "^13.1.5",
     "expo-status-bar": "~2.2.3",
     "firebase": "^12.2.1",
-    "firebase-admin": "^13.5.0",
     "metro-react-native-babel-transformer": "^0.77.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",

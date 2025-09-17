@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Correção de Custom Claims</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .button { background: #4285f4; color: white; border: none; padding: 10px 20px; margin: 10px; border-radius: 5px; cursor: pointer; }
+        .button:hover { background: #3367d6; }
+        .log { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; font-family: monospace; white-space: pre-wrap; }
+        .success { color: #0f5132; background: #d1e7dd; }
+        .error { color: #842029; background: #f8d7da; }
+        .info { color: #055160; background: #cff4fc; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Teste de Correção de Custom Claims</h1>
+    
+    <div>
+        <button class="button" onclick="testLogin()">1. Fazer Login</button>
+        <button class="button" onclick="checkCurrentClaims()">2. Verificar Claims Atuais</button>
+        <button class="button" onclick="migrateAllUsers()">3. Migrar Todos os Usuários</button>
+        <button class="button" onclick="testFirestoreAccess()">4. Testar Acesso ao Firestore</button>
+        <button class="button" onclick="clearLog()">Limpar Log</button>
+    </div>
+    
+    <div id="log" class="log"></div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnWCWCzYJJXMZJhSrjJGNfgGWYCvKKLCM",
+            authDomain: "academia-app-5cf79.firebaseapp.com",
+            projectId: "academia-app-5cf79",
+            storageBucket: "academia-app-5cf79.appspot.com",
+            messagingSenderId: "1092439421699",
+            appId: "1:1092439421699:web:a1b2c3d4e5f6g7h8i9j0k1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const functions = getFunctions(app);
+
+        let currentUser = null;
+
+        // Função para log
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // Monitorar estado de autenticação
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                log(`✅ Usuário logado: ${user.email}`, 'success');
+            } else {
+                log('❌ Usuário não logado', 'error');
+            }
+        });
+
+        // Função para fazer login
+        window.testLogin = async function() {
+            try {
+                log('🔐 Fazendo login...');
+                const email = prompt('Email:') || 'cicerosilva.ifce@gmail.com';
+                const password = prompt('Senha:');
+                
+                if (!password) {
+                    log('❌ Senha não fornecida', 'error');
+                    return;
+                }
+
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                log(`✅ Login realizado: ${userCredential.user.email}`, 'success');
+                
+            } catch (error) {
+                log(`❌ Erro no login: ${error.message}`, 'error');
+            }
+        };
+
+        // Função para verificar claims atuais
+        window.checkCurrentClaims = async function() {
+            if (!currentUser) {
+                log('❌ Usuário não logado', 'error');
+                return;
+            }
+
+            try {
+                log('🔍 Verificando Custom Claims...');
+                
+                // Forçar refresh do token
+                const token = await currentUser.getIdToken(true);
+                const tokenResult = await currentUser.getIdTokenResult();
+                
+                log(`📋 Claims atuais: ${JSON.stringify(tokenResult.claims, null, 2)}`);
+                
+                if (tokenResult.claims.academiaId && tokenResult.claims.role) {
+                    log('✅ Claims estão configurados corretamente', 'success');
+                } else {
+                    log('⚠️ Claims não estão configurados ou estão incompletos', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Erro ao verificar claims: ${error.message}`, 'error');
+            }
+        };
+
+        // Função para migrar todos os usuários
+        window.migrateAllUsers = async function() {
+            if (!currentUser) {
+                log('❌ Usuário não logado', 'error');
+                return;
+            }
+
+            try {
+                log('🔄 Executando migração de usuários...');
+                
+                const migrateUsers = httpsCallable(functions, 'migrateExistingUsers');
+                const result = await migrateUsers();
+                
+                log(`✅ Migração concluída: ${JSON.stringify(result.data, null, 2)}`, 'success');
+                log('💡 Aguarde alguns segundos e verifique os claims novamente', 'info');
+                
+            } catch (error) {
+                log(`❌ Erro na migração: ${error.message}`, 'error');
+            }
+        };
+
+        // Função para testar acesso ao Firestore
+        window.testFirestoreAccess = async function() {
+            if (!currentUser) {
+                log('❌ Usuário não logado', 'error');
+                return;
+            }
+
+            try {
+                log('🔍 Testando acesso ao Firestore...');
+                
+                // Buscar perfil do usuário
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    log(`✅ Perfil do usuário: ${JSON.stringify(userData, null, 2)}`, 'success');
+                    
+                    if (userData.academiaId) {
+                        // Tentar acessar dados da academia
+                        try {
+                            const academiaDoc = await getDoc(doc(db, 'gyms', userData.academiaId));
+                            if (academiaDoc.exists()) {
+                                log(`✅ Dados da academia acessados com sucesso: ${academiaDoc.data().name}`, 'success');
+                            } else {
+                                log('⚠️ Academia não encontrada', 'error');
+                            }
+                        } catch (firestoreError) {
+                            log(`❌ Erro ao acessar dados da academia: ${firestoreError.message}`, 'error');
+                        }
+                        
+                        // Tentar acessar notificações
+                        try {
+                            const notificationsRef = collection(db, 'gyms', userData.academiaId, 'notifications');
+                            const notificationsSnapshot = await getDocs(notificationsRef);
+                            log(`✅ Notificações acessadas: ${notificationsSnapshot.size} documentos`, 'success');
+                        } catch (notificationError) {
+                            log(`❌ Erro ao acessar notificações: ${notificationError.message}`, 'error');
+                        }
+                    }
+                } else {
+                    log('❌ Perfil do usuário não encontrado', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Erro no teste de acesso: ${error.message}`, 'error');
+            }
+        };
+
+        // Função para limpar log
+        window.clearLog = function() {
+            document.getElementById('log').innerHTML = '';
+        };
+
+        // Log inicial
+        log('🚀 Página de teste carregada. Faça login para começar.');
+    </script>
+</body>
+</html>
