@@ -59,6 +59,10 @@ module.exports = {
     }
   },
   configurations: {
+    default: {
+      device: 'emulator',
+      app: 'android.debug'
+    },
     'ios.sim.debug': {
       device: 'simulator',
       app: 'ios.debug'

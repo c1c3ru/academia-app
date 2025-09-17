@@ -58,6 +58,17 @@ jest.mock('react-native', () => {
       in: jest.fn(() => jest.fn()),
       out: jest.fn(() => jest.fn()),
       inOut: jest.fn(() => jest.fn())
+    },
+    I18nManager: {
+      isRTL: false,
+      doLeftAndRightSwapInRTL: false,
+      allowRTL: jest.fn(),
+      forceRTL: jest.fn(),
+      swapLeftAndRightInRTL: jest.fn(),
+      getConstants: jest.fn(() => ({
+        isRTL: false,
+        doLeftAndRightSwapInRTL: false,
+      })),
     }
   };
 });

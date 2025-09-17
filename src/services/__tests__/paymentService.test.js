@@ -112,12 +112,34 @@ describe('PaymentService', () => {
 
   describe('confirmPayment', () => {
     it('should confirm payment and send notification', async () => {
+      // Force fresh mocks for this test
+      jest.resetModules();
+      
       const mockPayment = { id: 'payment-123', amount: 150.00 };
       
-      // Configure mocks
-      firestoreService.updateDocument = jest.fn().mockResolvedValue();
-      firestoreService.getDocument = jest.fn().mockResolvedValue(mockPayment);
-      notificationService.sendLocalNotification = jest.fn().mockResolvedValue();
+      // Create fresh mock functions
+      const updateDocumentMock = jest.fn().mockResolvedValue();
+      const getDocumentMock = jest.fn().mockResolvedValue(mockPayment);
+      const sendNotificationMock = jest.fn().mockResolvedValue();
+      
+      // Apply mocks directly to the imported objects
+      Object.defineProperty(firestoreService, 'updateDocument', {
+        value: updateDocumentMock,
+        writable: true,
+        configurable: true
+      });
+      
+      Object.defineProperty(firestoreService, 'getDocument', {
+        value: getDocumentMock,
+        writable: true,
+        configurable: true
+      });
+      
+      Object.defineProperty(notificationService, 'sendLocalNotification', {
+        value: sendNotificationMock,
+        writable: true,
+        configurable: true
+      });
 
       const paidAt = new Date();
       
@@ -129,8 +151,8 @@ describe('PaymentService', () => {
       });
 
       expect(result).toBe(true);
-      expect(firestoreService.updateDocument).toHaveBeenCalledTimes(1);
-      expect(firestoreService.updateDocument).toHaveBeenCalledWith(
+      expect(updateDocumentMock).toHaveBeenCalledTimes(1);
+      expect(updateDocumentMock).toHaveBeenCalledWith(
         'payments',
         'payment-123',
         expect.objectContaining({
@@ -143,11 +165,11 @@ describe('PaymentService', () => {
         })
       );
       
-      expect(firestoreService.getDocument).toHaveBeenCalledTimes(1);
-      expect(firestoreService.getDocument).toHaveBeenCalledWith('payments', 'payment-123');
+      expect(getDocumentMock).toHaveBeenCalledTimes(1);
+      expect(getDocumentMock).toHaveBeenCalledWith('payments', 'payment-123');
       
-      expect(notificationService.sendLocalNotification).toHaveBeenCalledTimes(1);
-      expect(notificationService.sendLocalNotification).toHaveBeenCalledWith(
+      expect(sendNotificationMock).toHaveBeenCalledTimes(1);
+      expect(sendNotificationMock).toHaveBeenCalledWith(
         'Pagamento Confirmado! ✅',
         'Seu pagamento de R$ 150.00 foi processado com sucesso.',
         {
