@@ -17,7 +17,6 @@ import {
 import { collection, addDoc, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { updateAcademiaAssociation } from '../../services/userService';
 import { getString } from '../../services/languageService';
 import { initializeAcademySubcollections } from '../../services/academyInitializationService';
 import { isAdmin, getCanonicalUserType } from '../../utils/userTypeHelpers';
