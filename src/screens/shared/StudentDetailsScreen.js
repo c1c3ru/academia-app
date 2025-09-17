@@ -42,7 +42,7 @@ const StudentDetailsScreen = ({ route, navigation }) => {
     try {
       setLoading(true);
       
-      if (!studentData) {
+      if (!studentInfo) {
         const details = await firestoreService.getById('users', studentId);
         setStudentInfo(details);
       }
