@@ -100,10 +100,12 @@ describe('PaymentService', () => {
       firestoreService.getDocument = jest.fn().mockResolvedValue(mockPayment);
       notificationService.sendLocalNotification = jest.fn().mockResolvedValue();
 
+      const paidAt = new Date();
       const result = await paymentService.confirmPayment('payment-123', {
-        paidAt: new Date(),
+        paidAt,
         method: 'credit_card',
-        transactionId: 'txn-123'
+        transactionId: 'txn-123',
+        authorizationCode: 'AUTH_123'
       });
 
       expect(result).toBe(true);
@@ -112,10 +114,23 @@ describe('PaymentService', () => {
         'payment-123',
         expect.objectContaining({
           status: 'paid',
-          transactionId: 'txn-123'
+          transactionId: 'txn-123',
+          method: 'credit_card',
+          paidDate: paidAt,
+          authorizationCode: 'AUTH_123',
+          updatedAt: expect.any(Date)
         })
       );
-      expect(notificationService.sendLocalNotification).toHaveBeenCalled();
+      expect(firestoreService.getDocument).toHaveBeenCalledWith('payments', 'payment-123');
+      expect(notificationService.sendLocalNotification).toHaveBeenCalledWith(
+        'Pagamento Confirmado! ✅',
+        'Seu pagamento de R$ 150.00 foi processado com sucesso.',
+        {
+          type: 'payment',
+          paymentId: 'payment-123',
+          screen: 'Pagamentos'
+        }
+      );
     });
   });
 
