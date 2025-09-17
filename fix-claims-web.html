@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrigir Custom Claims</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Corrigir Custom Claims</h1>
+        
+        <div class="form-group">
+            <label for="email">Email do Admin:</label>
+            <input type="email" id="email" placeholder="cti.maracanau@ifce.edu.br" value="cti.maracanau@ifce.edu.br">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Senha:</label>
+            <input type="password" id="password" placeholder="Digite sua senha">
+        </div>
+        
+        <div class="form-group">
+            <label for="academiaId">Academia ID Correta:</label>
+            <input type="text" id="academiaId" placeholder="yCRtgOHYvw7kiHmF12aw" value="yCRtgOHYvw7kiHmF12aw">
+        </div>
+
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="fixClaims()">🔧 Corrigir Custom Claims</button>
+        </div>
+
+        <h3>Log de Execução:</h3>
+        <div id="log"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-functions-compat.js"></script>
+
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_hzFPt9hUITlMq9BrsJuxAdzycVR3AEI",
+            authDomain: "academia-app-5cf79.firebaseapp.com",
+            projectId: "academia-app-5cf79",
+            storageBucket: "academia-app-5cf79.firebasestorage.app",
+            messagingSenderId: "377489252583",
+            appId: "1:377489252583:android:87f2c3948511325769c242"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const functions = firebase.functions();
+
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            logElement.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        async function fixClaims() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const academiaId = document.getElementById('academiaId').value.trim();
+            
+            if (!email || !password || !academiaId) {
+                log('Por favor, preencha todos os campos', 'error');
+                return;
+            }
+
+            log('🔐 Fazendo login...');
+            
+            try {
+                // Fazer login
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                log(`✅ Logado como: ${user.email}`, 'success');
+                
+                // Aguardar token ser atualizado
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Verificar claims atuais
+                const token = await user.getIdTokenResult();
+                log(`🔍 Claims atuais: ${JSON.stringify(token.claims)}`, 'info');
+                
+                // Atualizar perfil do usuário no Firestore
+                log('📝 Atualizando perfil do usuário...');
+                await db.collection('users').doc(user.uid).update({
+                    academiaId: academiaId,
+                    updatedAt: new Date()
+                });
+                log('✅ Perfil do usuário atualizado', 'success');
+                
+                // Verificar se a academia existe
+                log('🏢 Verificando academia...');
+                const academiaDoc = await db.collection('gyms').doc(academiaId).get();
+                if (academiaDoc.exists) {
+                    log(`✅ Academia encontrada: ${academiaDoc.data().nome || academiaDoc.data().name}`, 'success');
+                } else {
+                    log('❌ Academia não encontrada! Verifique o ID.', 'error');
+                    return;
+                }
+                
+                // Forçar refresh do token
+                log('🔄 Forçando refresh do token...');
+                await user.getIdToken(true);
+                
+                // Aguardar um pouco para os custom claims serem aplicados
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                // Verificar claims após refresh
+                const newToken = await user.getIdTokenResult();
+                log(`🔍 Claims após refresh: ${JSON.stringify(newToken.claims)}`, 'info');
+                
+                if (newToken.claims.academiaId === academiaId) {
+                    log('🎉 Custom Claims corrigidos com sucesso!', 'success');
+                    log('📱 Você pode agora recarregar o app para ver as mudanças.', 'info');
+                } else {
+                    log('⚠️ Claims ainda não foram atualizados. Aguarde alguns minutos e tente recarregar o app.', 'warning');
+                }
+                
+            } catch (error) {
+                log(`❌ Erro: ${error.message}`, 'error');
+                console.error('Erro detalhado:', error);
+            }
+        }
+    </script>
+</body>
+</html>

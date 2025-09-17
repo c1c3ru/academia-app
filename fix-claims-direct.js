@@ -17,7 +17,7 @@ async function fixUserClaims() {
   const userId = 'EXjQ5utfSGRBd9pQJVFmts5DxtC3';
   const claims = {
     role: 'admin',
-    academiaId: 'Tgg6tZynnTbQUxeAFJAB'
+    "academiaId": "yCRtgOHYvw7kiHmF12aw"
   };
 
   try {

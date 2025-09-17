@@ -17,7 +17,7 @@ import {
 import { collection, addDoc, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { getString } from '../../services/languageService';
+import { useTheme } from '../../contexts/ThemeContext';
 import { initializeAcademySubcollections } from '../../services/academyInitializationService';
 import { isAdmin, getCanonicalUserType } from '../../utils/userTypeHelpers';
 import QRCodeScanner from '../../components/QRCodeScanner';

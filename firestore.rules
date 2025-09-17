@@ -60,6 +60,9 @@ service cloud.firestore {
       // Admins can list academies (for specific cases)
       allow list: if getUserRole() == 'admin';
       
+      // Temporary: allow specific user to read any gym for claims fixing
+      allow read: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
+      
       // Creation: disabled on client (handled via Cloud Functions)
       allow create: if false;
       // Temporary: allow authenticated users to create sample gym data
