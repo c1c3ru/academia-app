@@ -32,23 +32,26 @@ export const useAuthMigration = () => {
   } = useAuthStore();
 
   // Função para carregar Custom Claims
-  const loadCustomClaims = async (firebaseUser) => {
+  const loadCustomClaims = async (user) => {
     try {
-      console.log('🔍 loadCustomClaims: Carregando claims para:', firebaseUser.email);
-      const claims = await getUserClaims();
+      console.log('🔍 loadCustomClaims: Carregando claims para:', user.email);
+      const claims = await getUserClaims(user);
+      console.log('📋 loadCustomClaims: Claims carregados:', claims);
       setCustomClaims(claims);
-      
-      console.log('📋 loadCustomClaims: Claims carregados:', {
-        role: claims?.role,
-        academiaId: claims?.academiaId,
-        hasValidClaims: !!(claims?.role && claims?.academiaId)
-      });
-      
-      return claims;
     } catch (error) {
       console.error('❌ loadCustomClaims: Erro ao carregar claims:', error);
-      setCustomClaims(null);
-      return null;
+      
+      // Se for erro de conectividade, tentar novamente
+      if (error.code === 'unavailable' || error.message.includes('offline')) {
+        console.log('🔄 loadCustomClaims: Cliente offline, tentando novamente em 3s...');
+        setTimeout(() => {
+          if (user) {
+            loadCustomClaims(user);
+          }
+        }, 3000);
+      } else {
+        setCustomClaims(null);
+      }
     }
   };
 
@@ -130,7 +133,18 @@ export const useAuthMigration = () => {
       }
     } catch (error) {
       console.error('❌ fetchUserProfile: Erro ao buscar perfil:', error);
-      setUserProfile(null);
+      
+      // Se for erro de conectividade, tentar novamente após um delay
+      if (error.code === 'unavailable' || error.message.includes('offline')) {
+        console.log('🔄 fetchUserProfile: Cliente offline, tentando novamente em 5s...');
+        setTimeout(() => {
+          if (userId) {
+            fetchUserProfile(userId);
+          }
+        }, 5000);
+      } else {
+        setUserProfile(null);
+      }
     }
   };
 

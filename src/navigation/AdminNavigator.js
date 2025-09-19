@@ -273,15 +273,7 @@ const AdminNavigator = () => {
         name="AddGraduation" 
         component={AddGraduationScreen}
         options={{
-          headerShown: true,
-          header: ({ navigation }) => (
-            <UniversalHeader
-              title="Nova Graduação"
-              navigation={navigation}
-              showBack={true}
-              backgroundColor="#FF9800"
-            />
-          ),
+          headerShown: false
         }}
       />
       <Stack.Screen 

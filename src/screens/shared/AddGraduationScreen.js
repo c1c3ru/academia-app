@@ -1,47 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { 
-  Card, 
-  Button, 
-  TextInput,
-  Chip,
+import {
+  View,
   Text,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Platform,
+  SafeAreaView
+} from 'react-native';
+import {
+  Button,
+  TextInput,
+  Card,
   Portal,
   Dialog,
-  RadioButton,
-  Snackbar
+  Snackbar,
+  IconButton,
+  Chip,
+  Surface,
+  Divider,
+  RadioButton
 } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../contexts/AuthProvider';
 import { useTheme } from '../../contexts/ThemeContext';
-import { firestoreService } from '../../services/firestoreService';
+import academyCollectionsService from '../../services/academyCollectionsService';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width } = Dimensions.get('window');
 
 const AddGraduationScreen = ({ route, navigation }) => {
   const { studentId, studentName } = route.params;
   const { user, userProfile, academia } = useAuth();
   const { getString } = useTheme();
-  
+
   const [formData, setFormData] = useState({
     graduation: '',
     modality: '',
     modalityId: '',
     date: new Date(),
-    instructor: user?.name || '',
-    instructorId: user?.uid || '',
+    instructor: '',
+    instructorId: '',
     notes: '',
     certificate: '',
     previousGraduation: ''
   });
-  
+
   const [modalities, setModalities] = useState([]);
+  const [instructors, setInstructors] = useState([]);
   const [graduationLevels, setGraduationLevels] = useState([]);
   const [modalityDialogVisible, setModalityDialogVisible] = useState(false);
   const [graduationDialogVisible, setGraduationDialogVisible] = useState(false);
+  const [instructorDialogVisible, setInstructorDialogVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarType, setSnackbarType] = useState('success');
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const defaultGraduationLevels = [
     { id: 'white', name: 'Faixa Branca', color: '#FFFFFF', order: 1 },
@@ -70,24 +87,29 @@ const AddGraduationScreen = ({ route, navigation }) => {
         console.error('Academia ID não encontrado');
         return;
       }
-      
-      const modalitiesData = await firestoreService.getAll(`gyms/${academiaId}/modalities`);
+
+      const modalitiesData = await academyCollectionsService.getModalities(academiaId);
       setModalities(modalitiesData || []);
-      
+
+      // Carregar instrutores da academia
+      const instructorsData = await academyCollectionsService.getCollection(academiaId, 'instructors');
+      setInstructors(instructorsData || []);
+
       setGraduationLevels(defaultGraduationLevels);
-      
+
       try {
-        const studentData = await firestoreService.getById('users', studentId);
-        if (studentData?.currentGraduation) {
+        const studentData = await academyCollectionsService.getCollection(academiaId, 'students');
+        const student = studentData.find(user => user.id === studentId);
+        if (student?.currentGraduation) {
           setFormData(prev => ({
             ...prev,
-            previousGraduation: studentData.currentGraduation
+            previousGraduation: student.currentGraduation
           }));
         }
       } catch (error) {
         console.warn('Não foi possível carregar dados do aluno:', error.message);
       }
-      
+
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       Alert.alert('Erro', 'Não foi possível carregar os dados necessários');
@@ -100,14 +122,36 @@ const AddGraduationScreen = ({ route, navigation }) => {
     setSnackbarVisible(true);
   };
 
+  const validateForm = () => {
+    if (!formData.graduation) {
+      showSnackbar('Por favor, selecione uma graduação', 'error');
+      return false;
+    }
+    if (!formData.modality) {
+      showSnackbar('Por favor, selecione uma modalidade', 'error');
+      return false;
+    }
+    if (!formData.instructor || !formData.instructorId) {
+      showSnackbar('Por favor, selecione um instrutor responsável', 'error');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async () => {
-    if (!formData.graduation || !formData.modality || !formData.modalityId) {
-      showSnackbar('Por favor, preencha todos os campos obrigatórios', 'error');
+    if (!validateForm()) {
       return;
     }
 
     try {
       setLoading(true);
+
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        showSnackbar('Academia não encontrada. Faça login novamente.', 'error');
+        return;
+      }
 
       const graduationData = {
         ...formData,
@@ -118,16 +162,18 @@ const AddGraduationScreen = ({ route, navigation }) => {
         status: 'active'
       };
 
-      await firestoreService.create('graduations', graduationData);
+      // Salvar graduação usando academyCollectionsService
+      await academyCollectionsService.createDocument(academiaId, 'graduations', graduationData);
 
-      await firestoreService.update('users', studentId, {
+      // Atualizar perfil do aluno
+      await academyCollectionsService.updateDocument(academiaId, 'students', studentId, {
         currentGraduation: formData.graduation,
         lastGraduationDate: formData.date,
         updatedAt: new Date()
       });
 
       showSnackbar('Graduação adicionada com sucesso!', 'success');
-      
+
       setTimeout(() => {
         navigation.goBack();
       }, 2000);
@@ -135,13 +181,13 @@ const AddGraduationScreen = ({ route, navigation }) => {
     } catch (error) {
       console.error('Erro ao salvar graduação:', error);
       let errorMessage = 'Não foi possível salvar a graduação. Tente novamente.';
-      
+
       if (error.code === 'permission-denied') {
         errorMessage = 'Você não tem permissão para adicionar graduações. Contate o administrador.';
       } else if (error.code === 'unavailable') {
         errorMessage = 'Serviço temporariamente indisponível. Tente novamente em alguns minutos.';
       }
-      
+
       showSnackbar(errorMessage, 'error');
     } finally {
       setLoading(false);
@@ -155,13 +201,13 @@ const AddGraduationScreen = ({ route, navigation }) => {
       modalityId: modality.id,
       graduation: ''
     }));
-    
+
     if (modality.graduationLevels && modality.graduationLevels.length > 0) {
       setGraduationLevels(modality.graduationLevels);
     } else {
       setGraduationLevels(defaultGraduationLevels);
     }
-    
+
     setModalityDialogVisible(false);
   };
 
@@ -176,130 +222,223 @@ const AddGraduationScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <Card style={styles.headerCard}>
-          <Card.Content>
-            <View style={styles.header}>
-              <MaterialCommunityIcons name="trophy" size={32} color="#FFD700" />
-              <View style={styles.headerText}>
-                <Text style={styles.title}>Nova Graduação</Text>
-                <Text style={styles.subtitle}>
-                  {`Aluno: ${studentName}`}
-                </Text>
+      {/* Header com gradiente */}
+      <LinearGradient
+        colors={['#1976D2', '#1565C0']}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <IconButton
+            icon="arrow-left"
+            iconColor="white"
+            size={24}
+            onPress={() => navigation.goBack()}
+          />
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>Nova Graduação</Text>
+            <Text style={styles.headerSubtitle}>{studentName}</Text>
+          </View>
+        </View>
+      </LinearGradient>
+
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Card de graduação atual */}
+        {formData.previousGraduation && (
+          <Surface style={styles.currentGraduationCard} elevation={2}>
+            <View style={styles.currentGraduationContent}>
+              <IconButton icon="medal" size={24} iconColor="#FF9800" />
+              <View style={styles.currentGraduationText}>
+                <Text style={styles.currentGraduationLabel}>Graduação Atual</Text>
+                <Text style={styles.currentGraduationValue}>{formData.previousGraduation}</Text>
               </View>
             </View>
-          </Card.Content>
-        </Card>
+          </Surface>
+        )}
 
-        <Card style={styles.card}>
+        {/* Seção de seleções */}
+        <Card style={styles.selectionCard}>
           <Card.Content>
             <Text style={styles.sectionTitle}>Informações da Graduação</Text>
 
-            {formData.previousGraduation && (
-              <View style={styles.previousGraduation}>
-                <Text style={styles.label}>Graduação Atual:</Text>
-                <View style={styles.chipContainer}>
-                  <Text style={styles.chipText}>{formData.previousGraduation}</Text>
-                </View>
-              </View>
-            )}
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Modalidade *</Text>
-              <Button
-                mode="outlined"
+            {/* Modalidade */}
+            <View style={styles.selectionItem}>
+              <Text style={styles.selectionLabel}>Modalidade *</Text>
+              <TouchableOpacity
+                style={[styles.selectionButton, formData.modality && styles.selectionButtonSelected]}
                 onPress={() => setModalityDialogVisible(true)}
-                style={styles.selectButton}
-                contentStyle={styles.selectButtonContent}
               >
-                {formData.modality || 'Selecionar modalidade'}
-              </Button>
+                <View style={styles.selectionButtonContent}>
+                  <IconButton
+                    icon={formData.modality ? "karate" : "plus"}
+                    size={20}
+                    iconColor={formData.modality ? "#1976D2" : "#666"}
+                  />
+                  <Text style={[styles.selectionButtonText, formData.modality && styles.selectionButtonTextSelected]}>
+                    {formData.modality || 'Selecionar Modalidade'}
+                  </Text>
+                  <IconButton icon="chevron-right" size={16} iconColor="#999" />
+                </View>
+              </TouchableOpacity>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Nova Graduação *</Text>
-              <Button
-                mode="outlined"
+            {/* Instrutor */}
+            <View style={styles.selectionItem}>
+              <Text style={styles.selectionLabel}>Instrutor Responsável *</Text>
+              <TouchableOpacity
+                style={[styles.selectionButton, formData.instructor && styles.selectionButtonSelected]}
+                onPress={() => setInstructorDialogVisible(true)}
+              >
+                <View style={styles.selectionButtonContent}>
+                  <IconButton
+                    icon={formData.instructor ? "account-check" : "plus"}
+                    size={20}
+                    iconColor={formData.instructor ? "#1976D2" : "#666"}
+                  />
+                  <Text style={[styles.selectionButtonText, formData.instructor && styles.selectionButtonTextSelected]}>
+                    {formData.instructor || 'Selecionar Instrutor'}
+                  </Text>
+                  <IconButton icon="chevron-right" size={16} iconColor="#999" />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Nova Graduação */}
+            <View style={styles.selectionItem}>
+              <Text style={styles.selectionLabel}>Nova Graduação *</Text>
+              <TouchableOpacity
+                style={[
+                  styles.selectionButton,
+                  formData.graduation && styles.selectionButtonSelected,
+                  !formData.modalityId && styles.selectionButtonDisabled
+                ]}
                 onPress={() => setGraduationDialogVisible(true)}
-                style={styles.selectButton}
-                contentStyle={styles.selectButtonContent}
                 disabled={!formData.modalityId}
               >
-                {formData.graduation || (formData.modalityId ? 'Selecionar graduação' : 'Primeiro selecione uma modalidade')}
-              </Button>
+                <View style={styles.selectionButtonContent}>
+                  <IconButton
+                    icon={formData.graduation ? "trophy" : "plus"}
+                    size={20}
+                    iconColor={formData.graduation ? "#1976D2" : "#666"}
+                  />
+                  <Text style={[
+                    styles.selectionButtonText,
+                    formData.graduation && styles.selectionButtonTextSelected,
+                    !formData.modalityId && styles.selectionButtonTextDisabled
+                  ]}>
+                    {formData.graduation || 'Selecionar Graduação'}
+                  </Text>
+                  <IconButton icon="chevron-right" size={16} iconColor="#999" />
+                </View>
+              </TouchableOpacity>
+              {!formData.modalityId && (
+                <Text style={styles.helperText}>Selecione uma modalidade primeiro</Text>
+              )}
             </View>
-
-            <TextInput
-              label="Data da Graduação (DD/MM/AAAA)"
-              value={formData.date.toLocaleDateString('pt-BR')}
-              onChangeText={(text) => {
-                const parts = text.split('/');
-                if (parts.length === 3) {
-                  const day = parseInt(parts[0], 10);
-                  const month = parseInt(parts[1], 10) - 1;
-                  const year = parseInt(parts[2], 10);
-                  if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-                    const newDate = new Date(year, month, day);
-                    if (newDate.getFullYear() === year && newDate.getMonth() === month && newDate.getDate() === day) {
-                      setFormData(prev => ({ ...prev, date: newDate }));
-                    }
-                  }
-                }
-              }}
-              mode="outlined"
-              style={styles.input}
-              placeholder="DD/MM/AAAA"
-              left={<TextInput.Icon icon="calendar" />}
-            />
-
-            <TextInput
-              label="Instrutor Responsável"
-              value={formData.instructor}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, instructor: text }))}
-              mode="outlined"
-              style={styles.input}
-            />
-
-            <TextInput
-              label="Número do Certificado (opcional)"
-              value={formData.certificate}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, certificate: text }))}
-              mode="outlined"
-              style={styles.input}
-            />
-
-            <TextInput
-              label="Observações (opcional)"
-              value={formData.notes}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, notes: text }))}
-              mode="outlined"
-              multiline
-              numberOfLines={3}
-              style={styles.input}
-            />
           </Card.Content>
         </Card>
 
-        <View style={styles.buttonContainer}>
-          <Button
-            mode="outlined"
-            onPress={() => navigation.goBack()}
-            style={styles.button}
-          >
-            Cancelar
-          </Button>
-          
+        {/* Data e observações */}
+        <Card style={styles.detailsCard}>
+          <Card.Content>
+            <Text style={styles.sectionTitle}>Detalhes Adicionais</Text>
+            
+            {/* Data */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Data da Graduação *</Text>
+              <TouchableOpacity
+                style={styles.dateButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <IconButton icon="calendar" size={20} iconColor="#1976D2" />
+                <Text style={styles.dateButtonText}>
+                  {formData.date ? formData.date.toLocaleDateString('pt-BR', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  }) : 'Selecionar data'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Observações */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Observações</Text>
+              <TextInput
+                mode="outlined"
+                multiline
+                numberOfLines={4}
+                value={formData.notes}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, notes: text }))}
+                placeholder="Adicione observações sobre a graduação..."
+                style={styles.notesInput}
+                outlineColor="#E0E0E0"
+                activeOutlineColor="#1976D2"
+              />
+            </View>
+
+            {/* Certificado */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Número do Certificado (Opcional)</Text>
+              <TextInput
+                mode="outlined"
+                value={formData.certificate}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, certificate: text }))}
+                placeholder="Ex: CERT-2024-001"
+                style={styles.certificateInput}
+                outlineColor="#E0E0E0"
+                activeOutlineColor="#FF9800"
+                left={<TextInput.Icon icon="certificate" />}
+              />
+            </View>
+          </Card.Content>
+        </Card>
+
+        {/* Botões de ação */}
+        <View style={styles.actionContainer}>
           <Button
             mode="contained"
             onPress={handleSubmit}
             loading={loading}
             disabled={loading}
-            style={[styles.button, styles.submitButton]}
+            style={styles.submitButton}
+            contentStyle={styles.submitButtonContent}
+            labelStyle={styles.submitButtonLabel}
           >
-            Salvar Graduação
+            {loading ? 'Salvando...' : 'Salvar Graduação'}
+          </Button>
+          
+          <Button
+            mode="outlined"
+            onPress={() => navigation.goBack()}
+            disabled={loading}
+            style={styles.cancelButton}
+            contentStyle={styles.cancelButtonContent}
+            labelStyle={styles.cancelButtonLabel}
+          >
+            Cancelar
           </Button>
         </View>
       </ScrollView>
+
+      {/* DateTimePicker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={formData.date}
+          mode="date"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (selectedDate) {
+              setFormData(prev => ({ ...prev, date: selectedDate }));
+            }
+          }}
+        />
+      )}
 
       <Portal>
         <Dialog visible={modalityDialogVisible} onDismiss={() => setModalityDialogVisible(false)}>
@@ -330,27 +469,65 @@ const AddGraduationScreen = ({ route, navigation }) => {
 
       <Portal>
         <Dialog visible={graduationDialogVisible} onDismiss={() => setGraduationDialogVisible(false)}>
-          <View style={styles.dialogTitleContainer}>
-            <Text style={styles.dialogTitle}>Selecionar Graduação</Text>
-          </View>
-          <Dialog.ScrollArea>
-            <ScrollView style={styles.dialogScroll}>
-              {graduationLevels.map((graduation, index) => (
-                <View key={graduation.id || graduation || index}>
-                  <RadioButton.Item
-                    label={graduation.name || graduation}
-                    value={graduation.id || graduation}
-                    status={formData.graduation === (graduation.name || graduation) ? 'checked' : 'unchecked'}
-                    onPress={() => selectGraduation(graduation)}
-                  />
-                </View>
+          <Dialog.Title>Selecionar Graduação</Dialog.Title>
+          <Dialog.Content>
+            <ScrollView style={styles.dialogContent}>
+              {graduationLevels.map((level) => (
+                <TouchableOpacity
+                  key={level.id}
+                  style={styles.dialogItem}
+                  onPress={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      graduation: level.name
+                    }));
+                    setGraduationDialogVisible(false);
+                  }}
+                >
+                  <View style={styles.graduationItem}>
+                    <View style={[styles.colorIndicator, { backgroundColor: level.color }]} />
+                    <Text style={styles.dialogItemText}>{level.name}</Text>
+                  </View>
+                </TouchableOpacity>
               ))}
             </ScrollView>
-          </Dialog.ScrollArea>
+          </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setGraduationDialogVisible(false)}>
-              Cancelar
-            </Button>
+            <Button onPress={() => setGraduationDialogVisible(false)}>Cancelar</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      <Portal>
+        <Dialog visible={instructorDialogVisible} onDismiss={() => setInstructorDialogVisible(false)}>
+          <Dialog.Title>Selecionar Instrutor</Dialog.Title>
+          <Dialog.Content>
+            <ScrollView style={styles.dialogContent}>
+              {instructors.map((instructor, index) => (
+                <TouchableOpacity
+                  key={instructor.id || `instructor-${index}`}
+                  style={styles.dialogItem}
+                  onPress={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      instructor: instructor.name || instructor.displayName || instructor.email || 'Instrutor',
+                      instructorId: instructor.id
+                    }));
+                    setInstructorDialogVisible(false);
+                  }}
+                >
+                  <Text style={styles.dialogItemText}>
+                    {instructor.name || instructor.displayName || instructor.email || 'Instrutor sem nome'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+              {instructors.length === 0 && (
+                <Text style={styles.emptyText}>Nenhum instrutor encontrado</Text>
+              )}
+            </ScrollView>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setInstructorDialogVisible(false)}>Cancelar</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -374,7 +551,237 @@ const AddGraduationScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  header: {
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingBottom: 20,
+    paddingHorizontal: 16,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTextContainer: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  currentGraduationCard: {
+    borderRadius: 12,
+    marginBottom: 16,
+    backgroundColor: 'white',
+  },
+  currentGraduationContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  currentGraduationText: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  currentGraduationLabel: {
+    fontSize: 12,
+    color: '#666',
+    textTransform: 'uppercase',
+    fontWeight: '500',
+    letterSpacing: 0.5,
+  },
+  currentGraduationValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 2,
+  },
+  selectionCard: {
+    borderRadius: 12,
+    marginBottom: 16,
+    elevation: 2,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  selectionItem: {
+    marginBottom: 16,
+  },
+  selectionLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+    marginBottom: 8,
+  },
+  selectionButton: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    backgroundColor: 'white',
+  },
+  selectionButtonSelected: {
+    borderColor: '#1976D2',
+    backgroundColor: '#F3F8FF',
+  },
+  selectionButtonDisabled: {
+    borderColor: '#E0E0E0',
+    backgroundColor: '#F5F5F5',
+  },
+  selectionButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  selectionButtonText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#666',
+  },
+  selectionButtonTextSelected: {
+    color: '#1976D2',
+    fontWeight: '500',
+  },
+  selectionButtonTextDisabled: {
+    color: '#999',
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  detailsCard: {
+    borderRadius: 12,
+    marginBottom: 16,
+    elevation: 2,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+    marginBottom: 8,
+  },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    backgroundColor: 'white',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  dateButtonText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    textTransform: 'capitalize',
+  },
+  notesInput: {
+    backgroundColor: 'white',
+  },
+  certificateCard: {
+    borderRadius: 12,
+    marginBottom: 16,
+    elevation: 2,
+  },
+  certificateHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  certificateInput: {
+    backgroundColor: 'white',
+  },
+  actionContainer: {
+    marginTop: 8,
+    gap: 12,
+  },
+  submitButton: {
+    backgroundColor: '#1976D2',
+    borderRadius: 8,
+  },
+  submitButtonContent: {
+    height: 48,
+  },
+  submitButtonLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    borderColor: '#999',
+    borderRadius: 8,
+  },
+  cancelButtonContent: {
+    height: 48,
+  },
+  cancelButtonLabel: {
+    fontSize: 16,
+    color: '#666',
+  },
+  dialogTitleContainer: {
+    padding: 20,
+    paddingBottom: 16,
+  },
+  dialogTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  dialogContent: {
+    maxHeight: 300,
+  },
+  dialogItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  dialogItemText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  graduationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  colorIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    padding: 20,
+    fontStyle: 'italic',
+  },
   scrollView: { flex: 1 },
   headerCard: { margin: 16, marginBottom: 8, elevation: 4 },
   card: { margin: 16, marginTop: 8, elevation: 2 },
@@ -395,7 +802,6 @@ const styles = StyleSheet.create({
   button: { flex: 1 },
   submitButton: { backgroundColor: '#4CAF50' },
   dialogScroll: { maxHeight: 300 },
-  dialogTitleContainer: { padding: 24, paddingBottom: 0 },
   dialogTitle: { fontSize: 20, fontWeight: 'bold', color: '#333' },
 });
 

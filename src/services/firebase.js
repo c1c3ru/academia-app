@@ -42,9 +42,13 @@ try {
   
   // Inicializar Firestore com configurações específicas da plataforma
   if (isWeb) {
-    // Para web, usar a configuração padrão otimizada
-    db = getFirestore(app);
-    console.log('✅ Firebase Firestore inicializado para web');
+    // Para web, usar configurações otimizadas para conectividade
+    db = initializeFirestore(app, {
+      experimentalAutoDetectLongPolling: true,
+      ignoreUndefinedProperties: true,
+      cacheSizeBytes: 40000000, // 40MB cache
+    });
+    console.log('✅ Firebase Firestore inicializado para web com configurações otimizadas');
   } else {
     // Para React Native, usar configurações específicas
     db = initializeFirestore(app, {

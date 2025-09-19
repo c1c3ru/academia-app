@@ -104,7 +104,7 @@ const EditStudentScreen = ({ navigation, route }) => {
       newErrors.phone = 'Telefone é obrigatório';
     }
 
-    if (!formData.birthDate.trim()) {
+    if (!formData.birthDate || (typeof formData.birthDate === 'string' && !formData.birthDate.trim())) {
       newErrors.birthDate = 'Data de nascimento é obrigatória';
     }
 
