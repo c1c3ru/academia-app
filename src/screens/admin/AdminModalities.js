@@ -537,8 +537,12 @@ const AdminModalities = ({ navigation }) => {
         throw new Error('ID do aviso não encontrado');
       }
       
+      if (!userProfile?.academiaId) {
+        throw new Error('Usuário não associado a uma academia');
+      }
+
       console.log('🗑️ Iniciando exclusão do aviso:', announcement.id);
-      await firestoreService.delete('announcements', announcement.id);
+      await academyCollectionsService.deleteAnnouncement(userProfile.academiaId, announcement.id);
       console.log('✅ Aviso excluído do Firestore');
       
       // Atualizar lista local imediatamente

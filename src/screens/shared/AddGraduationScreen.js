@@ -212,7 +212,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
                 style={styles.selectButton}
                 contentStyle={styles.selectButtonContent}
               >
-                <Text>{formData.modality || 'Selecionar modalidade'}</Text>
+                {formData.modality || 'Selecionar modalidade'}
               </Button>
             </View>
 
@@ -225,7 +225,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
                 contentStyle={styles.selectButtonContent}
                 disabled={!formData.modalityId}
               >
-                <Text>{formData.graduation || (formData.modalityId ? 'Selecionar graduação' : 'Primeiro selecione uma modalidade')}</Text>
+                {formData.graduation || (formData.modalityId ? 'Selecionar graduação' : 'Primeiro selecione uma modalidade')}
               </Button>
             </View>
 
@@ -286,7 +286,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
             onPress={() => navigation.goBack()}
             style={styles.button}
           >
-            <Text>Cancelar</Text>
+            Cancelar
           </Button>
           
           <Button
@@ -296,7 +296,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
             disabled={loading}
             style={[styles.button, styles.submitButton]}
           >
-            <Text>Salvar Graduação</Text>
+            Salvar Graduação
           </Button>
         </View>
       </ScrollView>
@@ -322,7 +322,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
           </Dialog.ScrollArea>
           <Dialog.Actions>
             <Button onPress={() => setModalityDialogVisible(false)}>
-              <Text>Cancelar</Text>
+              Cancelar
             </Button>
           </Dialog.Actions>
         </Dialog>
@@ -349,7 +349,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
           </Dialog.ScrollArea>
           <Dialog.Actions>
             <Button onPress={() => setGraduationDialogVisible(false)}>
-              <Text>Cancelar</Text>
+              Cancelar
             </Button>
           </Dialog.Actions>
         </Dialog>

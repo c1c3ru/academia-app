@@ -21,9 +21,9 @@ import { useAuth } from '../../contexts/AuthProvider';
 const { width } = Dimensions.get('window');
 
 const ClassDetailsScreen = ({ route, navigation }) => {
-  const { classId } = route.params;
+  const { classId, classData = null } = route.params || {};
   const { user, userProfile, academia } = useAuth();
-  const [classInfo, setClassInfo] = useState(classData || null);
+  const [classInfo, setClassInfo] = useState(classData);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(!classData);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,7 +40,7 @@ const ClassDetailsScreen = ({ route, navigation }) => {
     try {
       setLoading(true);
       
-      if (!classData) {
+      if (!classInfo) {
         // Obter ID da academia para buscar a turma
         const academiaId = userProfile?.academiaId || academia?.id;
         if (!academiaId) {
