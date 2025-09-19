@@ -59,30 +59,42 @@ export const useAuthMigration = () => {
   const fetchAcademiaData = async (academiaId) => {
     try {
       console.log('🏢 fetchAcademiaData: Buscando dados da academia:', academiaId);
+      console.log('🔍 fetchAcademiaData: Tentando buscar em /gyms/' + academiaId);
+      
       const academiaDoc = await getDoc(doc(db, 'gyms', academiaId));
+      console.log('📄 fetchAcademiaData: Documento existe?', academiaDoc.exists());
+      
       if (academiaDoc.exists()) {
-        console.log('✅ fetchAcademiaData: Academia encontrada');
+        const academiaData = academiaDoc.data();
+        console.log('✅ fetchAcademiaData: Academia encontrada:', academiaData.name || 'Sem nome');
         setAcademia({
           id: academiaId,
-          ...academiaDoc.data()
+          ...academiaData
         });
       } else {
-        console.log('❌ fetchAcademiaData: Academia não encontrada, limpando associação do usuário');
-        setAcademia(null);
+        console.log('❌ fetchAcademiaData: Academia não encontrada na coleção gyms');
+        console.log('🔍 fetchAcademiaData: Tentando buscar em /academias/' + academiaId);
         
-        // Se a academia não existe mais, limpar a associação do usuário
-        if (user?.uid) {
-          try {
-            await setDoc(doc(db, 'users', user.uid), {
-              academiaId: null,
-              updatedAt: new Date()
-            }, { merge: true });
-            
-            // Atualizar o estado local
+        // Tentar buscar na coleção alternativa 'academias'
+        const academiaDocAlt = await getDoc(doc(db, 'academias', academiaId));
+        console.log('📄 fetchAcademiaData: Documento existe em academias?', academiaDocAlt.exists());
+        
+        if (academiaDocAlt.exists()) {
+          const academiaData = academiaDocAlt.data();
+          console.log('✅ fetchAcademiaData: Academia encontrada em academias:', academiaData.name || 'Sem nome');
+          setAcademia({
+            id: academiaId,
+            ...academiaData
+          });
+        } else {
+          console.log('❌ fetchAcademiaData: Academia não encontrada em nenhuma coleção');
+          setAcademia(null);
+          
+          // Se a academia não existe mais, limpar apenas o estado local
+          if (userProfile?.academiaId) {
+            console.log('⚠️ fetchAcademiaData: Limpando associação local da academia inexistente');
             const updatedProfile = { ...userProfile, academiaId: null };
             setUserProfile(updatedProfile);
-          } catch (error) {
-            console.error('❌ Erro ao limpar associação da academia:', error);
           }
         }
       }
