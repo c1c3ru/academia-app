@@ -28,6 +28,8 @@ import { useAuth } from '../../contexts/AuthProvider';
 import { useTheme } from '../../contexts/ThemeContext';
 import academyCollectionsService from '../../services/academyCollectionsService';
 import { LinearGradient } from 'expo-linear-gradient';
+import SelectionField from '../../components/SelectionField';
+import graduationRepository from '../../repositories/graduationRepository';
 
 const { width } = Dimensions.get('window');
 
@@ -81,38 +83,34 @@ const AddGraduationScreen = ({ route, navigation }) => {
 
   const loadInitialData = async () => {
     try {
+      setLoading(true);
+      
       // Obter ID da academia
       const academiaId = userProfile?.academiaId || academia?.id;
       if (!academiaId) {
         console.error('Academia ID não encontrado');
+        showSnackbar('Academia não encontrada. Faça login novamente.', 'error');
         return;
       }
 
-      const modalitiesData = await academyCollectionsService.getModalities(academiaId);
-      setModalities(modalitiesData || []);
-
-      // Carregar instrutores da academia
-      const instructorsData = await academyCollectionsService.getCollection(academiaId, 'instructors');
-      setInstructors(instructorsData || []);
-
+      const { modalities, instructors, currentGraduation } = await graduationRepository.loadInitialData(academiaId, studentId);
+      
+      setModalities(modalities);
+      setInstructors(instructors);
       setGraduationLevels(defaultGraduationLevels);
-
-      try {
-        const studentData = await academyCollectionsService.getCollection(academiaId, 'students');
-        const student = studentData.find(user => user.id === studentId);
-        if (student?.currentGraduation) {
-          setFormData(prev => ({
-            ...prev,
-            previousGraduation: student.currentGraduation
-          }));
-        }
-      } catch (error) {
-        console.warn('Não foi possível carregar dados do aluno:', error.message);
+      
+      if (currentGraduation) {
+        setFormData(prev => ({
+          ...prev,
+          previousGraduation: currentGraduation
+        }));
       }
 
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os dados necessários');
+      showSnackbar(error.message || 'Não foi possível carregar os dados necessários', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -135,6 +133,29 @@ const AddGraduationScreen = ({ route, navigation }) => {
       showSnackbar('Por favor, selecione um instrutor responsável', 'error');
       return false;
     }
+    
+    // Validar data
+    if (!formData.date) {
+      showSnackbar('Por favor, selecione uma data', 'error');
+      return false;
+    }
+    
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // Fim do dia atual
+    if (formData.date > today) {
+      showSnackbar('A data da graduação não pode ser futura', 'error');
+      return false;
+    }
+    
+    // Validar certificado (se preenchido)
+    if (formData.certificate && formData.certificate.trim()) {
+      const certPattern = /^CERT-\d{4}-\d+$/;
+      if (!certPattern.test(formData.certificate.trim())) {
+        showSnackbar('Formato do certificado deve ser: CERT-YYYY-NNN (ex: CERT-2024-001)', 'error');
+        return false;
+      }
+    }
+    
     return true;
   };
 
@@ -162,16 +183,8 @@ const AddGraduationScreen = ({ route, navigation }) => {
         status: 'active'
       };
 
-      // Salvar graduação usando academyCollectionsService
-      await academyCollectionsService.createDocument(academiaId, 'graduations', graduationData);
-
-      // Atualizar perfil do aluno
-      await academyCollectionsService.updateDocument(academiaId, 'students', studentId, {
-        currentGraduation: formData.graduation,
-        lastGraduationDate: formData.date,
-        updatedAt: new Date()
-      });
-
+      await graduationRepository.addGraduation(academiaId, studentId, graduationData);
+      
       showSnackbar('Graduação adicionada com sucesso!', 'success');
 
       setTimeout(() => {
@@ -179,16 +192,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
       }, 2000);
 
     } catch (error) {
-      console.error('Erro ao salvar graduação:', error);
-      let errorMessage = 'Não foi possível salvar a graduação. Tente novamente.';
-
-      if (error.code === 'permission-denied') {
-        errorMessage = 'Você não tem permissão para adicionar graduações. Contate o administrador.';
-      } else if (error.code === 'unavailable') {
-        errorMessage = 'Serviço temporariamente indisponível. Tente novamente em alguns minutos.';
-      }
-
-      showSnackbar(errorMessage, 'error');
+      showSnackbar(error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -265,79 +269,36 @@ const AddGraduationScreen = ({ route, navigation }) => {
             <Text style={styles.sectionTitle}>Informações da Graduação</Text>
 
             {/* Modalidade */}
-            <View style={styles.selectionItem}>
-              <Text style={styles.selectionLabel}>Modalidade *</Text>
-              <TouchableOpacity
-                style={[styles.selectionButton, formData.modality && styles.selectionButtonSelected]}
-                onPress={() => setModalityDialogVisible(true)}
-              >
-                <View style={styles.selectionButtonContent}>
-                  <IconButton
-                    icon={formData.modality ? "karate" : "plus"}
-                    size={20}
-                    iconColor={formData.modality ? "#1976D2" : "#666"}
-                  />
-                  <Text style={[styles.selectionButtonText, formData.modality && styles.selectionButtonTextSelected]}>
-                    {formData.modality || 'Selecionar Modalidade'}
-                  </Text>
-                  <IconButton icon="chevron-right" size={16} iconColor="#999" />
-                </View>
-              </TouchableOpacity>
-            </View>
+            <SelectionField
+              label="Modalidade"
+              value={formData.modality}
+              placeholder="Selecionar Modalidade"
+              icon={formData.modality ? "karate" : "plus"}
+              onPress={() => setModalityDialogVisible(true)}
+              required
+            />
 
             {/* Instrutor */}
-            <View style={styles.selectionItem}>
-              <Text style={styles.selectionLabel}>Instrutor Responsável *</Text>
-              <TouchableOpacity
-                style={[styles.selectionButton, formData.instructor && styles.selectionButtonSelected]}
-                onPress={() => setInstructorDialogVisible(true)}
-              >
-                <View style={styles.selectionButtonContent}>
-                  <IconButton
-                    icon={formData.instructor ? "account-check" : "plus"}
-                    size={20}
-                    iconColor={formData.instructor ? "#1976D2" : "#666"}
-                  />
-                  <Text style={[styles.selectionButtonText, formData.instructor && styles.selectionButtonTextSelected]}>
-                    {formData.instructor || 'Selecionar Instrutor'}
-                  </Text>
-                  <IconButton icon="chevron-right" size={16} iconColor="#999" />
-                </View>
-              </TouchableOpacity>
-            </View>
+            <SelectionField
+              label="Instrutor Responsável"
+              value={formData.instructor}
+              placeholder="Selecionar Instrutor"
+              icon={formData.instructor ? "account-check" : "plus"}
+              onPress={() => setInstructorDialogVisible(true)}
+              required
+            />
 
             {/* Nova Graduação */}
-            <View style={styles.selectionItem}>
-              <Text style={styles.selectionLabel}>Nova Graduação *</Text>
-              <TouchableOpacity
-                style={[
-                  styles.selectionButton,
-                  formData.graduation && styles.selectionButtonSelected,
-                  !formData.modalityId && styles.selectionButtonDisabled
-                ]}
-                onPress={() => setGraduationDialogVisible(true)}
-                disabled={!formData.modalityId}
-              >
-                <View style={styles.selectionButtonContent}>
-                  <IconButton
-                    icon={formData.graduation ? "trophy" : "plus"}
-                    size={20}
-                    iconColor={formData.graduation ? "#1976D2" : "#666"}
-                  />
-                  <Text style={[
-                    styles.selectionButtonText,
-                    formData.graduation && styles.selectionButtonTextSelected,
-                    !formData.modalityId && styles.selectionButtonTextDisabled
-                  ]}>
-                    {formData.graduation || 'Selecionar Graduação'}
-                  </Text>
-                  <IconButton icon="chevron-right" size={16} iconColor="#999" />
-                </View>
-              </TouchableOpacity>
-              {!formData.modalityId && (
-                <Text style={styles.helperText}>Selecione uma modalidade primeiro</Text>
-              )}
-            </View>
+            <SelectionField
+              label="Nova Graduação"
+              value={formData.graduation}
+              placeholder="Selecionar Graduação"
+              icon={formData.graduation ? "trophy" : "plus"}
+              onPress={() => setGraduationDialogVisible(true)}
+              disabled={!formData.modalityId}
+              helperText={!formData.modalityId ? "Selecione uma modalidade primeiro" : null}
+              required
+            />
           </Card.Content>
         </Card>
 
@@ -408,6 +369,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
             style={styles.submitButton}
             contentStyle={styles.submitButtonContent}
             labelStyle={styles.submitButtonLabel}
+            icon={loading ? undefined : "content-save"}
           >
             {loading ? 'Salvando...' : 'Salvar Graduação'}
           </Button>
@@ -447,16 +409,24 @@ const AddGraduationScreen = ({ route, navigation }) => {
           </View>
           <Dialog.ScrollArea>
             <ScrollView style={styles.dialogScroll}>
-              {modalities.map((modality) => (
-                <View key={modality.id}>
-                  <RadioButton.Item
-                    label={modality.name}
-                    value={modality.id}
-                    status={formData.modalityId === modality.id ? 'checked' : 'unchecked'}
-                    onPress={() => selectModality(modality)}
-                  />
+              {loading ? (
+                <View style={styles.loadingContainer}>
+                  <Text style={styles.loadingText}>Carregando modalidades...</Text>
                 </View>
-              ))}
+              ) : modalities.length > 0 ? (
+                modalities.map((modality) => (
+                  <View key={modality.id}>
+                    <RadioButton.Item
+                      label={modality.name}
+                      value={modality.id}
+                      status={formData.modalityId === modality.id ? 'checked' : 'unchecked'}
+                      onPress={() => selectModality(modality)}
+                    />
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.emptyText}>Nenhuma modalidade encontrada</Text>
+              )}
             </ScrollView>
           </Dialog.ScrollArea>
           <Dialog.Actions>
@@ -472,24 +442,28 @@ const AddGraduationScreen = ({ route, navigation }) => {
           <Dialog.Title>Selecionar Graduação</Dialog.Title>
           <Dialog.Content>
             <ScrollView style={styles.dialogContent}>
-              {graduationLevels.map((level) => (
-                <TouchableOpacity
-                  key={level.id}
-                  style={styles.dialogItem}
-                  onPress={() => {
-                    setFormData(prev => ({
-                      ...prev,
-                      graduation: level.name
-                    }));
-                    setGraduationDialogVisible(false);
-                  }}
-                >
-                  <View style={styles.graduationItem}>
-                    <View style={[styles.colorIndicator, { backgroundColor: level.color }]} />
-                    <Text style={styles.dialogItemText}>{level.name}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+              {graduationLevels.length > 0 ? (
+                graduationLevels.map((level) => (
+                  <TouchableOpacity
+                    key={level.id}
+                    style={styles.dialogItem}
+                    onPress={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        graduation: level.name
+                      }));
+                      setGraduationDialogVisible(false);
+                    }}
+                  >
+                    <View style={styles.graduationItem}>
+                      <View style={[styles.colorIndicator, { backgroundColor: level.color }]} />
+                      <Text style={styles.dialogItemText}>{level.name}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.emptyText}>Nenhuma graduação disponível</Text>
+              )}
             </ScrollView>
           </Dialog.Content>
           <Dialog.Actions>
@@ -503,25 +477,30 @@ const AddGraduationScreen = ({ route, navigation }) => {
           <Dialog.Title>Selecionar Instrutor</Dialog.Title>
           <Dialog.Content>
             <ScrollView style={styles.dialogContent}>
-              {instructors.map((instructor, index) => (
-                <TouchableOpacity
-                  key={instructor.id || `instructor-${index}`}
-                  style={styles.dialogItem}
-                  onPress={() => {
-                    setFormData(prev => ({
-                      ...prev,
-                      instructor: instructor.name || instructor.displayName || instructor.email || 'Instrutor',
-                      instructorId: instructor.id
-                    }));
-                    setInstructorDialogVisible(false);
-                  }}
-                >
-                  <Text style={styles.dialogItemText}>
-                    {instructor.name || instructor.displayName || instructor.email || 'Instrutor sem nome'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-              {instructors.length === 0 && (
+              {loading ? (
+                <View style={styles.loadingContainer}>
+                  <Text style={styles.loadingText}>Carregando instrutores...</Text>
+                </View>
+              ) : instructors.length > 0 ? (
+                instructors.map((instructor, index) => (
+                  <TouchableOpacity
+                    key={instructor.id || `instructor-${index}`}
+                    style={styles.dialogItem}
+                    onPress={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        instructor: instructor.name || instructor.displayName || instructor.email || 'Instrutor',
+                        instructorId: instructor.id
+                      }));
+                      setInstructorDialogVisible(false);
+                    }}
+                  >
+                    <Text style={styles.dialogItemText}>
+                      {instructor.name || instructor.displayName || instructor.email || 'Instrutor sem nome'}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
                 <Text style={styles.emptyText}>Nenhum instrutor encontrado</Text>
               )}
             </ScrollView>
@@ -782,27 +761,15 @@ const styles = StyleSheet.create({
     padding: 20,
     fontStyle: 'italic',
   },
-  scrollView: { flex: 1 },
-  headerCard: { margin: 16, marginBottom: 8, elevation: 4 },
-  card: { margin: 16, marginTop: 8, elevation: 2 },
-  header: { flexDirection: 'row', alignItems: 'center' },
-  headerText: { marginLeft: 16, flex: 1 },
-  title: { fontSize: 20, fontWeight: 'bold', color: '#333' },
-  subtitle: { fontSize: 14, color: '#666', marginTop: 4 },
-  sectionTitle: { fontSize: 18, marginBottom: 16, color: '#333' },
-  previousGraduation: { marginBottom: 16, padding: 12, backgroundColor: '#f8f9fa', borderRadius: 8 },
-  label: { fontSize: 14, fontWeight: '500', color: '#333', marginBottom: 8 },
-  chipContainer: { alignSelf: 'flex-start', backgroundColor: '#E8F5E8', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#ddd' },
-  chipText: { fontSize: 14, color: '#333' },
-  inputGroup: { marginBottom: 16 },
-  selectButton: { justifyContent: 'flex-start', borderColor: '#ddd' },
-  selectButtonContent: { justifyContent: 'flex-start', paddingVertical: 8 },
-  input: { marginBottom: 16 },
-  buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', margin: 16, gap: 12 },
-  button: { flex: 1 },
-  submitButton: { backgroundColor: '#4CAF50' },
-  dialogScroll: { maxHeight: 300 },
-  dialogTitle: { fontSize: 20, fontWeight: 'bold', color: '#333' },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+  },
 });
 
 export default AddGraduationScreen;
