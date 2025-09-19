@@ -15,7 +15,7 @@ import {
 } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { firestoreService } from '../../services/firestoreService';
+import { academyFirestoreService } from '../../services/academyFirestoreService';
 import { useAuth } from '../../contexts/AuthProvider';
 
 const { width } = Dimensions.get('window');
@@ -47,7 +47,9 @@ const ClassDetailsScreen = ({ route, navigation }) => {
           console.error('Academia ID não encontrado');
           return;
         }
-        const classDetails = await firestoreService.getById(`gyms/${academiaId}/classes`, classId);
+        
+        console.log('🔍 Carregando detalhes da turma:', classId, 'academia:', academiaId);
+        const classDetails = await academyFirestoreService.getById('classes', classId, academiaId);
         setClassInfo(classDetails);
       }
       
@@ -59,11 +61,13 @@ const ClassDetailsScreen = ({ route, navigation }) => {
       }
       
       // Buscar alunos da turma na academia
-      const allStudents = await firestoreService.getAll(`gyms/${academiaId}/students`);
+      console.log('👥 Carregando alunos da turma...');
+      const allStudents = await academyFirestoreService.getAll('students', academiaId);
       const classStudents = allStudents.filter(student => 
         student.classIds && 
         student.classIds.includes(classId)
       );
+      console.log('✅ Alunos da turma encontrados:', classStudents.length);
       setStudents(classStudents);
       
     } catch (error) {
@@ -115,8 +119,36 @@ const ClassDetailsScreen = ({ route, navigation }) => {
   };
 
   const formatSchedule = (schedule) => {
-    if (!schedule || !Array.isArray(schedule)) return 'Não definido';
-    return schedule.map(s => `${s.day} - ${s.time}`).join(', ');
+    if (!schedule) return 'Não definido';
+    
+    // Se for uma string, retornar diretamente
+    if (typeof schedule === 'string') {
+      return schedule;
+    }
+    
+    // Se for um objeto único com dayOfWeek, minute, hour
+    if (schedule.dayOfWeek !== undefined && schedule.hour !== undefined && schedule.minute !== undefined) {
+      const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+      const dayName = days[schedule.dayOfWeek] || `Dia ${schedule.dayOfWeek}`;
+      const time = `${schedule.hour.toString().padStart(2, '0')}:${schedule.minute.toString().padStart(2, '0')}`;
+      return `${dayName} - ${time}`;
+    }
+    
+    // Se for um array
+    if (Array.isArray(schedule)) {
+      return schedule.map(s => {
+        if (typeof s === 'string') return s;
+        if (s.dayOfWeek !== undefined && s.hour !== undefined && s.minute !== undefined) {
+          const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+          const dayName = days[s.dayOfWeek] || `Dia ${s.dayOfWeek}`;
+          const time = `${s.hour.toString().padStart(2, '0')}:${s.minute.toString().padStart(2, '0')}`;
+          return `${dayName} - ${time}`;
+        }
+        return `${s.day || 'Dia'} - ${s.time || 'Horário'}`;
+      }).join(', ');
+    }
+    
+    return 'Horário não definido';
   };
 
   const getModalityColor = (modality) => {
@@ -201,7 +233,9 @@ const ClassDetailsScreen = ({ route, navigation }) => {
               <Ionicons name="person-circle" size={24} color="#2196F3" />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Instrutor</Text>
-                <Text style={styles.infoValue}>{classInfo?.instructor || 'Não definido'}</Text>
+                <Text style={styles.infoValue}>
+                  {classInfo?.instructorName || classInfo?.instructor || 'Não definido'}
+                </Text>
               </View>
             </View>
             
@@ -209,7 +243,9 @@ const ClassDetailsScreen = ({ route, navigation }) => {
               <Ionicons name="time-outline" size={24} color="#4CAF50" />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Horários</Text>
-                <Text style={styles.infoValue}>{formatSchedule(classInfo?.schedule)}</Text>
+                <Text style={styles.infoValue}>
+                  {formatSchedule(classInfo?.schedule) || classInfo?.scheduleText || 'Horário não definido'}
+                </Text>
               </View>
             </View>
             
@@ -316,13 +352,21 @@ const ClassDetailsScreen = ({ route, navigation }) => {
               <Surface style={styles.actionItem} elevation={2}>
                 <Button
                   mode="contained"
-                  onPress={() => navigation.navigate('ClassStudents', { classId: classId })}
+                  onPress={() => {
+                    // Navegação condicional baseada no tipo de usuário
+                    if (userProfile?.userType === 'admin') {
+                      navigation.navigate('ClassStudents', { classId: classId });
+                    } else {
+                      // Para instrutores, mostrar/ocultar lista de alunos na própria tela
+                      setShowStudents(!showStudents);
+                    }
+                  }}
                   style={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
                   contentStyle={styles.actionButtonContent}
                   labelStyle={styles.actionButtonLabel}
                 >
-                  <Ionicons name="person-add" size={20} color="white" />
-                  {"\n"}Gerenciar
+                  <Ionicons name={showStudents ? "eye-off" : "eye"} size={20} color="white" />
+                  {"\n"}{userProfile?.userType === 'admin' ? 'Gerenciar' : (showStudents ? 'Ocultar' : 'Ver Alunos')}
                 </Button>
               </Surface>
             </View>

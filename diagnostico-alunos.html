@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico de Alunos - Academia App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #2196F3;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #f44336;
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #4CAF50;
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .warning {
+            color: #ff9800;
+            background: #fff3e0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico de Alunos - Academia App</h1>
+        
+        <div class="section">
+            <h3>📋 Configuração</h3>
+            <div class="input-group">
+                <label for="academiaId">ID da Academia:</label>
+                <input type="text" id="academiaId" placeholder="Digite o ID da sua academia (ex: gym_123)" />
+            </div>
+            <button onclick="iniciarDiagnostico()">🔍 Iniciar Diagnóstico</button>
+            <button onclick="verificarEstrutura()">🏗️ Verificar Estrutura</button>
+            <button onclick="migrarDados()">🔄 Migrar Dados</button>
+        </div>
+
+        <div class="section">
+            <h3>📊 Resultados do Diagnóstico</h3>
+            <div id="results" class="results">
+Clique em "Iniciar Diagnóstico" para verificar os dados dos alunos...
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🛠️ Ações de Correção</h3>
+            <button onclick="criarAlunoTeste()" disabled id="btnCriarTeste">👤 Criar Aluno de Teste</button>
+            <button onclick="associarAlunosATurmas()" disabled id="btnAssociar">🔗 Associar Alunos às Turmas</button>
+            <button onclick="limparCache()">🗑️ Limpar Cache</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            getDocs, 
+            getDoc,
+            setDoc,
+            addDoc,
+            query, 
+            where,
+            orderBy,
+            updateDoc
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Configuração do Firebase (substitua pela sua configuração)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBEWjKmKzqFhYJjZhHNqPKKKKKKKKKKKKK",
+            authDomain: "academia-app-12345.firebaseapp.com",
+            projectId: "academia-app-12345",
+            storageBucket: "academia-app-12345.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdefghijklmnop"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Tornar funções globais
+        window.db = db;
+        window.collection = collection;
+        window.doc = doc;
+        window.getDocs = getDocs;
+        window.getDoc = getDoc;
+        window.setDoc = setDoc;
+        window.addDoc = addDoc;
+        window.query = query;
+        window.where = where;
+        window.orderBy = orderBy;
+        window.updateDoc = updateDoc;
+
+        console.log('Firebase inicializado com sucesso');
+    </script>
+
+    <script>
+        let diagnosticoCompleto = false;
+
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            let prefix = '';
+            
+            switch(type) {
+                case 'error':
+                    prefix = '❌ ERRO';
+                    break;
+                case 'success':
+                    prefix = '✅ SUCESSO';
+                    break;
+                case 'warning':
+                    prefix = '⚠️ AVISO';
+                    break;
+                case 'info':
+                default:
+                    prefix = 'ℹ️ INFO';
+                    break;
+            }
+            
+            results.textContent += `[${timestamp}] ${prefix}: ${message}\n`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('results').textContent = '';
+        }
+
+        async function iniciarDiagnostico() {
+            clearLog();
+            const academiaId = document.getElementById('academiaId').value.trim();
+            
+            if (!academiaId) {
+                log('Por favor, insira o ID da academia', 'error');
+                return;
+            }
+
+            log('Iniciando diagnóstico completo...');
+            log(`Academia ID: ${academiaId}`);
+
+            try {
+                // 1. Verificar se a academia existe
+                log('\n=== 1. VERIFICANDO ACADEMIA ===');
+                const academiaRef = doc(db, 'gyms', academiaId);
+                const academiaSnap = await getDoc(academiaRef);
+                
+                if (academiaSnap.exists()) {
+                    const academiaData = academiaSnap.data();
+                    log(`✅ Academia encontrada: ${academiaData.name || 'Sem nome'}`, 'success');
+                } else {
+                    log('❌ Academia não encontrada na coleção gyms', 'error');
+                    
+                    // Tentar na coleção alternativa
+                    const academiaAltRef = doc(db, 'academias', academiaId);
+                    const academiaAltSnap = await getDoc(academiaAltRef);
+                    
+                    if (academiaAltSnap.exists()) {
+                        log('⚠️ Academia encontrada na coleção "academias" (estrutura antiga)', 'warning');
+                    } else {
+                        log('❌ Academia não encontrada em nenhuma coleção', 'error');
+                        return;
+                    }
+                }
+
+                // 2. Verificar alunos na coleção global
+                log('\n=== 2. VERIFICANDO ALUNOS NA COLEÇÃO GLOBAL ===');
+                const globalStudentsRef = collection(db, 'users');
+                const globalStudentsQuery = query(globalStudentsRef, where('userType', '==', 'student'));
+                const globalStudentsSnap = await getDocs(globalStudentsQuery);
+                
+                log(`Alunos encontrados na coleção global 'users': ${globalStudentsSnap.size}`);
+                
+                let alunosComAcademia = 0;
+                let alunosDestaAcademia = 0;
+                
+                globalStudentsSnap.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.academiaId) {
+                        alunosComAcademia++;
+                        if (data.academiaId === academiaId) {
+                            alunosDestaAcademia++;
+                        }
+                    }
+                });
+                
+                log(`Alunos com academiaId definido: ${alunosComAcademia}`);
+                log(`Alunos desta academia: ${alunosDestaAcademia}`);
+
+                // 3. Verificar alunos na subcoleção da academia
+                log('\n=== 3. VERIFICANDO ALUNOS NA SUBCOLEÇÃO ===');
+                const subStudentsRef = collection(db, 'gyms', academiaId, 'students');
+                const subStudentsSnap = await getDocs(subStudentsRef);
+                
+                log(`Alunos na subcoleção gyms/${academiaId}/students: ${subStudentsSnap.size}`);
+                
+                if (subStudentsSnap.size > 0) {
+                    log('Lista de alunos na subcoleção:');
+                    subStudentsSnap.forEach((doc) => {
+                        const data = doc.data();
+                        log(`  - ${data.name || 'Sem nome'} (${data.email || 'Sem email'})`);
+                    });
+                }
+
+                // 4. Verificar turmas
+                log('\n=== 4. VERIFICANDO TURMAS ===');
+                const classesRef = collection(db, 'gyms', academiaId, 'classes');
+                const classesSnap = await getDocs(classesRef);
+                
+                log(`Turmas na subcoleção gyms/${academiaId}/classes: ${classesSnap.size}`);
+                
+                if (classesSnap.size > 0) {
+                    log('Lista de turmas:');
+                    classesSnap.forEach((doc) => {
+                        const data = doc.data();
+                        log(`  - ${data.name || 'Sem nome'} (Instrutor: ${data.instructorId || 'Não definido'})`);
+                    });
+                }
+
+                // 5. Verificar modalidades
+                log('\n=== 5. VERIFICANDO MODALIDADES ===');
+                const modalitiesRef = collection(db, 'gyms', academiaId, 'modalities');
+                const modalitiesSnap = await getDocs(modalitiesRef);
+                
+                log(`Modalidades na subcoleção: ${modalitiesSnap.size}`);
+
+                // 6. Verificar planos
+                log('\n=== 6. VERIFICANDO PLANOS ===');
+                const plansRef = collection(db, 'gyms', academiaId, 'plans');
+                const plansSnap = await getDocs(plansRef);
+                
+                log(`Planos na subcoleção: ${plansSnap.size}`);
+
+                // 7. Diagnóstico final
+                log('\n=== 7. DIAGNÓSTICO FINAL ===');
+                
+                if (subStudentsSnap.size === 0 && alunosDestaAcademia > 0) {
+                    log('🔍 PROBLEMA IDENTIFICADO: Alunos existem na coleção global mas não na subcoleção', 'warning');
+                    log('💡 SOLUÇÃO: Execute a migração de dados', 'info');
+                } else if (subStudentsSnap.size === 0 && alunosDestaAcademia === 0) {
+                    log('🔍 PROBLEMA IDENTIFICADO: Nenhum aluno cadastrado', 'warning');
+                    log('💡 SOLUÇÃO: Cadastre alunos ou crie um aluno de teste', 'info');
+                } else if (subStudentsSnap.size > 0) {
+                    log('✅ Alunos encontrados na estrutura correta', 'success');
+                    
+                    // Verificar se alunos têm associação com turmas
+                    let alunosComTurmas = 0;
+                    subStudentsSnap.forEach((doc) => {
+                        const data = doc.data();
+                        if (data.classIds && data.classIds.length > 0) {
+                            alunosComTurmas++;
+                        }
+                    });
+                    
+                    log(`Alunos associados a turmas: ${alunosComTurmas}/${subStudentsSnap.size}`);
+                    
+                    if (alunosComTurmas === 0 && classesSnap.size > 0) {
+                        log('⚠️ PROBLEMA: Alunos não estão associados a turmas', 'warning');
+                        log('💡 SOLUÇÃO: Execute a associação automática', 'info');
+                    }
+                }
+
+                diagnosticoCompleto = true;
+                document.getElementById('btnCriarTeste').disabled = false;
+                document.getElementById('btnAssociar').disabled = false;
+                
+                log('\n✅ Diagnóstico concluído!', 'success');
+
+            } catch (error) {
+                log(`Erro durante o diagnóstico: ${error.message}`, 'error');
+                console.error('Erro:', error);
+            }
+        }
+
+        async function verificarEstrutura() {
+            clearLog();
+            const academiaId = document.getElementById('academiaId').value.trim();
+            
+            if (!academiaId) {
+                log('Por favor, insira o ID da academia', 'error');
+                return;
+            }
+
+            log('Verificando estrutura de coleções...');
+
+            try {
+                const colecoes = ['students', 'classes', 'instructors', 'modalities', 'plans', 'announcements', 'payments', 'graduations'];
+                
+                for (const colecao of colecoes) {
+                    const ref = collection(db, 'gyms', academiaId, colecao);
+                    const snap = await getDocs(ref);
+                    log(`${colecao}: ${snap.size} documentos`);
+                }
+
+            } catch (error) {
+                log(`Erro ao verificar estrutura: ${error.message}`, 'error');
+            }
+        }
+
+        async function migrarDados() {
+            const academiaId = document.getElementById('academiaId').value.trim();
+            
+            if (!academiaId) {
+                log('Por favor, insira o ID da academia', 'error');
+                return;
+            }
+
+            if (!confirm('Deseja migrar os dados da coleção global para as subcoleções? Esta operação pode demorar alguns minutos.')) {
+                return;
+            }
+
+            log('Iniciando migração de dados...');
+
+            try {
+                // Migrar alunos
+                log('Migrando alunos...');
+                const globalStudentsRef = collection(db, 'users');
+                const globalStudentsQuery = query(globalStudentsRef, 
+                    where('userType', '==', 'student'),
+                    where('academiaId', '==', academiaId)
+                );
+                const globalStudentsSnap = await getDocs(globalStudentsQuery);
+                
+                let migrados = 0;
+                for (const docSnap of globalStudentsSnap.docs) {
+                    const data = docSnap.data();
+                    const subStudentRef = doc(db, 'gyms', academiaId, 'students', docSnap.id);
+                    await setDoc(subStudentRef, {
+                        ...data,
+                        migratedAt: new Date()
+                    });
+                    migrados++;
+                }
+                
+                log(`✅ ${migrados} alunos migrados para subcoleção`, 'success');
+
+                // Verificar outras coleções globais
+                const colecoesGlobais = ['modalities', 'plans', 'announcements'];
+                
+                for (const colecao of colecoesGlobais) {
+                    log(`Verificando ${colecao} globais...`);
+                    const globalRef = collection(db, colecao);
+                    const globalQuery = query(globalRef, where('academiaId', '==', academiaId));
+                    const globalSnap = await getDocs(globalQuery);
+                    
+                    if (globalSnap.size > 0) {
+                        log(`Migrando ${globalSnap.size} ${colecao}...`);
+                        for (const docSnap of globalSnap.docs) {
+                            const data = docSnap.data();
+                            const subRef = doc(db, 'gyms', academiaId, colecao, docSnap.id);
+                            await setDoc(subRef, {
+                                ...data,
+                                migratedAt: new Date()
+                            });
+                        }
+                        log(`✅ ${colecao} migrados`, 'success');
+                    } else {
+                        log(`Nenhum ${colecao} encontrado para migrar`);
+                    }
+                }
+
+                log('✅ Migração concluída! Execute o diagnóstico novamente.', 'success');
+
+            } catch (error) {
+                log(`Erro durante migração: ${error.message}`, 'error');
+            }
+        }
+
+        async function criarAlunoTeste() {
+            const academiaId = document.getElementById('academiaId').value.trim();
+            
+            if (!academiaId) {
+                log('Por favor, insira o ID da academia', 'error');
+                return;
+            }
+
+            log('Criando aluno de teste...');
+
+            try {
+                const alunoTeste = {
+                    name: 'Aluno Teste',
+                    email: 'aluno.teste@exemplo.com',
+                    phone: '(11) 99999-9999',
+                    userType: 'student',
+                    academiaId: academiaId,
+                    isActive: true,
+                    currentGraduation: 'Iniciante',
+                    classIds: [],
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                };
+
+                // Criar na subcoleção
+                const subStudentRef = collection(db, 'gyms', academiaId, 'students');
+                const docRef = await addDoc(subStudentRef, alunoTeste);
+                
+                log(`✅ Aluno de teste criado com ID: ${docRef.id}`, 'success');
+
+            } catch (error) {
+                log(`Erro ao criar aluno de teste: ${error.message}`, 'error');
+            }
+        }
+
+        async function associarAlunosATurmas() {
+            const academiaId = document.getElementById('academiaId').value.trim();
+            
+            if (!academiaId) {
+                log('Por favor, insira o ID da academia', 'error');
+                return;
+            }
+
+            log('Associando alunos às turmas...');
+
+            try {
+                // Buscar turmas
+                const classesRef = collection(db, 'gyms', academiaId, 'classes');
+                const classesSnap = await getDocs(classesRef);
+                
+                if (classesSnap.size === 0) {
+                    log('Nenhuma turma encontrada', 'warning');
+                    return;
+                }
+
+                // Buscar alunos
+                const studentsRef = collection(db, 'gyms', academiaId, 'students');
+                const studentsSnap = await getDocs(studentsRef);
+                
+                if (studentsSnap.size === 0) {
+                    log('Nenhum aluno encontrado', 'warning');
+                    return;
+                }
+
+                // Associar cada aluno à primeira turma disponível
+                const primeiraTurma = classesSnap.docs[0];
+                const turmaId = primeiraTurma.id;
+                const turmaNome = primeiraTurma.data().name;
+                
+                log(`Associando alunos à turma: ${turmaNome}`);
+
+                let associados = 0;
+                for (const studentDoc of studentsSnap.docs) {
+                    const studentData = studentDoc.data();
+                    
+                    // Verificar se já tem turmas
+                    if (!studentData.classIds || studentData.classIds.length === 0) {
+                        await updateDoc(doc(db, 'gyms', academiaId, 'students', studentDoc.id), {
+                            classIds: [turmaId],
+                            updatedAt: new Date()
+                        });
+                        associados++;
+                    }
+                }
+
+                log(`✅ ${associados} alunos associados à turma`, 'success');
+
+            } catch (error) {
+                log(`Erro ao associar alunos: ${error.message}`, 'error');
+            }
+        }
+
+        function limparCache() {
+            if (confirm('Deseja limpar o cache do navegador? Isso pode ajudar a resolver problemas de carregamento.')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                log('✅ Cache limpo', 'success');
+                log('Recarregue a página do app para ver as mudanças');
+            }
+        }
+    </script>
+</body>
+</html>
