@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Classes - Academia App</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .class-item { background: #f5f5f5; margin: 10px 0; padding: 10px; border-radius: 3px; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .error { color: red; }
+        .success { color: green; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Debug Classes - Academia App</h1>
+        
+        <div class="section">
+            <h2>Configuração Firebase</h2>
+            <button onclick="initFirebase()">Inicializar Firebase</button>
+            <div id="firebase-status"></div>
+        </div>
+
+        <div class="section">
+            <h2>Verificar Turmas</h2>
+            <input type="text" id="academiaId" placeholder="ID da Academia" style="width: 300px; padding: 5px;">
+            <button onclick="checkClasses()">Verificar Turmas</button>
+            <div id="classes-result"></div>
+        </div>
+
+        <div class="section">
+            <h2>Verificar Instrutor</h2>
+            <input type="text" id="instructorId" placeholder="ID do Instrutor" style="width: 300px; padding: 5px;">
+            <button onclick="checkInstructor()">Verificar Instrutor</button>
+            <div id="instructor-result"></div>
+        </div>
+
+        <div class="section">
+            <h2>Buscar Turmas por Instrutor</h2>
+            <button onclick="searchClassesByInstructor()">Buscar Turmas</button>
+            <div id="instructor-classes-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuração do Firebase (substitua pelos seus dados)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxWJYKKhJGLKJHGKJHGKJHGKJHGKJHGKJ",
+            authDomain: "academia-app-12345.firebaseapp.com",
+            projectId: "academia-app-12345",
+            storageBucket: "academia-app-12345.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef123456789012345"
+        };
+
+        let db;
+
+        function initFirebase() {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                document.getElementById('firebase-status').innerHTML = '<span class="success">✅ Firebase inicializado com sucesso!</span>';
+            } catch (error) {
+                document.getElementById('firebase-status').innerHTML = `<span class="error">❌ Erro ao inicializar Firebase: ${error.message}</span>`;
+            }
+        }
+
+        async function checkClasses() {
+            const academiaId = document.getElementById('academiaId').value;
+            if (!academiaId) {
+                alert('Por favor, insira o ID da academia');
+                return;
+            }
+
+            try {
+                const classesRef = db.collection('gyms').doc(academiaId).collection('classes');
+                const snapshot = await classesRef.get();
+                
+                let html = `<h3>Turmas encontradas: ${snapshot.size}</h3>`;
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    html += `
+                        <div class="class-item">
+                            <strong>ID:</strong> ${doc.id}<br>
+                            <strong>Nome:</strong> ${data.name}<br>
+                            <strong>Instrutor ID:</strong> ${data.instructorId}<br>
+                            <strong>Instrutor Nome:</strong> ${data.instructorName}<br>
+                            <strong>Status:</strong> ${data.status}<br>
+                            <strong>Criado em:</strong> ${data.createdAt ? data.createdAt.toDate() : 'N/A'}<br>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('classes-result').innerHTML = html;
+            } catch (error) {
+                document.getElementById('classes-result').innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        async function checkInstructor() {
+            const instructorId = document.getElementById('instructorId').value;
+            if (!instructorId) {
+                alert('Por favor, insira o ID do instrutor');
+                return;
+            }
+
+            try {
+                const userRef = db.collection('users').doc(instructorId);
+                const doc = await userRef.get();
+                
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('instructor-result').innerHTML = `
+                        <h3>Dados do Instrutor:</h3>
+                        <div class="class-item">
+                            <strong>ID:</strong> ${doc.id}<br>
+                            <strong>Nome:</strong> ${data.name}<br>
+                            <strong>Email:</strong> ${data.email}<br>
+                            <strong>Tipo:</strong> ${data.userType}<br>
+                            <strong>Academia ID:</strong> ${data.academiaId}<br>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('instructor-result').innerHTML = '<span class="error">❌ Instrutor não encontrado</span>';
+                }
+            } catch (error) {
+                document.getElementById('instructor-result').innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        async function searchClassesByInstructor() {
+            const academiaId = document.getElementById('academiaId').value;
+            const instructorId = document.getElementById('instructorId').value;
+            
+            if (!academiaId || !instructorId) {
+                alert('Por favor, preencha o ID da academia e do instrutor');
+                return;
+            }
+
+            try {
+                const classesRef = db.collection('gyms').doc(academiaId).collection('classes');
+                const snapshot = await classesRef.where('instructorId', '==', instructorId).get();
+                
+                let html = `<h3>Turmas do instrutor: ${snapshot.size}</h3>`;
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    html += `
+                        <div class="class-item">
+                            <strong>ID:</strong> ${doc.id}<br>
+                            <strong>Nome:</strong> ${data.name}<br>
+                            <strong>Instrutor ID:</strong> ${data.instructorId}<br>
+                            <strong>Instrutor Nome:</strong> ${data.instructorName}<br>
+                            <strong>Status:</strong> ${data.status}<br>
+                            <strong>Criado em:</strong> ${data.createdAt ? data.createdAt.toDate() : 'N/A'}<br>
+                        </div>
+                    `;
+                });
+
+                if (snapshot.size === 0) {
+                    html += '<p><strong>Nenhuma turma encontrada para este instrutor.</strong></p>';
+                    html += '<p>Possíveis causas:</p>';
+                    html += '<ul>';
+                    html += '<li>O instructorId não está sendo salvo corretamente</li>';
+                    html += '<li>A turma foi criada em uma academia diferente</li>';
+                    html += '<li>O instrutor não tem permissão para ver as turmas</li>';
+                    html += '</ul>';
+                }
+
+                document.getElementById('instructor-classes-result').innerHTML = html;
+            } catch (error) {
+                document.getElementById('instructor-classes-result').innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        // Inicializar automaticamente
+        window.onload = function() {
+            // Você precisa configurar o Firebase com suas credenciais reais
+            console.log('Para usar este debug, configure o firebaseConfig com suas credenciais reais');
+        };
+    </script>
+</body>
+</html>

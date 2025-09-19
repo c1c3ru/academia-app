@@ -15,10 +15,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthProvider';
-import { firestoreService, classService, studentService } from '../../services/firestoreService';
+import { academyFirestoreService, academyClassService, academyStudentService } from '../../services/academyFirestoreService';
 
 const InstructorClasses = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [classes, setClasses] = useState([]);
   const [filteredClasses, setFilteredClasses] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,8 +39,14 @@ const InstructorClasses = ({ navigation }) => {
       setLoading(true);
       console.log('📚 Carregando turmas do instrutor:', user.uid);
       
+      if (!userProfile?.academiaId) {
+        console.warn('⚠️ Usuário sem academiaId definido');
+        setClasses([]);
+        return;
+      }
+      
       // Buscar turmas do instrutor usando o service correto
-      const classesData = await classService.getClassesByInstructor(user.uid, user?.email);
+      const classesData = await academyClassService.getClassesByInstructor(user.uid, userProfile.academiaId, user?.email);
       setClasses(Array.isArray(classesData) ? classesData : []);
       console.log('✅', classesData.length, 'turmas encontradas');
       
@@ -58,10 +64,12 @@ const InstructorClasses = ({ navigation }) => {
 
   const loadStudentCounts = async (classes) => {
     try {
+      if (!userProfile?.academiaId) return;
+      
       const counts = {};
       for (const classItem of classes) {
         try {
-          const students = await studentService.getStudentsByClass(classItem.id);
+          const students = await academyStudentService.getStudentsByClass(classItem.id, userProfile.academiaId);
           counts[classItem.id] = Array.isArray(students) ? students.length : 0;
         } catch (error) {
           console.warn(`⚠️ Erro ao carregar alunos da turma ${classItem.id}:`, error);

@@ -19,7 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
-import { firestoreService } from '../../services/firestoreService';
+import { academyFirestoreService } from '../../services/academyFirestoreService';
 import { useAuth } from '../../contexts/AuthProvider';
 
 const StudentDetailsScreen = ({ route, navigation }) => {
@@ -43,7 +43,7 @@ const StudentDetailsScreen = ({ route, navigation }) => {
       setLoading(true);
       
       if (!studentInfo) {
-        const details = await firestoreService.getById('users', studentId);
+        const details = await academyFirestoreService.getById('users', studentId);
         setStudentInfo(details);
       }
       
@@ -55,14 +55,14 @@ const StudentDetailsScreen = ({ route, navigation }) => {
       }
       
       // Buscar turmas do aluno na academia
-      const allClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
+      const allClasses = await academyFirestoreService.getAll('classes', academiaId);
       const userClasses = allClasses.filter(cls => 
         studentInfo?.classIds && studentInfo.classIds.includes(cls.id)
       );
       setStudentClasses(userClasses);
       
       // Buscar pagamentos do aluno na academia
-      const allPayments = await firestoreService.getAll(`gyms/${academiaId}/payments`);
+      const allPayments = await academyFirestoreService.getAll('payments', academiaId);
       const userPayments = allPayments.filter(payment => 
         payment.userId === studentId
       ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

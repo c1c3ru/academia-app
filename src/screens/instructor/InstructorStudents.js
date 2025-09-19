@@ -20,7 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthProvider';
 import { useTheme } from '../../contexts/ThemeContext';
-import { studentService, firestoreService } from '../../services/firestoreService';
+import { academyFirestoreService, academyStudentService } from '../../services/academyFirestoreService';
 
 const InstructorStudents = ({ navigation }) => {
   const { user, userProfile, academia } = useAuth();
@@ -57,40 +57,31 @@ const InstructorStudents = ({ navigation }) => {
       setLoading(true);
       console.log(getString('loadingStudentsInstructor'), user.uid);
       
+      // Verificar se o usuário tem academiaId
+      if (!userProfile?.academiaId) {
+        console.warn('⚠️ Usuário sem academiaId definido');
+        setStudents([]);
+        setClasses([]);
+        setModalities([]);
+        return;
+      }
+      
       // Load students with error handling
       let instructorStudents = [];
       try {
-        // Primeiro tenta pelo service
-        instructorStudents = await studentService.getStudentsByInstructor(user.uid);
+        // Buscar alunos do instrutor usando o service academy-scoped
+        instructorStudents = await academyStudentService.getStudentsByInstructor(user.uid, userProfile.academiaId);
         console.log(`✅ ${instructorStudents.length} alunos encontrados via service`);
-        
-        // Se não encontrou alunos, tenta buscar todos os alunos criados por este instrutor
-        if (instructorStudents.length === 0) {
-          console.log(getString('searchingStudentsCreatedBy'));
-          const allStudents = await firestoreService.getWhere('users', 'createdBy', '==', user.uid);
-          const students = allStudents.filter(user => user.userType === 'student');
-          instructorStudents = students;
-          console.log(getString('studentsFoundCreatedBy').replace('{count}', instructorStudents.length));
-        }
       } catch (studentError) {
         console.warn(getString('errorSearchingStudentsService'), studentError);
-        // Fallback: buscar diretamente por createdBy
-        try {
-          const allStudents = await firestoreService.getWhere('users', 'createdBy', '==', user.uid);
-          const students = allStudents.filter(user => user.userType === 'student');
-          instructorStudents = students;
-          console.log(getString('fallbackStudentsFound').replace('{count}', instructorStudents.length));
-        } catch (fallbackError) {
-          console.error(getString('errorFallback'), fallbackError);
-          instructorStudents = [];
-        }
+        instructorStudents = [];
       }
       setStudents(instructorStudents);
       
       // Load classes for this instructor with error handling
       let instructorClasses = [];
       try {
-        instructorClasses = await firestoreService.getWhere('classes', 'instructorId', '==', user.uid);
+        instructorClasses = await academyFirestoreService.getWhere('classes', 'instructorId', '==', user.uid, userProfile.academiaId);
         console.log(getString('classesFound').replace('{count}', instructorClasses.length));
       } catch (classError) {
         console.warn(getString('errorSearchingClasses'), classError);
@@ -101,11 +92,7 @@ const InstructorStudents = ({ navigation }) => {
       // Load modalities (for filter options) with error handling
       let allModalities = [];
       try {
-        // Obter ID da academia
-        const academiaId = userProfile?.academiaId || academia?.id;
-        if (academiaId) {
-          allModalities = await firestoreService.getAll(`gyms/${academiaId}/modalities`);
-        }
+        allModalities = await academyFirestoreService.getAll('modalities', userProfile.academiaId);
         console.log(getString('modalitiesLoaded').replace('{count}', allModalities.length));
       } catch (modalityError) {
         console.warn(getString('errorSearchingModalities'), modalityError);

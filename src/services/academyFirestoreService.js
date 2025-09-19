@@ -35,7 +35,9 @@ const ACADEMY_ISOLATED_COLLECTIONS = [
   'evaluation_schedules',
   'audit_logs',
   'notifications',
-  'injuries'
+  'injuries',
+  'instructors',
+  'students'
 ];
 
 // Collections globais que não precisam de isolamento
@@ -394,23 +396,42 @@ export const academyClassService = {
   getClassesByInstructor: async (instructorId, academiaId, instructorEmail = null) => {
     validateAcademiaId(academiaId, 'busca de turmas por instrutor');
     
+    console.log('🔍 academyClassService.getClassesByInstructor chamado com:', {
+      instructorId,
+      academiaId,
+      instructorEmail
+    });
+    
     // Consulta principal: campo simples na academia específica
+    console.log('📋 Buscando por instructorId...');
     const byId = await academyFirestoreService.getWhere('classes', 'instructorId', '==', instructorId, academiaId);
+    console.log('✅ Encontradas por instructorId:', byId?.length || 0);
     
     // Alternativa: campo array com múltiplos instrutores
+    console.log('📋 Buscando por instructorIds array...');
     const byIdsArray = await academyFirestoreService.getWhere('classes', 'instructorIds', 'array-contains', instructorId, academiaId).catch(() => []);
+    console.log('✅ Encontradas por instructorIds:', byIdsArray?.length || 0);
     
     // Alternativa opcional por email
-    const byEmail = instructorEmail
-      ? await academyFirestoreService.getWhere('classes', 'instructorEmail', '==', instructorEmail, academiaId).catch(() => [])
-      : [];
+    let byEmail = [];
+    if (instructorEmail) {
+      console.log('📋 Buscando por instructorEmail...');
+      byEmail = await academyFirestoreService.getWhere('classes', 'instructorEmail', '==', instructorEmail, academiaId).catch(() => []);
+      console.log('✅ Encontradas por instructorEmail:', byEmail?.length || 0);
+    }
 
     // Mesclar e remover duplicados por id
     const map = new Map();
     [...(byId || []), ...(byIdsArray || []), ...(byEmail || [])].forEach((c) => {
-      if (c && c.id && !map.has(c.id)) map.set(c.id, c);
+      if (c && c.id && !map.has(c.id)) {
+        console.log('📝 Adicionando turma:', c.name, 'ID:', c.id);
+        map.set(c.id, c);
+      }
     });
-    return Array.from(map.values());
+    
+    const result = Array.from(map.values());
+    console.log('🎯 Total de turmas retornadas:', result.length);
+    return result;
   },
 
   getClassesByModality: async (modalityId, academiaId) => {

@@ -19,7 +19,7 @@ import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthProvider';
 import { useTheme } from '../../contexts/ThemeContext';
-import { firestoreService } from '../../services/firestoreService';
+import { academyFirestoreService } from '../../services/academyFirestoreService';
 import SafeCardContent from '../../components/SafeCardContent';
 
 const { width } = Dimensions.get('window');
@@ -47,7 +47,7 @@ const StudentProfileScreen = ({ route, navigation }) => {
       
       // Carregar dados do aluno se não foram passados
       if (!studentData) {
-        const details = await firestoreService.getById('users', studentId);
+        const details = await academyFirestoreService.getById('users', studentId);
         setStudentInfo(details);
       }
       
@@ -59,14 +59,14 @@ const StudentProfileScreen = ({ route, navigation }) => {
       }
       
       // Buscar turmas do aluno na academia
-      const allClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
+      const allClasses = await academyFirestoreService.getAll('classes', academiaId);
       const userClasses = allClasses.filter(cls => 
         studentInfo?.classIds && studentInfo.classIds.includes(cls.id)
       );
       setStudentClasses(userClasses);
       
       // Buscar pagamentos do aluno na academia
-      const allPayments = await firestoreService.getAll(`gyms/${academiaId}/payments`);
+      const allPayments = await academyFirestoreService.getAll('payments', academiaId);
       const userPayments = allPayments.filter(payment => 
         payment.userId === studentId
       ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -74,7 +74,7 @@ const StudentProfileScreen = ({ route, navigation }) => {
       
       // Buscar graduações com tratamento robusto de erros
       try {
-        const allGraduations = await firestoreService.getAll(`gyms/${academiaId}/graduations`);
+        const allGraduations = await academyFirestoreService.getAll('graduations', academiaId);
         const userGraduations = allGraduations.filter(graduation => 
           graduation.studentId === studentId
         ).sort((a, b) => new Date(b.date) - new Date(a.date));

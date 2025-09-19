@@ -8,7 +8,7 @@ import { Card, Text, Button, TextInput, HelperText, Chip, RadioButton, Snackbar 
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import * as FileSystem from 'expo-file-system'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthProvider';
-import { firestoreService, classService } from '../../services/firestoreService';
+import { academyFirestoreService, academyClassService } from '../../services/academyFirestoreService';
 
 const AddClassScreen = ({ navigation }) => {
   const { user, userProfile, academia } = useAuth();
@@ -99,7 +99,7 @@ const AddClassScreen = ({ navigation }) => {
 
     // 1) Buscar instrutores na subcoleção da academia
     try {
-      const instructorsData = await firestoreService.getAll(`gyms/${academiaId}/instructors`);
+      const instructorsData = await academyFirestoreService.getAll('instructors', academiaId);
       userInstructors = instructorsData
         .map(u => ({
           id: u.id,
@@ -111,32 +111,9 @@ const AddClassScreen = ({ navigation }) => {
       console.warn('Aviso: falha ao buscar instrutores em users (permissões?):', error?.message || error);
     }
 
-    // 2) Fallback: buscar na coleção global users APENAS se não encontrou instrutores na subcoleção
+    // Se não encontrou instrutores na subcoleção, significa que não há instrutores cadastrados para esta academia
     if (userInstructors.length === 0) {
-      try {
-        const users = await firestoreService.getAll('users');
-        const globalInstructors = users
-          .filter(u => (
-            u?.userType === 'instructor' ||
-            u?.tipo === 'instrutor' ||
-            u?.tipo === 'instructor'
-          ))
-          .filter(u => {
-            if (!userProfile?.academiaId) return true;
-            return !u?.academiaId || u.academiaId === userProfile.academiaId;
-          })
-          .map(u => ({
-            id: u.id,
-            name: u.name || u.displayName || u.fullName || u.email || 'Instrutor',
-            email: u.email || null,
-            academiaId: u.academiaId || null
-          }));
-        
-        userInstructors = globalInstructors;
-        console.log('⚠️ Usando fallback para coleção global users:', userInstructors.length, 'instrutores');
-      } catch (e) {
-        console.warn('Aviso: falha ao buscar instrutores na coleção users:', e?.message || e);
-      }
+      console.log('ℹ️ Nenhum instrutor encontrado na subcoleção da academia');
     }
 
     // 3) Mesclar e remover duplicados por id
@@ -162,7 +139,7 @@ const AddClassScreen = ({ navigation }) => {
       }
       
       console.log('🔍 Carregando modalidades da coleção:', `gyms/${academiaId}/modalities`);
-      const list = await firestoreService.getAll(`gyms/${academiaId}/modalities`);
+      const list = await academyFirestoreService.getAll('modalities', academiaId);
       console.log('📋 Modalidades brutas encontradas:', list.length);
       
       // Normalizar e remover duplicatas
@@ -205,8 +182,10 @@ const AddClassScreen = ({ navigation }) => {
       newErrors.maxStudents = 'Número máximo de alunos deve ser um número positivo';
     }
 
-    if (!formData.instructorId && !formData.instructorName?.trim()) {
-      newErrors.instructorId = 'Instrutor é obrigatório (selecione da lista ou informe o nome)';
+    // Validação flexível: se não selecionou instrutor específico nem informou nome manual, usará o usuário atual
+    // Só dar erro se realmente não há como identificar um instrutor
+    if (formData.instructorId && !instructors.find(i => i.id === formData.instructorId) && !formData.instructorName?.trim()) {
+      newErrors.instructorId = 'Instrutor selecionado não encontrado. Informe o nome manualmente.';
     }
 
     if (!formData.schedule.trim()) {
@@ -239,7 +218,7 @@ const AddClassScreen = ({ navigation }) => {
         description: formData.description.trim(),
         maxStudents: parseInt(formData.maxStudents),
         currentStudents: 0,
-        instructorId: formData.instructorId || user.uid, // Garantir instrutor
+        instructorId: formData.instructorId || user.uid, // Usar instrutor selecionado ou usuário atual como fallback
         instructorName: formData.instructorName || userProfile?.name || user.displayName || user.email,
         // Armazenar formato estruturado e manter texto para compatibilidade
         schedule: parseScheduleTextToArray(formData.schedule.trim()),
@@ -253,6 +232,22 @@ const AddClassScreen = ({ navigation }) => {
         updatedAt: new Date()
       };
 
+      console.log('🔍 Dados da turma que será criada:', {
+        name: classData.name,
+        instructorId: classData.instructorId,
+        instructorName: classData.instructorName,
+        academiaId: classData.academiaId,
+        formDataInstructorId: formData.instructorId,
+        userUid: user.uid,
+        userType: userProfile?.userType,
+        userEmail: user.email
+      });
+
+      // Verificação específica para instrutor criando própria turma
+      if (userProfile?.userType === 'instructor' && !formData.instructorId) {
+        console.log('🎯 INSTRUTOR CRIANDO PRÓPRIA TURMA - instructorId será:', user.uid);
+      }
+
       // Obter ID da academia para criar na subcoleção correta
       const academiaId = userProfile?.academiaId || academia?.id;
       if (!academiaId) {
@@ -261,19 +256,37 @@ const AddClassScreen = ({ navigation }) => {
 
       console.log('✅ Criando turma na coleção:', `gyms/${academiaId}/classes`);
       console.log('✅ Dados da turma:', classData);
-      const newClassId = await firestoreService.create(`gyms/${academiaId}/classes`, classData);
+      const newClassId = await academyFirestoreService.create('classes', classData, academiaId);
       console.log('✅ Turma criada com ID:', newClassId);
+      
+      // Verificar se a turma foi realmente salva
+      try {
+        const savedClass = await academyFirestoreService.getById('classes', newClassId, academiaId);
+        console.log('🔍 Turma salva verificada:', {
+          id: savedClass.id,
+          name: savedClass.name,
+          instructorId: savedClass.instructorId,
+          academiaId: savedClass.academiaId
+        });
+      } catch (verifyError) {
+        console.error('❌ Erro ao verificar turma salva:', verifyError);
+      }
       
       setSnackbar({ 
         visible: true, 
-        message: `Turma "${formData.name.trim()}" criada com sucesso!`, 
+        message: `✅ Turma "${formData.name.trim()}" criada com sucesso! Redirecionando...`, 
         type: 'success' 
       });
       
       // Voltar após pequeno atraso para permitir ver o feedback
       setTimeout(() => {
-        navigation.goBack();
-      }, 1500);
+        // Se for instrutor, redirecionar para o dashboard dele
+        if (userProfile?.userType === 'instructor') {
+          navigation.navigate('InstructorDashboard');
+        } else {
+          navigation.goBack();
+        }
+      }, 2000);
 
     } catch (error) {
       console.error('Erro ao criar turma:', error);
@@ -393,23 +406,61 @@ const AddClassScreen = ({ navigation }) => {
 
             {/* Instrutor */}
             <View style={styles.pickerContainer}>
-              <Text style={styles.label}>Instrutor</Text>
+              <Text style={styles.label}>Instrutor da Turma</Text>
+              
+              {/* Opção "Eu serei o instrutor" sempre visível */}
               <View style={styles.chipContainer}>
-                {instructors.length === 0 && (
-                  <Text style={{ color: '#666' }}>Nenhum instrutor encontrado</Text>
-                )}
-                {instructors.map((instructor) => (
-                  <Chip
-                    key={instructor.id}
-                    selected={formData.instructorId === instructor.id}
-                    onPress={() => handleInstructorChange(instructor.id)}
-                    style={styles.chip}
-                    mode={formData.instructorId === instructor.id ? 'flat' : 'outlined'}
-                  >
-                    {instructor.name}
-                  </Chip>
-                ))}
+                <Chip
+                  selected={!formData.instructorId}
+                  onPress={() => {
+                    updateFormData('instructorId', '');
+                    updateFormData('instructorName', '');
+                  }}
+                  style={[styles.chip, { backgroundColor: !formData.instructorId ? '#E8F5E8' : 'transparent' }]}
+                  mode={!formData.instructorId ? 'flat' : 'outlined'}
+                  icon={!formData.instructorId ? 'check' : 'account'}
+                >
+                  👤 Eu serei o instrutor
+                </Chip>
               </View>
+
+              {/* Mostrar nome do usuário atual quando selecionado */}
+              {!formData.instructorId && (
+                <View style={{ backgroundColor: '#E8F5E8', padding: 8, borderRadius: 6, marginBottom: 8 }}>
+                  <Text style={{ color: '#2E7D32', fontSize: 12 }}>
+                    ✅ Instrutor: {userProfile?.name || user.displayName || user.email}
+                  </Text>
+                </View>
+              )}
+
+              {/* Lista de outros instrutores */}
+              {instructors.length > 0 && (
+                <>
+                  <Text style={[styles.label, { fontSize: 14, marginTop: 12, marginBottom: 8 }]}>
+                    Ou escolher outro instrutor:
+                  </Text>
+                  <View style={styles.chipContainer}>
+                    {instructors.map((instructor) => (
+                      <Chip
+                        key={instructor.id}
+                        selected={formData.instructorId === instructor.id}
+                        onPress={() => handleInstructorChange(instructor.id)}
+                        style={styles.chip}
+                        mode={formData.instructorId === instructor.id ? 'flat' : 'outlined'}
+                      >
+                        {instructor.name}
+                      </Chip>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {instructors.length === 0 && (
+                <Text style={{ color: '#666', fontSize: 12, marginTop: 8 }}>
+                  Nenhum outro instrutor cadastrado na academia
+                </Text>
+              )}
+              
               {errors.instructorId && <HelperText type="error">{errors.instructorId}</HelperText>}
 
               {/* Entrada manual do nome do instrutor como fallback */}

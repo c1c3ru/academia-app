@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthProvider';
-import { firestoreService } from '../../services/firestoreService';
+import { academyFirestoreService } from '../../services/academyFirestoreService';
 import { getThemeColors } from '../../theme/professionalTheme';
 import notificationService from '../../services/notificationService';
 
@@ -73,14 +73,14 @@ const EnhancedCalendarScreen = ({ navigation }) => {
       
       if (userProfile?.userType === 'admin') {
         // Admin vê todas as turmas da academia
-        userClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
+        userClasses = await academyFirestoreService.getAll('classes', academiaId);
       } else if (userProfile?.userType === 'instructor') {
         // Instrutor vê suas turmas da academia
-        const allClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
+        const allClasses = await academyFirestoreService.getAll('classes', academiaId);
         userClasses = allClasses.filter(cls => cls.instructorId === user.uid);
       } else {
         // Aluno vê suas turmas matriculadas da academia
-        const allClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
+        const allClasses = await academyFirestoreService.getAll('classes', academiaId);
         userClasses = allClasses.filter(cls => 
           userProfile?.classIds && userProfile.classIds.includes(cls.id)
         );

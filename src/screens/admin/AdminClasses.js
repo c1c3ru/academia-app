@@ -19,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthProvider';
 import { useTheme } from '../../contexts/ThemeContext';
-import { firestoreService, classService, studentService } from '../../services/firestoreService';
+import { academyFirestoreService, academyClassService, academyStudentService } from '../../services/academyFirestoreService';
 import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';
 
 const AdminClasses = ({ navigation }) => {
@@ -60,18 +60,18 @@ const AdminClasses = ({ navigation }) => {
       }
       
       // Buscar turmas da academia usando subcoleção
-      const allClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
+      const allClasses = await academyFirestoreService.getAll('classes', academiaId);
       
       // Buscar informações adicionais para cada turma
       const classesWithDetails = await Promise.all(
         allClasses.map(async (classItem) => {
           try {
             // Buscar alunos da turma
-            const students = await studentService.getStudentsByClass(classItem.id);
+            const students = await academyStudentService.getStudentsByClass(classItem.id, academiaId);
             
             // Buscar dados do instrutor na subcoleção de instrutores
             const instructor = classItem.instructorId ? 
-              await firestoreService.getById(`gyms/${academiaId}/instructors`, classItem.instructorId) : null;
+              await academyFirestoreService.getById('instructors', classItem.instructorId, academiaId) : null;
             
             return {
               ...classItem,

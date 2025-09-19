@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthProvider';
-import { firestoreService } from '../../services/firestoreService';
+import { academyFirestoreService } from '../../services/academyFirestoreService';
 import { getThemeColors } from '../../theme/professionalTheme';
 
 const { width } = Dimensions.get('window');
@@ -41,8 +41,9 @@ const CheckInScreen = ({ navigation }) => {
       tomorrow.setDate(tomorrow.getDate() + 1);
 
       // Buscar check-in de hoje
-      const todayCheckIns = await firestoreService.getDocuments(
-        `gyms/${academia.id}/checkins`,
+      const todayCheckIns = await academyFirestoreService.getDocuments(
+        'checkins',
+        academia.id,
         [
           { field: 'userId', operator: '==', value: user.uid },
           { field: 'date', operator: '>=', value: today },
@@ -58,8 +59,9 @@ const CheckInScreen = ({ navigation }) => {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
 
-      const recentCheckIns = await firestoreService.getDocuments(
-        `gyms/${academia.id}/checkins`,
+      const recentCheckIns = await academyFirestoreService.getDocuments(
+        'checkins',
+        academia.id,
         [
           { field: 'userId', operator: '==', value: user.uid },
           { field: 'date', operator: '>=', value: weekAgo }
@@ -83,7 +85,7 @@ const CheckInScreen = ({ navigation }) => {
       }
       
       // Buscar turmas do aluno na academia
-      const allClasses = await firestoreService.getAll(`gyms/${academiaId}/classes`);
+      const allClasses = await academyFirestoreService.getAll('classes', academiaId);
       const userClasses = allClasses.filter(cls => 
         userProfile?.classIds && userProfile.classIds.includes(cls.id)
       );
@@ -108,7 +110,7 @@ const CheckInScreen = ({ navigation }) => {
         createdAt: new Date()
       };
 
-      await firestoreService.create(`gyms/${academia.id}/checkins`, checkInData);
+      await academyFirestoreService.create('checkins', checkInData, academia.id);
 
       Alert.alert(
         '✅ Check-in realizado!',

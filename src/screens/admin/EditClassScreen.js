@@ -10,7 +10,7 @@ import { Card, Text, Button, TextInput, HelperText, Chip, RadioButton, Snackbar 
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import { Picker } from '@react-native-picker/picker'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthProvider';
-import { firestoreService, classService } from '../../services/firestoreService';
+import { academyFirestoreService, academyClassService } from '../../services/academyFirestoreService';
 import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';
 
 const EditClassScreen = ({ route, navigation }) => {
@@ -92,7 +92,7 @@ const EditClassScreen = ({ route, navigation }) => {
         return;
       }
       
-      const list = await firestoreService.getAll(`gyms/${academiaId}/modalities`);
+      const list = await academyFirestoreService.getAll('modalities', academiaId);
       const normalized = (list || []).map((m) => ({ id: m.id || m.name, name: m.name }));
       setModalities(normalized);
     } catch (error) {
@@ -109,7 +109,13 @@ const EditClassScreen = ({ route, navigation }) => {
   const loadClassData = async () => {
     try {
       setLoadingData(true);
-      const classData = await firestoreService.getById('classes', classId);
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        return;
+      }
+      
+      const classData = await academyFirestoreService.getById('classes', classId, academiaId);
       
       if (classData) {
         setFormData({
@@ -150,7 +156,7 @@ const EditClassScreen = ({ route, navigation }) => {
         return;
       }
       
-      const instructorsData = await firestoreService.getAll(`gyms/${academiaId}/instructors`);
+      const instructorsData = await academyFirestoreService.getAll('instructors', academiaId);
       setInstructors(instructorsData);
     } catch (error) {
       console.error('Erro ao carregar instrutores:', error);
@@ -222,7 +228,12 @@ const EditClassScreen = ({ route, navigation }) => {
         updatedBy: user.uid
       };
 
-      await firestoreService.update('classes', classId, classData);
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        throw new Error('Academia ID não encontrado');
+      }
+      
+      await academyFirestoreService.update('classes', classId, classData, academiaId);
       setSnackbar({ visible: true, message: 'Turma atualizada com sucesso!', type: 'success' });
       setTimeout(() => navigation.goBack(), 800);
 
@@ -239,7 +250,12 @@ const EditClassScreen = ({ route, navigation }) => {
     (async () => {
       try {
         setLoading(true);
-        await firestoreService.delete('classes', classId);
+        const academiaId = userProfile?.academiaId || academia?.id;
+        if (!academiaId) {
+          throw new Error('Academia ID não encontrado');
+        }
+        
+        await academyFirestoreService.delete('classes', classId, academiaId);
         setSnackbar({ visible: true, message: 'Turma excluída com sucesso!', type: 'success' });
         setTimeout(() => navigation.goBack(), 800);
       } catch (error) {

@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthProvider';
-import { firestoreService } from '../../services/firestoreService';
+import { academyFirestoreService } from '../../services/academyFirestoreService';
 
 const ReportsScreen = ({ navigation }) => {
   const { user, userProfile, academia } = useAuth();
@@ -47,15 +47,15 @@ const ReportsScreen = ({ navigation }) => {
       }
       
       // Carregar dados dos alunos da academia
-      const students = await firestoreService.getAll(`gyms/${academiaId}/students`);
+      const students = await academyFirestoreService.getAll('students', academiaId);
       const activeStudents = students.filter(student => student.isActive !== false);
 
       // Carregar dados das turmas da academia
-      const classes = await firestoreService.getAll(`gyms/${academiaId}/classes`);
+      const classes = await academyFirestoreService.getAll('classes', academiaId);
       const activeClasses = classes.filter(cls => cls.status === 'active');
 
       // Carregar dados de pagamentos da academia
-      const payments = await firestoreService.getAll(`gyms/${academiaId}/payments`);
+      const payments = await academyFirestoreService.getAll('payments', academiaId);
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
       

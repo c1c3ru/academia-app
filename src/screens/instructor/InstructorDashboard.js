@@ -1,6 +1,6 @@
-
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Animated, Platform, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, StyleSheet, Animated, Dimensions, RefreshControl, Platform, ActivityIndicator, ScrollView } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { 
   Card, 
   Title, 
@@ -18,7 +18,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthProvider';
 import { useTheme } from '../../contexts/ThemeContext';
-import { firestoreService, classService, studentService, announcementService } from '../../services/firestoreService';
+import { academyFirestoreService, academyClassService, academyStudentService, academyAnnouncementService } from '../../services/academyFirestoreService';
 import AnimatedCard from '../../components/AnimatedCard';
 import AnimatedButton from '../../components/AnimatedButton';
 import { useAnimation, ResponsiveUtils } from '../../utils/animations';
@@ -48,11 +48,27 @@ const InstructorDashboard = ({ navigation }) => {
     startEntryAnimation();
   }, []);
 
+  // Recarregar dados sempre que a tela ganhar foco
+  useFocusEffect(
+    useCallback(() => {
+      console.log('🔄 InstructorDashboard ganhou foco - recarregando dados...');
+      loadDashboardData();
+      loadAnnouncements();
+    }, [])
+  );
+
   // Carregar anúncios do Firestore
   const loadAnnouncements = async () => {
     try {
       setLoadingAnnouncements(true);
-      const userAnnouncements = await announcementService.getActiveAnnouncements('instructor');
+      
+      if (!userProfile?.academiaId) {
+        console.warn('⚠️ Usuário sem academiaId definido');
+        setAnnouncements([]);
+        return;
+      }
+      
+      const userAnnouncements = await academyAnnouncementService.getActiveAnnouncements(userProfile.academiaId, 'instructor');
       
       // Formatar dados para exibição
       const formattedAnnouncements = userAnnouncements.map(announcement => ({
@@ -105,26 +121,43 @@ const InstructorDashboard = ({ navigation }) => {
       setLoading(true);
       console.log(getString('loadingInstructorDashboard'), user.uid);
       
+      // Verificar se o usuário tem academiaId
+      if (!userProfile?.academiaId) {
+        console.warn('⚠️ Usuário sem academiaId definido');
+        setDashboardData({
+          myClasses: [],
+          todayClasses: [],
+          totalStudents: 0,
+          activeCheckIns: 0,
+          recentGraduations: [],
+          upcomingClasses: []
+        });
+        return;
+      }
+      
       // Buscar turmas do professor com tratamento de erro
       let instructorClasses = [];
       try {
-        instructorClasses = await classService.getClassesByInstructor(user.uid, user?.email);
-        console.log(getString('classesLoaded').replace('{count}', instructorClasses.length));
-      } catch (classError) {
-        console.warn(getString('errorSearchingClasses'), classError);
-        try {
-          instructorClasses = await firestoreService.getWhere('classes', 'instructorId', '==', user.uid);
-          console.log(getString('fallbackClasses').replace('{count}', instructorClasses.length));
-        } catch (fallbackError) {
-          console.error(getString('fallbackClassesError'), fallbackError);
-          instructorClasses = [];
+        console.log('🔍 Buscando turmas para instrutor:', user.uid, 'na academia:', userProfile.academiaId);
+        instructorClasses = await academyClassService.getClassesByInstructor(user.uid, userProfile.academiaId, user?.email);
+        console.log('✅ Turmas encontradas:', instructorClasses.length);
+        if (instructorClasses.length > 0) {
+          console.log('📋 Detalhes das turmas:', instructorClasses.map(c => ({
+            id: c.id,
+            name: c.name,
+            instructorId: c.instructorId,
+            instructorName: c.instructorName
+          })));
         }
+      } catch (classError) {
+        console.error('❌ Erro ao buscar turmas:', classError);
+        instructorClasses = [];
       }
       
       // Buscar alunos do professor com tratamento de erro
       let instructorStudents = [];
       try {
-        instructorStudents = await studentService.getStudentsByInstructor(user.uid);
+        instructorStudents = await academyStudentService.getStudentsByInstructor(user.uid, userProfile.academiaId);
         console.log(getString('studentsLoaded').replace('{count}', instructorStudents.length));
       } catch (studentError) {
         console.warn(getString('errorSearchingStudents'), studentError);
@@ -181,6 +214,7 @@ const InstructorDashboard = ({ navigation }) => {
   };
 
   const onRefresh = async () => {
+    console.log('🔄 Pull-to-refresh ativado');
     setRefreshing(true);
     await Promise.all([
       loadDashboardData(),
@@ -213,16 +247,22 @@ const InstructorDashboard = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Animated.ScrollView 
+      <ScrollView 
         style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        showsVerticalScrollIndicator={false}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: Platform.OS !== 'web' }
+          { useNativeDriver: false }
         )}
         scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#4CAF50']}
+            tintColor="#4CAF50"
+          />
+        }
       >
         {/* Header Moderno com Gradiente */}
         <Animated.View style={[headerTransform]}>
@@ -653,7 +693,7 @@ const InstructorDashboard = ({ navigation }) => {
             </AnimatedButton>
           </Card.Content>
         </AnimatedCard>
-      </Animated.ScrollView>
+      </ScrollView>
     </SafeAreaView>
   );
 };

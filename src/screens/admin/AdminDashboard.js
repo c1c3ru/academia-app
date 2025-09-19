@@ -19,7 +19,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthProvider';
 import { ADMIN_COLORS, ADMIN_ICONS } from '../../theme/adminTheme';
-import { firestoreService, paymentService, announcementService } from '../../services/firestoreService';
+import { academyFirestoreService, academyPaymentService, academyAnnouncementService } from '../../services/academyFirestoreService';
 import AnimatedCard from '../../components/AnimatedCard';
 import AnimatedButton from '../../components/AnimatedButton';
 import { useAnimation, ResponsiveUtils } from '../../utils/animations';
@@ -75,14 +75,14 @@ const AdminDashboard = ({ navigation }) => {
       }
 
       // Buscar alunos da academia usando subcoleção
-      const students = await firestoreService.getAll(`gyms/${academiaId}/students`);
+      const students = await academyFirestoreService.getAll('students', academiaId);
       const activeStudents = students.filter(s => s.isActive !== false);
       
       // Buscar turmas da academia usando subcoleção
-      const classes = await firestoreService.getAll(`gyms/${academiaId}/classes`);
+      const classes = await academyFirestoreService.getAll('classes', academiaId);
       
       // Buscar pagamentos da academia usando subcoleção
-      const payments = await firestoreService.getAll(`gyms/${academiaId}/payments`);
+      const payments = await academyFirestoreService.getAll('payments', academiaId);
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
       
@@ -121,7 +121,7 @@ const AdminDashboard = ({ navigation }) => {
       ];
 
       // Buscar instrutores da academia usando subcoleção
-      const instructors = await firestoreService.getAll(`gyms/${academiaId}/instructors`);
+      const instructors = await academyFirestoreService.getAll('instructors', academiaId);
 
       setDashboardData({
         totalStudents: students.length,
