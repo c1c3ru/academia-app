@@ -48,13 +48,16 @@ const AdminStudents = ({ navigation }) => {
       
       // Obter ID da academia
       const academiaId = userProfile?.academiaId || academia?.id;
+      console.log('🏫 Academia ID:', academiaId);
       if (!academiaId) {
-        console.error('Academia ID não encontrado');
+        console.error('❌ Academia ID não encontrado');
         return;
       }
       
       // Buscar alunos da academia usando subcoleção
+      console.log('🔍 Buscando alunos na coleção:', `gyms/${academiaId}/students`);
       const studentUsers = await firestoreService.getAll(`gyms/${academiaId}/students`);
+      console.log('👥 Alunos encontrados:', studentUsers.length);
       
       // Buscar informações de pagamento para cada aluno
       const studentsWithPayments = await Promise.all(

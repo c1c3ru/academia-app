@@ -161,10 +161,25 @@ const AddClassScreen = ({ navigation }) => {
         return;
       }
       
+      console.log('🔍 Carregando modalidades da coleção:', `gyms/${academiaId}/modalities`);
       const list = await firestoreService.getAll(`gyms/${academiaId}/modalities`);
-      // Normalizar: garantir pelo menos name
-      const normalized = (list || []).map((m) => ({ id: m.id || m.name, name: m.name }));
-      setModalities(normalized);
+      console.log('📋 Modalidades brutas encontradas:', list.length);
+      
+      // Normalizar e remover duplicatas
+      const normalized = (list || []).map((m) => ({ 
+        id: m.id || m.name, 
+        name: m.name 
+      }));
+      
+      // Remover duplicatas baseado no nome da modalidade
+      const uniqueModalities = normalized.filter((modality, index, self) => 
+        index === self.findIndex(m => m.name === modality.name)
+      );
+      
+      console.log('✅ Modalidades únicas após deduplicação:', uniqueModalities.length);
+      console.log('📝 Lista de modalidades:', uniqueModalities.map(m => m.name));
+      
+      setModalities(uniqueModalities);
     } catch (error) {
       console.error('Erro ao carregar modalidades:', error);
     }
@@ -238,8 +253,15 @@ const AddClassScreen = ({ navigation }) => {
         updatedAt: new Date()
       };
 
-      console.log('✅ Criando turma:', classData);
-      const newClassId = await firestoreService.create('classes', classData);
+      // Obter ID da academia para criar na subcoleção correta
+      const academiaId = userProfile?.academiaId || academia?.id;
+      if (!academiaId) {
+        throw new Error('Academia ID não encontrado');
+      }
+
+      console.log('✅ Criando turma na coleção:', `gyms/${academiaId}/classes`);
+      console.log('✅ Dados da turma:', classData);
+      const newClassId = await firestoreService.create(`gyms/${academiaId}/classes`, classData);
       console.log('✅ Turma criada com ID:', newClassId);
       
       setSnackbar({ 
@@ -473,7 +495,16 @@ const AddClassScreen = ({ navigation }) => {
       <Snackbar
         visible={snackbar.visible}
         onDismiss={() => setSnackbar((s) => ({ ...s, visible: false }))}
-        duration={2500}
+        duration={3000}
+        style={{
+          backgroundColor: snackbar.type === 'success' ? '#4CAF50' : 
+                          snackbar.type === 'error' ? '#F44336' : '#2196F3'
+        }}
+        action={{
+          label: 'OK',
+          onPress: () => setSnackbar((s) => ({ ...s, visible: false })),
+          labelStyle: { color: 'white' }
+        }}
       >
         {snackbar.message}
       </Snackbar>

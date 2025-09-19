@@ -43,9 +43,9 @@ const SelectionField = ({
           <IconButton icon="chevron-right" size={16} iconColor="#999" />
         </View>
       </TouchableOpacity>
-      {helperText && (
+      {helperText ? (
         <Text style={styles.helperText}>{helperText}</Text>
-      )}
+      ) : null}
     </View>
   );
 };

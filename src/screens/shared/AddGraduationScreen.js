@@ -114,88 +114,37 @@ const AddGraduationScreen = ({ route, navigation }) => {
     }
   };
 
-  const showSnackbar = (message, type = 'success') => {
+  const showSnackbar = (message, type = 'error') => {
     setSnackbarMessage(message);
     setSnackbarType(type);
     setSnackbarVisible(true);
   };
 
-  const validateForm = () => {
-    if (!formData.graduation) {
-      showSnackbar('Por favor, selecione uma graduação', 'error');
-      return false;
-    }
-    if (!formData.modality) {
-      showSnackbar('Por favor, selecione uma modalidade', 'error');
-      return false;
-    }
-    if (!formData.instructor || !formData.instructorId) {
-      showSnackbar('Por favor, selecione um instrutor responsável', 'error');
-      return false;
-    }
+  const getGraduationColor = (levelName, index) => {
+    const colorMap = {
+      'Branca': '#FFFFFF',
+      'Amarela': '#FFEB3B',
+      'Laranja': '#FF9800',
+      'Verde': '#4CAF50',
+      'Azul': '#2196F3',
+      'Roxa': '#9C27B0',
+      'Marrom': '#795548',
+      'Preta': '#000000',
+      'Vermelha': '#F44336',
+      'Crua': '#8D6E63',
+      'Cordão': '#FFD700'
+    };
     
-    // Validar data
-    if (!formData.date) {
-      showSnackbar('Por favor, selecione uma data', 'error');
-      return false;
-    }
-    
-    const today = new Date();
-    today.setHours(23, 59, 59, 999); // Fim do dia atual
-    if (formData.date > today) {
-      showSnackbar('A data da graduação não pode ser futura', 'error');
-      return false;
-    }
-    
-    // Validar certificado (se preenchido)
-    if (formData.certificate && formData.certificate.trim()) {
-      const certPattern = /^CERT-\d{4}-\d+$/;
-      if (!certPattern.test(formData.certificate.trim())) {
-        showSnackbar('Formato do certificado deve ser: CERT-YYYY-NNN (ex: CERT-2024-001)', 'error');
-        return false;
+    // Procurar por cor baseada no nome
+    for (const [color, hex] of Object.entries(colorMap)) {
+      if (levelName.toLowerCase().includes(color.toLowerCase())) {
+        return hex;
       }
     }
     
-    return true;
-  };
-
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // Obter ID da academia
-      const academiaId = userProfile?.academiaId || academia?.id;
-      if (!academiaId) {
-        showSnackbar('Academia não encontrada. Faça login novamente.', 'error');
-        return;
-      }
-
-      const graduationData = {
-        ...formData,
-        studentId,
-        studentName,
-        createdAt: new Date(),
-        createdBy: user.uid,
-        status: 'active'
-      };
-
-      await graduationRepository.addGraduation(academiaId, studentId, graduationData);
-      
-      showSnackbar('Graduação adicionada com sucesso!', 'success');
-
-      setTimeout(() => {
-        navigation.goBack();
-      }, 2000);
-
-    } catch (error) {
-      showSnackbar(error.message, 'error');
-    } finally {
-      setLoading(false);
-    }
+    // Cores padrão baseadas no índice se não encontrar correspondência
+    const defaultColors = ['#FFFFFF', '#FFEB3B', '#FF9800', '#4CAF50', '#2196F3', '#9C27B0', '#795548', '#000000'];
+    return defaultColors[index % defaultColors.length] || '#E0E0E0';
   };
 
   const selectModality = (modality) => {
@@ -207,7 +156,14 @@ const AddGraduationScreen = ({ route, navigation }) => {
     }));
 
     if (modality.graduationLevels && modality.graduationLevels.length > 0) {
-      setGraduationLevels(modality.graduationLevels);
+      // Converter array de strings para objetos com estrutura esperada
+      const convertedLevels = modality.graduationLevels.map((level, index) => ({
+        id: `${modality.id}-${index}`,
+        name: level,
+        color: getGraduationColor(level, index),
+        order: index + 1
+      }));
+      setGraduationLevels(convertedLevels);
     } else {
       setGraduationLevels(defaultGraduationLevels);
     }
@@ -222,6 +178,129 @@ const AddGraduationScreen = ({ route, navigation }) => {
       graduationId: graduation.id || graduation
     }));
     setGraduationDialogVisible(false);
+  };
+
+  const validateForm = () => {
+    console.log('🔍 Iniciando validação do formulário...');
+    console.log('📋 Dados do formulário:', {
+      graduation: formData.graduation,
+      modality: formData.modality,
+      instructor: formData.instructor,
+      instructorId: formData.instructorId,
+      date: formData.date,
+      certificate: formData.certificate
+    });
+
+    if (!formData.graduation) {
+      console.log('❌ Falha na validação: graduação não selecionada');
+      showSnackbar('Por favor, selecione uma graduação', 'error');
+      return false;
+    }
+    console.log('✅ Graduação válida:', formData.graduation);
+
+    if (!formData.modality) {
+      console.log('❌ Falha na validação: modalidade não selecionada');
+      showSnackbar('Por favor, selecione uma modalidade', 'error');
+      return false;
+    }
+    console.log('✅ Modalidade válida:', formData.modality);
+
+    if (!formData.instructor || !formData.instructorId) {
+      console.log('❌ Falha na validação: instrutor não selecionado', {
+        instructor: formData.instructor,
+        instructorId: formData.instructorId
+      });
+      showSnackbar('Por favor, selecione um instrutor responsável', 'error');
+      return false;
+    }
+    console.log('✅ Instrutor válido:', formData.instructor, 'ID:', formData.instructorId);
+    
+    // Validar data
+    if (!formData.date) {
+      console.log('❌ Falha na validação: data não selecionada');
+      showSnackbar('Por favor, selecione uma data', 'error');
+      return false;
+    }
+    console.log('✅ Data válida:', formData.date);
+    
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // Fim do dia atual
+    if (formData.date > today) {
+      console.log('❌ Falha na validação: data futura', {
+        dataFormulario: formData.date,
+        hoje: today
+      });
+      showSnackbar('A data da graduação não pode ser futura', 'error');
+      return false;
+    }
+    console.log('✅ Data não é futura');
+    
+    // Validar certificado (se preenchido)
+    if (formData.certificate && formData.certificate.trim()) {
+      const certPattern = /^CERT-\d{4}-\d+$/;
+      if (!certPattern.test(formData.certificate.trim())) {
+        console.log('❌ Falha na validação: formato do certificado inválido:', formData.certificate);
+        showSnackbar('Formato do certificado deve ser: CERT-YYYY-NNN (ex: CERT-2024-001)', 'error');
+        return false;
+      }
+      console.log('✅ Certificado válido:', formData.certificate);
+    } else {
+      console.log('ℹ️ Certificado não preenchido (opcional)');
+    }
+    
+    console.log('🎉 Validação concluída com sucesso!');
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    console.log('Iniciando processo de salvamento...');
+    console.log('FormData atual:', formData);
+    
+    if (!validateForm()) {
+      console.log('Validação falhou');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Obter ID da academia
+      const academiaId = userProfile?.academiaId || academia?.id;
+      console.log('Academia ID:', academiaId);
+      console.log('User profile:', userProfile);
+      console.log('Academia:', academia);
+      
+      if (!academiaId) {
+        console.error('Academia ID não encontrado');
+        showSnackbar('Academia não encontrada. Faça login novamente.', 'error');
+        return;
+      }
+
+      const graduationData = {
+        ...formData,
+        studentId,
+        studentName,
+        createdAt: new Date(),
+        createdBy: user.uid,
+        status: 'active'
+      };
+
+      console.log('Dados da graduação a serem salvos:', graduationData);
+
+      await graduationRepository.addGraduation(academiaId, studentId, graduationData);
+      
+      showSnackbar('Graduação adicionada com sucesso!', 'success');
+
+      setTimeout(() => {
+        navigation.goBack();
+      }, 2000);
+
+    } catch (error) {
+      console.error('Erro no handleSubmit:', error);
+      showSnackbar(error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -240,7 +319,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
           />
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>Nova Graduação</Text>
-            <Text style={styles.headerSubtitle}>{studentName}</Text>
+            <Text style={styles.headerSubtitle}>{studentName || 'Aluno'}</Text>
           </View>
         </View>
       </LinearGradient>
@@ -251,17 +330,17 @@ const AddGraduationScreen = ({ route, navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         {/* Card de graduação atual */}
-        {formData.previousGraduation && (
+{formData.previousGraduation ? (
           <Surface style={styles.currentGraduationCard} elevation={2}>
             <View style={styles.currentGraduationContent}>
               <IconButton icon="medal" size={24} iconColor="#FF9800" />
               <View style={styles.currentGraduationText}>
                 <Text style={styles.currentGraduationLabel}>Graduação Atual</Text>
-                <Text style={styles.currentGraduationValue}>{formData.previousGraduation}</Text>
+                <Text style={styles.currentGraduationValue}>{String(formData.previousGraduation)}</Text>
               </View>
             </View>
           </Surface>
-        )}
+        ) : null}
 
         {/* Seção de seleções */}
         <Card style={styles.selectionCard}>
@@ -316,12 +395,15 @@ const AddGraduationScreen = ({ route, navigation }) => {
               >
                 <IconButton icon="calendar" size={20} iconColor="#1976D2" />
                 <Text style={styles.dateButtonText}>
-                  {formData.date ? formData.date.toLocaleDateString('pt-BR', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  }) : 'Selecionar data'}
+                  {formData.date ? 
+                    (formData.date instanceof Date ? 
+                      formData.date.toLocaleDateString('pt-BR', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      }) : 'Data inválida'
+                    ) : 'Selecionar data'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -388,9 +470,9 @@ const AddGraduationScreen = ({ route, navigation }) => {
       </ScrollView>
 
       {/* DateTimePicker */}
-      {showDatePicker && (
+{showDatePicker ? (
         <DateTimePicker
-          value={formData.date}
+          value={formData.date || new Date()}
           mode="date"
           display="default"
           onChange={(event, selectedDate) => {
@@ -400,7 +482,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
             }
           }}
         />
-      )}
+      ) : null}
 
       <Portal>
         <Dialog visible={modalityDialogVisible} onDismiss={() => setModalityDialogVisible(false)}>
@@ -443,9 +525,9 @@ const AddGraduationScreen = ({ route, navigation }) => {
           <Dialog.Content>
             <ScrollView style={styles.dialogContent}>
               {graduationLevels.length > 0 ? (
-                graduationLevels.map((level) => (
+                graduationLevels.map((level, index) => (
                   <TouchableOpacity
-                    key={level.id}
+                    key={level.id || `graduation-${index}`}
                     style={styles.dialogItem}
                     onPress={() => {
                       setFormData(prev => ({
@@ -456,8 +538,8 @@ const AddGraduationScreen = ({ route, navigation }) => {
                     }}
                   >
                     <View style={styles.graduationItem}>
-                      <View style={[styles.colorIndicator, { backgroundColor: level.color }]} />
-                      <Text style={styles.dialogItemText}>{level.name}</Text>
+                      <View style={[styles.colorIndicator, { backgroundColor: level.color || '#E0E0E0' }]} />
+                      <Text style={styles.dialogItemText}>{level.name || 'Graduação sem nome'}</Text>
                     </View>
                   </TouchableOpacity>
                 ))
@@ -496,7 +578,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
                     }}
                   >
                     <Text style={styles.dialogItemText}>
-                      {instructor.name || instructor.displayName || instructor.email || 'Instrutor sem nome'}
+                      {(instructor.name || instructor.displayName || instructor.email || 'Instrutor sem nome').toString()}
                     </Text>
                   </TouchableOpacity>
                 ))
@@ -523,7 +605,7 @@ const AddGraduationScreen = ({ route, navigation }) => {
           onPress: () => setSnackbarVisible(false),
         }}
       >
-        <Text style={{ color: 'white' }}>{snackbarMessage}</Text>
+        <Text style={{ color: 'white' }}>{snackbarMessage || 'Mensagem'}</Text>
       </Snackbar>
     </SafeAreaView>
   );
