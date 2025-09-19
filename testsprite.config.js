@@ -81,38 +81,9 @@ module.exports = {
   testTimeout: 10000,
   
   // Relatórios
-  reporters: [
-    'default',
-    ['jest-html-reporters', {
-      publicPath: './coverage/html-report',
-      filename: 'report.html',
-      expand: true
-    }]
-  ],
+  reporters: ['default'],
   
   // Cache
   clearMocks: true,
-  restoreMocks: true,
-  
-  // Configurações avançadas do TestSprite
-  testsprite: {
-    // Configurações de mock automático
-    autoMock: {
-      firebase: true,
-      asyncStorage: true,
-      navigation: true
-    },
-    
-    // Configurações de snapshot
-    snapshot: {
-      updateOnFail: false,
-      threshold: 0.8
-    },
-    
-    // Configurações de performance
-    performance: {
-      maxTestDuration: 5000,
-      memoryLimit: '512MB'
-    }
-  }
+  restoreMocks: true
 };

@@ -363,22 +363,55 @@ export const academyStudentService = {
   getStudentsByClass: async (classId, academiaId) => {
     validateAcademiaId(academiaId, 'busca de alunos por turma');
     
-    // Buscar alunos na coleção global 'users', mas filtrados por academiaId
-    const usersInClass = await academyFirestoreService.getWhere('users', 'classIds', 'array-contains', classId);
-    return usersInClass.filter(u => u.userType === 'student' && u.academiaId === academiaId);
+    console.log('🔍 Buscando alunos da turma:', classId, 'na academia:', academiaId);
+    
+    // Buscar alunos na subcoleção da academia
+    const studentsInClass = await academyFirestoreService.getWhere('students', 'classIds', 'array-contains', classId, academiaId);
+    console.log('👥 Alunos encontrados na turma:', studentsInClass.length);
+    
+    return studentsInClass;
   },
 
   getStudentsByInstructor: async (instructorId, academiaId) => {
     validateAcademiaId(academiaId, 'busca de alunos por instrutor');
     
+    console.log('🔍 Buscando alunos do instrutor:', instructorId, 'na academia:', academiaId);
+    
     // Buscar turmas do instrutor na academia específica
     const classes = await academyFirestoreService.getWhere('classes', 'instructorId', '==', instructorId, academiaId);
     const classIds = (classes || []).map(c => c.id).filter(Boolean);
+    
+    console.log('📚 Turmas do instrutor:', classIds.length);
+    
     if (classIds.length === 0) return [];
     
-    // Buscar usuários (alunos) que estejam em quaisquer dessas turmas
-    const usersInClasses = await academyFirestoreService.getWhereArrayContainsAny('users', 'classIds', classIds.slice(0, 10));
-    return usersInClasses.filter(u => u.userType === 'student' && u.academiaId === academiaId);
+    // Buscar alunos na subcoleção da academia que estejam em quaisquer dessas turmas
+    try {
+      const studentsInClasses = await academyFirestoreService.getWhereArrayContainsAny('students', 'classIds', classIds.slice(0, 10), academiaId);
+      console.log('👥 Alunos encontrados do instrutor:', studentsInClasses.length);
+      return studentsInClasses;
+    } catch (error) {
+      console.error('❌ Erro ao buscar alunos por array-contains-any, tentando busca individual:', error);
+      
+      // Fallback: buscar alunos individualmente por turma
+      const allStudents = [];
+      for (const classId of classIds) {
+        try {
+          const classStudents = await academyFirestoreService.getWhere('students', 'classIds', 'array-contains', classId, academiaId);
+          allStudents.push(...classStudents);
+        } catch (err) {
+          console.error('❌ Erro ao buscar alunos da turma:', classId, err);
+        }
+      }
+      
+      // Remover duplicatas
+      const uniqueStudents = allStudents.filter((student, index, self) => 
+        index === self.findIndex(s => s.id === student.id)
+      );
+      
+      console.log('👥 Alunos encontrados (fallback):', uniqueStudents.length);
+      return uniqueStudents;
+    }
   },
 
   addGraduation: async (studentId, graduation, academiaId) => {

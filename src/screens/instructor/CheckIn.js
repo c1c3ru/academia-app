@@ -56,6 +56,8 @@ const CheckIn = ({ navigation }) => {
         return;
       }
 
+      console.log('🔄 CheckIn: Carregando dados para instrutor:', user.uid, 'academia:', userProfile.academiaId);
+
       // Carregar turmas do instrutor
       const instructorClasses = await academyClassService.getClassesByInstructor(
         user.uid, 
@@ -63,7 +65,7 @@ const CheckIn = ({ navigation }) => {
         user.email
       );
       setClasses(instructorClasses);
-      console.log('📚 Turmas do instrutor carregadas:', instructorClasses.length);
+      console.log('📚 CheckIn: Turmas do instrutor carregadas:', instructorClasses.length);
 
       // Carregar check-ins ativos (sessões de check-in abertas)
       await loadActiveCheckIns();
@@ -75,7 +77,7 @@ const CheckIn = ({ navigation }) => {
       await loadStudents();
 
     } catch (error) {
-      console.error('❌ Erro ao carregar dados:', error);
+      console.error('❌ CheckIn: Erro ao carregar dados:', error);
       Alert.alert('Erro', 'Não foi possível carregar os dados. Tente novamente.');
     } finally {
       setLoading(false);
@@ -494,26 +496,38 @@ const CheckIn = ({ navigation }) => {
 
           {/* Lista de Alunos */}
           <ScrollView style={styles.studentsList}>
-            {filteredStudents.map((student) => (
-              <List.Item
-                key={student.id}
-                title={student.name}
-                description={student.email}
-                left={() => (
-                  <List.Icon icon="account" color="#2196F3" />
-                )}
-                right={() => (
-                  <Button
-                    mode="contained"
-                    compact
-                    onPress={() => handleManualCheckIn(student.id, student.name)}
-                    disabled={!selectedClass}
-                  >
-                    Check-in
-                  </Button>
-                )}
-              />
-            ))}
+            {filteredStudents.length > 0 ? (
+              filteredStudents.map((student) => (
+                <List.Item
+                  key={student.id}
+                  title={student.name || 'Nome não informado'}
+                  description={student.email || 'Email não informado'}
+                  left={() => (
+                    <List.Icon icon="account" color="#2196F3" />
+                  )}
+                  right={() => (
+                    <Button
+                      mode="contained"
+                      compact
+                      onPress={() => handleManualCheckIn(student.id, student.name)}
+                      disabled={!selectedClass}
+                    >
+                      Check-in
+                    </Button>
+                  )}
+                />
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <MaterialCommunityIcons name="account-off" size={48} color="#ccc" />
+                <Text style={styles.emptyText}>
+                  {searchQuery ? 'Nenhum aluno encontrado na busca' : 'Nenhum aluno cadastrado'}
+                </Text>
+                <Text style={styles.emptySubtext}>
+                  Total de alunos: {students.length}
+                </Text>
+              </View>
+            )}
           </ScrollView>
 
           <View style={styles.modalActions}>
@@ -614,6 +628,11 @@ const styles = StyleSheet.create({
     fontSize: ResponsiveUtils.fontSize.medium,
     color: '#666',
     marginTop: ResponsiveUtils.spacing.sm,
+  },
+  emptySubtext: {
+    fontSize: ResponsiveUtils.fontSize.small,
+    color: '#999',
+    marginTop: 4,
   },
   fab: {
     position: 'absolute',
