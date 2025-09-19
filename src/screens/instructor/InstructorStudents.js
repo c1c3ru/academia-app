@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { 
   Card, 
   Title, 
@@ -44,9 +45,12 @@ const InstructorStudents = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
+  // Auto-refresh quando a tela ganha foco
+  useFocusEffect(
+    React.useCallback(() => {
+      loadInitialData();
+    }, [userProfile?.academiaId])
+  );
 
   useEffect(() => {
     filterStudents();

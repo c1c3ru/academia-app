@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -17,11 +17,14 @@ import {
   RadioButton,
   Snackbar,
   ActivityIndicator,
-  Banner
+  Banner,
+  Chip,
+  Divider
 } from 'react-native-paper';
 // import { Picker } from '@react-native-picker/picker'; // Removido - dependência não disponível
 import { useAuth } from '../../contexts/AuthProvider';
-import { firestoreService } from '../../services/firestoreService';
+import { academyFirestoreService } from '../../services/academyFirestoreService';
+import { refreshManager } from '../../utils/refreshManager';
 
 const AddStudentScreen = ({ navigation, route }) => {
   const { user, userProfile, academia } = useAuth();
@@ -34,6 +37,11 @@ const AddStudentScreen = ({ navigation, route }) => {
     type: 'info' // 'success', 'error', 'info'
   });
   const [showValidationBanner, setShowValidationBanner] = useState(false);
+  
+  // Classes data
+  const [availableClasses, setAvailableClasses] = useState([]);
+  const [selectedClasses, setSelectedClasses] = useState([]);
+  const [loadingClasses, setLoadingClasses] = useState(true);
   
   // Form data
   const [formData, setFormData] = useState({
@@ -51,6 +59,50 @@ const AddStudentScreen = ({ navigation, route }) => {
   });
 
   const [errors, setErrors] = useState({});
+
+  // Carregar turmas disponíveis
+  useEffect(() => {
+    loadAvailableClasses();
+  }, [userProfile?.academiaId]);
+
+  const loadAvailableClasses = async () => {
+    try {
+      setLoadingClasses(true);
+      if (!userProfile?.academiaId) return;
+      
+      const classes = await academyFirestoreService.getAll('classes', userProfile.academiaId);
+      console.log('📚 Turmas disponíveis carregadas:', classes.length);
+      setAvailableClasses(classes);
+      
+      if (classes.length === 0) {
+        showSnackbar('Nenhuma turma encontrada. Crie turmas primeiro para associar alunos.', 'info');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao carregar turmas:', error);
+      showSnackbar('Erro ao carregar turmas disponíveis', 'error');
+    } finally {
+      setLoadingClasses(false);
+    }
+  };
+
+  const toggleClassSelection = (classId) => {
+    setSelectedClasses(prev => {
+      const isSelected = prev.includes(classId);
+      const newSelection = isSelected 
+        ? prev.filter(id => id !== classId)
+        : [...prev, classId];
+      
+      // Feedback visual
+      const className = availableClasses.find(c => c.id === classId)?.name || 'Turma';
+      if (isSelected) {
+        showSnackbar(`${className} removida da seleção`, 'info');
+      } else {
+        showSnackbar(`${className} adicionada à seleção`, 'success');
+      }
+      
+      return newSelection;
+    });
+  };
 
   const showSnackbar = (message, type = 'info') => {
     setSnackbar({
@@ -131,7 +183,8 @@ const AddStudentScreen = ({ navigation, route }) => {
         createdAt: new Date(),
         updatedAt: new Date(),
         graduations: [],
-        currentGraduation: null
+        currentGraduation: null,
+        classIds: selectedClasses // Adicionar turmas selecionadas
       };
 
       // Garantir associação com a academia do instrutor/admin
@@ -143,10 +196,28 @@ const AddStudentScreen = ({ navigation, route }) => {
       studentData.academiaId = academiaId;
       
       console.log('✅ Criando aluno na academia:', academiaId, studentData);
-      const newStudentId = await firestoreService.create(`gyms/${academiaId}/students`, studentData);
+      const newStudentId = await academyFirestoreService.create('students', studentData, academiaId);
       console.log('✅ Aluno criado com ID:', newStudentId);
+      
+      if (selectedClasses.length > 0) {
+        console.log('📚 Aluno associado às turmas:', selectedClasses);
+      }
 
       showSnackbar(`Aluno "${formData.name.trim()}" cadastrado com sucesso!`, 'success');
+      
+      // Notificar outras telas sobre o novo aluno via callback
+      if (route.params?.onStudentAdded) {
+        route.params.onStudentAdded({
+          id: newStudentId,
+          ...studentData
+        });
+      }
+      
+      // Notificar globalmente via refresh manager
+      refreshManager.refreshStudents({
+        id: newStudentId,
+        ...studentData
+      });
       
       // Limpar formulário após sucesso
       setTimeout(() => {
@@ -163,6 +234,7 @@ const AddStudentScreen = ({ navigation, route }) => {
           status: 'active',
           userType: 'student'
         });
+        setSelectedClasses([]); // Limpar turmas selecionadas
         setErrors({});
         navigation.goBack();
       }, 2000);
@@ -359,6 +431,81 @@ const AddStudentScreen = ({ navigation, route }) => {
               left={<TextInput.Icon icon="target" />}
             />
 
+            {/* Seleção de Turmas */}
+            <Divider style={styles.divider} />
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>🎯 Turmas</Text>
+              {loadingClasses && <ActivityIndicator size="small" color="#2196F3" />}
+            </View>
+            <Text style={styles.sectionSubtitle}>
+              Selecione as turmas que o aluno irá participar (opcional)
+            </Text>
+            
+            {loadingClasses ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#2196F3" />
+                <Text style={styles.loadingText}>Carregando turmas...</Text>
+              </View>
+            ) : availableClasses.length > 0 ? (
+              <>
+                <View style={styles.classesContainer}>
+                  {availableClasses.map((classItem) => (
+                    <Chip
+                      key={classItem.id}
+                      selected={selectedClasses.includes(classItem.id)}
+                      onPress={() => toggleClassSelection(classItem.id)}
+                      style={[
+                        styles.classChip,
+                        selectedClasses.includes(classItem.id) && styles.selectedChip
+                      ]}
+                      textStyle={selectedClasses.includes(classItem.id) && styles.selectedChipText}
+                      icon={selectedClasses.includes(classItem.id) ? "check-circle" : "plus-circle"}
+                    >
+                      {classItem.name || `${classItem.modality} - ${classItem.instructorName}`}
+                    </Chip>
+                  ))}
+                </View>
+                
+                {selectedClasses.length > 0 && (
+                  <View style={styles.selectedClassesContainer}>
+                    <Text style={styles.selectedClassesInfo}>
+                      ✅ {selectedClasses.length} turma{selectedClasses.length !== 1 ? 's' : ''} selecionada{selectedClasses.length !== 1 ? 's' : ''}
+                    </Text>
+                    <Button
+                      mode="text"
+                      onPress={() => {
+                        setSelectedClasses([]);
+                        showSnackbar('Todas as turmas foram desmarcadas', 'info');
+                      }}
+                      compact
+                      style={styles.clearButton}
+                    >
+                      Limpar seleção
+                    </Button>
+                  </View>
+                )}
+              </>
+            ) : (
+              <View style={styles.emptyStateContainer}>
+                <Text style={styles.emptyStateIcon}>📚</Text>
+                <Text style={styles.noClassesText}>
+                  Nenhuma turma disponível
+                </Text>
+                <Text style={styles.noClassesSubtext}>
+                  Crie turmas primeiro para associar alunos
+                </Text>
+                <Button
+                  mode="outlined"
+                  onPress={loadAvailableClasses}
+                  style={styles.retryButton}
+                  icon="refresh"
+                  compact
+                >
+                  Tentar novamente
+                </Button>
+              </View>
+            )}
+
             {/* Status */}
             <View style={styles.radioContainer}>
               <Text style={styles.label}>Status</Text>
@@ -390,11 +537,12 @@ const AddStudentScreen = ({ navigation, route }) => {
               <Button
                 mode="contained"
                 onPress={handleSubmit}
-                style={styles.button}
+                style={[styles.button, loading && styles.buttonLoading]}
                 loading={loading}
                 disabled={loading}
+                icon={loading ? undefined : "account-plus"}
               >
-                Cadastrar Aluno
+                {loading ? 'Cadastrando...' : 'Cadastrar Aluno'}
               </Button>
             </View>
           </Card.Content>
@@ -450,6 +598,92 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: '#333',
   },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+    fontStyle: 'italic',
+  },
+  divider: {
+    marginVertical: 16,
+  },
+  classesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  classChip: {
+    marginBottom: 8,
+  },
+  selectedChip: {
+    backgroundColor: '#2196F3',
+  },
+  selectedChipText: {
+    color: 'white',
+  },
+  noClassesText: {
+    fontSize: 14,
+    color: '#999',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    marginBottom: 16,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    padding: 32,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+  selectedClassesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#E3F2FD',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  selectedClassesInfo: {
+    fontSize: 14,
+    color: '#1976D2',
+    fontWeight: '500',
+    flex: 1,
+  },
+  clearButton: {
+    marginLeft: 8,
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    padding: 32,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    marginVertical: 16,
+  },
+  emptyStateIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  noClassesSubtext: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  retryButton: {
+    marginTop: 8,
+  },
   input: {
     marginBottom: 12,
   },
@@ -480,6 +714,18 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     marginHorizontal: 8,
+  },
+  buttonLoading: {
+    opacity: 0.7,
+  },
+  snackbar: {
+    marginBottom: 16,
+  },
+  snackbarSuccess: {
+    backgroundColor: '#4CAF50',
+  },
+  snackbarError: {
+    backgroundColor: '#F44336',
   },
   validationBanner: {
     backgroundColor: '#ffebee',

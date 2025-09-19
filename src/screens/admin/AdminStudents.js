@@ -18,9 +18,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthProvider';
-import { firestoreService, paymentService } from '../../services/firestoreService';
+import { academyFirestoreService } from '../../services/academyFirestoreService';
 import ActionButton, { ActionButtonGroup } from '../../components/ActionButton';
 import StudentDisassociationDialog from '../../components/StudentDisassociationDialog';
+import { useFocusEffect } from '@react-navigation/native';
 
 const AdminStudents = ({ navigation }) => {
   const { user, userProfile, academia } = useAuth();
@@ -34,9 +35,12 @@ const AdminStudents = ({ navigation }) => {
   const [showDisassociationDialog, setShowDisassociationDialog] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
 
-  useEffect(() => {
-    loadStudents();
-  }, []);
+  // Auto-refresh quando a tela ganha foco
+  useFocusEffect(
+    React.useCallback(() => {
+      loadStudents();
+    }, [userProfile?.academiaId])
+  );
 
   useEffect(() => {
     filterStudents();
@@ -55,15 +59,15 @@ const AdminStudents = ({ navigation }) => {
       }
       
       // Buscar alunos da academia usando subcoleção
-      console.log('🔍 Buscando alunos na coleção:', `gyms/${academiaId}/students`);
-      const studentUsers = await firestoreService.getAll(`gyms/${academiaId}/students`);
+      console.log('🔍 Buscando alunos na academia:', academiaId);
+      const studentUsers = await academyFirestoreService.getAll('students', academiaId);
       console.log('👥 Alunos encontrados:', studentUsers.length);
       
       // Buscar informações de pagamento para cada aluno
       const studentsWithPayments = await Promise.all(
         studentUsers.map(async (student) => {
           try {
-            const payments = await paymentService.getPaymentsByStudent(student.id, academiaId);
+            const payments = await academyFirestoreService.getWhere('payments', 'studentId', '==', student.id, academiaId);
             const latestPayment = payments[0];
             return {
               ...student,
@@ -137,7 +141,17 @@ const AdminStudents = ({ navigation }) => {
   };
 
   const handleAddStudent = () => {
-    navigation.navigate('AddStudent');
+    navigation.navigate('AddStudent', {
+      onStudentAdded: (newStudent) => {
+        console.log('🔄 Novo aluno adicionado, atualizando lista:', newStudent.name);
+        // Adicionar o novo aluno à lista imediatamente
+        setStudents(prevStudents => [newStudent, ...prevStudents]);
+        // Também recarregar para garantir dados atualizados
+        setTimeout(() => {
+          loadStudents();
+        }, 1000);
+      }
+    });
   };
 
   const handleEditStudent = (student) => {

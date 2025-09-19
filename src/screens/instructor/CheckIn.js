@@ -37,14 +37,11 @@ const CheckIn = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredStudents, setFilteredStudents] = useState([]);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
+  // Auto-refresh quando a tela ganha foco
   useFocusEffect(
-    useCallback(() => {
+    React.useCallback(() => {
       loadData();
-    }, [])
+    }, [userProfile?.academiaId])
   );
 
   const loadData = async () => {
