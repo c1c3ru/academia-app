@@ -180,7 +180,8 @@ export const useAlunos = (options) => useAcademiaCollection('students', options)
 export const useInstrutores = (options) => useAcademiaCollection('instructors', options);
 export const useTurmas = (options) => useAcademiaCollection('classes', options);
 export const usePagamentos = (options) => useAcademiaCollection('payments', options);
-export const useCheckins = (options) => useAcademiaCollection('checkins', options);
+// CheckIns agora são subcoleções - use getSubcollectionDocuments diretamente
+// export const useCheckins = (options) => useAcademiaCollection('checkins', options);
 export const usePlanos = (options) => useAcademiaCollection('plans', options);
 
 // Backward compatibility aliases (deprecated - use English names)

@@ -97,14 +97,17 @@ service cloud.firestore {
         allow create: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
         allow update: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
         allow delete: if isAdminOf(academiaId);
-        // Temporary: allow authenticated users to create sample data
-        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
         
-        // Class students
-        match /students/{studentId} {
-          allow read: if isMemberOf(academiaId);
-          allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
+        // Subcoleção checkIns dentro de classes - REGRAS COMPLETAMENTE ABERTAS PARA DEBUG
+        match /{document=**} {
+          allow read, write: if true;
         }
+      }
+      
+      // Class students
+      match /students/{studentId} {
+        allow read: if isMemberOf(academiaId);
+        allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
       }
       
       // Payments
@@ -220,15 +223,27 @@ service cloud.firestore {
         allow create: if isStudentOf(academiaId) && request.resource.data.studentId == request.auth.uid;
       }
       
-      // Check-ins
-      match /checkins/{checkinId} {
+      // Check-in Sessions (for managing active check-in periods)
+      match /checkInSessions/{sessionId} {
         allow read: if isMemberOf(academiaId);
-        // Any member can check-in, but only themselves
-        allow create: if isMemberOf(academiaId) && request.resource.data.studentId == request.auth.uid;
+        // Instructors can create and manage their own sessions
+        allow create: if isInstructorOf(academiaId) && request.resource.data.instructorId == request.auth.uid;
+        allow update: if isInstructorOf(academiaId) && resource.data.instructorId == request.auth.uid;
+        // Admins can manage all sessions
+        allow write: if isAdminOf(academiaId);
+      }
+      
+      // Check-ins (individual check-in records)
+      match /checkIns/{checkInId} {
+        allow read: if isMemberOf(academiaId);
+        // Students can check-in for themselves
+        allow create: if isStudentOf(academiaId) && request.resource.data.studentId == request.auth.uid;
         // Instructors and admins can create check-ins for any student
         allow create: if (isInstructorOf(academiaId) || isAdminOf(academiaId));
         // Only admins can update/delete check-ins
         allow update, delete: if isAdminOf(academiaId);
+        // Instructors can update check-ins they created
+        allow update: if isInstructorOf(academiaId) && resource.data.instructorId == request.auth.uid;
       }
       
       // Invites

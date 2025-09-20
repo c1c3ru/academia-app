@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrigir Claims - Firebase Console</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .step {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            color: #856404;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            color: #155724;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        h3 {
+            color: #495057;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Corrigir Claims do Usuário - Firebase Console</h1>
+        
+        <div class="highlight">
+            <strong>🎯 Objetivo:</strong> Alterar claims do usuário <code>cicero.silva@ifce.edu.br</code><br>
+            <strong>De:</strong> <code>academiaId: 'RBPHlgc39EXphF47Qzql'</code> (inexistente)<br>
+            <strong>Para:</strong> <code>academiaId: 'yCRtgOHYvw7kiHmF12aw'</code> (correto)
+        </div>
+
+        <h2>📋 Instruções Passo a Passo</h2>
+
+        <div class="step">
+            <h3>Passo 1: Acessar Firebase Console</h3>
+            <p>1. Acesse: <a href="https://console.firebase.google.com/" target="_blank">https://console.firebase.google.com/</a></p>
+            <p>2. Selecione o projeto: <strong>academia-app-5cf79</strong></p>
+            <p>3. No menu lateral, vá em <strong>Functions</strong></p>
+        </div>
+
+        <div class="step">
+            <h3>Passo 2: Abrir Cloud Shell ou Terminal</h3>
+            <p>1. No Firebase Console, clique no ícone do terminal (Cloud Shell) no canto superior direito</p>
+            <p>2. Ou use o terminal local com Firebase CLI autenticado</p>
+        </div>
+
+        <div class="step">
+            <h3>Passo 3: Executar Script de Correção</h3>
+            <p>Execute o seguinte comando no terminal:</p>
+            
+            <div class="code-block">node -e "
+const admin = require('firebase-admin');
+
+// Inicializar Firebase Admin (se não estiver inicializado)
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+async function fixUserClaims() {
+  try {
+    console.log('🔧 Iniciando correção dos claims...');
+    
+    const userEmail = 'cicero.silva@ifce.edu.br';
+    const correctAcademiaId = 'yCRtgOHYvw7kiHmF12aw';
+    
+    // Buscar usuário por email
+    console.log('🔍 Buscando usuário:', userEmail);
+    const userRecord = await admin.auth().getUserByEmail(userEmail);
+    console.log('✅ Usuário encontrado:', userRecord.uid);
+    
+    // Verificar claims atuais
+    console.log('📋 Claims atuais:', userRecord.customClaims);
+    
+    // Definir novos claims
+    const newClaims = {
+      role: 'instructor',
+      academiaId: correctAcademiaId,
+      hasAcademiaId: true,
+      hasRole: true
+    };
+    
+    // Atualizar claims
+    await admin.auth().setCustomUserClaims(userRecord.uid, newClaims);
+    console.log('✅ Claims atualizados!');
+    console.log('📋 Novos claims:', newClaims);
+    
+    // Verificar atualização
+    const updatedUser = await admin.auth().getUser(userRecord.uid);
+    console.log('🔍 Claims após atualização:', updatedUser.customClaims);
+    
+    console.log('🎉 Correção concluída!');
+    
+  } catch (error) {
+    console.error('❌ Erro:', error);
+  }
+}
+
+fixUserClaims().then(() => process.exit(0));
+"</div>
+            
+            <button onclick="copyToClipboard('nodeScript')">📋 Copiar Script</button>
+        </div>
+
+        <div class="step">
+            <h3>Alternativa: Usar Firebase Functions Deploy</h3>
+            <p>Se preferir, pode criar uma função temporária:</p>
+            
+            <div class="code-block">// Adicionar ao functions/index.js
+exports.fixUserClaims = functions.https.onRequest(async (req, res) => {
+  try {
+    const userEmail = 'cicero.silva@ifce.edu.br';
+    const correctAcademiaId = 'yCRtgOHYvw7kiHmF12aw';
+    
+    const userRecord = await admin.auth().getUserByEmail(userEmail);
+    
+    const newClaims = {
+      role: 'instructor',
+      academiaId: correctAcademiaId,
+      hasAcademiaId: true,
+      hasRole: true
+    };
+    
+    await admin.auth().setCustomUserClaims(userRecord.uid, newClaims);
+    
+    res.json({
+      success: true,
+      message: 'Claims atualizados com sucesso',
+      oldClaims: userRecord.customClaims,
+      newClaims: newClaims
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});</div>
+            
+            <p>Depois execute:</p>
+            <div class="code-block">firebase deploy --only functions:fixUserClaims</div>
+            
+            <button onclick="copyToClipboard('functionCode')">📋 Copiar Código da Função</button>
+        </div>
+
+        <div class="warning">
+            <h3>⚠️ Importante</h3>
+            <ul>
+                <li>Certifique-se de estar autenticado no projeto correto</li>
+                <li>O usuário deve fazer <strong>logout e login</strong> após a correção</li>
+                <li>Verifique se os claims foram aplicados corretamente</li>
+                <li>Remova a função temporária após o uso (se usar a alternativa)</li>
+            </ul>
+        </div>
+
+        <div class="success">
+            <h3>✅ Após a Correção</h3>
+            <p>1. O usuário <code>cicero.silva@ifce.edu.br</code> deve fazer logout do app</p>
+            <p>2. Fazer login novamente</p>
+            <p>3. O sistema deve carregar a academia <code>yCRtgOHYvw7kiHmF12aw</code> corretamente</p>
+            <p>4. Não deve mais aparecer erro de permissões</p>
+        </div>
+
+        <h2>🔍 Verificação</h2>
+        <p>Para verificar se os claims foram atualizados, execute:</p>
+        <div class="code-block">node -e "
+const admin = require('firebase-admin');
+if (!admin.apps.length) admin.initializeApp();
+
+admin.auth().getUserByEmail('cicero.silva@ifce.edu.br')
+  .then(user => {
+    console.log('Claims atuais:', user.customClaims);
+    process.exit(0);
+  })
+  .catch(console.error);
+"</div>
+        
+        <button onclick="copyToClipboard('verifyScript')">📋 Copiar Script de Verificação</button>
+    </div>
+
+    <script>
+        function copyToClipboard(type) {
+            let text = '';
+            
+            if (type === 'nodeScript') {
+                text = `node -e "
+const admin = require('firebase-admin');
+
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+async function fixUserClaims() {
+  try {
+    console.log('🔧 Iniciando correção dos claims...');
+    
+    const userEmail = 'cicero.silva@ifce.edu.br';
+    const correctAcademiaId = 'yCRtgOHYvw7kiHmF12aw';
+    
+    const userRecord = await admin.auth().getUserByEmail(userEmail);
+    console.log('✅ Usuário encontrado:', userRecord.uid);
+    console.log('📋 Claims atuais:', userRecord.customClaims);
+    
+    const newClaims = {
+      role: 'instructor',
+      academiaId: correctAcademiaId,
+      hasAcademiaId: true,
+      hasRole: true
+    };
+    
+    await admin.auth().setCustomUserClaims(userRecord.uid, newClaims);
+    console.log('✅ Claims atualizados!');
+    console.log('📋 Novos claims:', newClaims);
+    
+    const updatedUser = await admin.auth().getUser(userRecord.uid);
+    console.log('🔍 Claims após atualização:', updatedUser.customClaims);
+    console.log('🎉 Correção concluída!');
+    
+  } catch (error) {
+    console.error('❌ Erro:', error);
+  }
+}
+
+fixUserClaims().then(() => process.exit(0));
+"`;
+            } else if (type === 'verifyScript') {
+                text = `node -e "
+const admin = require('firebase-admin');
+if (!admin.apps.length) admin.initializeApp();
+
+admin.auth().getUserByEmail('cicero.silva@ifce.edu.br')
+  .then(user => {
+    console.log('Claims atuais:', user.customClaims);
+    process.exit(0);
+  })
+  .catch(console.error);
+"`;
+            }
+            
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Script copiado para a área de transferência!');
+            });
+        }
+    </script>
+</body>
+</html>

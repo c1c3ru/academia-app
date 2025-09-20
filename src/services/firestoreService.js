@@ -281,12 +281,13 @@ export const classService = {
       date: new Date().toISOString().split('T')[0] // YYYY-MM-DD
     };
     
-    return await firestoreService.create('checkIns', checkInData);
+    // CheckIns agora são subcoleções - esta função está obsoleta
+    throw new Error('CheckIns agora são subcoleções. Use academyFirestoreService.addSubcollectionDocument()');
   },
 
   getCheckIns: async (classId, date) => {
-    const checkIns = await firestoreService.getWhere('checkIns', 'classId', '==', classId);
-    return checkIns.filter(checkIn => checkIn.date === date);
+    // CheckIns agora são subcoleções - esta função está obsoleta
+    throw new Error('CheckIns agora são subcoleções. Use academyFirestoreService.getSubcollectionDocuments()');
   }
 };
 

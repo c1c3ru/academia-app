@@ -30,13 +30,18 @@ const ACADEMY_ISOLATED_COLLECTIONS = [
   'plans',
   'students',
   'checkInSessions',
-  'checkIns',
   'audit_logs',
   'notifications',
   'injuries',
   'instructors',
   'students'
 ];
+
+// Subcoleções que ficam dentro de outras coleções
+const SUBCOLLECTIONS = {
+  'checkIns': 'classes', // checkIns é subcoleção de classes
+  'attendance': 'classes' // attendance é subcoleção de classes
+};
 
 // Collections globais que não precisam de isolamento
 const GLOBAL_COLLECTIONS = [
@@ -323,6 +328,105 @@ export const academyFirestoreService = {
   },
 
   /**
+   * Trabalhar com subcoleções (ex: checkIns dentro de classes)
+   * @param {string} parentCollection - Coleção pai
+   * @param {string} parentDocId - ID do documento pai
+   * @param {string} subCollection - Nome da subcoleção
+   * @param {string} academiaId - ID da academia
+   * @param {Array} filters - Filtros opcionais
+   * @param {Object} orderByClause - Ordenação opcional
+   * @param {number} limitCount - Limite de documentos
+   */
+  getSubcollectionDocuments: async (parentCollection, parentDocId, subCollection, academiaId, filters = [], orderByClause = null, limitCount = null) => {
+    try {
+      validateAcademiaId(academiaId);
+      
+      // Referência para a subcoleção
+      const parentDocRef = doc(db, 'gyms', academiaId, parentCollection, parentDocId);
+      let q = collection(parentDocRef, subCollection);
+      
+      // Aplicar filtros
+      if (filters.length > 0) {
+        filters.forEach(filter => {
+          q = query(q, where(filter.field, filter.operator, filter.value));
+        });
+      }
+      
+      // Aplicar ordenação
+      if (orderByClause) {
+        q = query(q, orderBy(orderByClause.field, orderByClause.direction));
+      }
+      
+      // Aplicar limite
+      if (limitCount) {
+        q = query(q, limit(limitCount));
+      }
+      
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error(`❌ Erro ao buscar documentos na subcoleção ${subCollection}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Adicionar documento em subcoleção
+   * @param {string} parentCollection - Coleção pai
+   * @param {string} parentDocId - ID do documento pai
+   * @param {string} subCollection - Nome da subcoleção
+   * @param {Object} data - Dados do documento
+   * @param {string} academiaId - ID da academia
+   */
+  addSubcollectionDocument: async (parentCollection, parentDocId, subCollection, data, academiaId) => {
+    try {
+      validateAcademiaId(academiaId);
+      
+      const parentDocRef = doc(db, 'gyms', academiaId, parentCollection, parentDocId);
+      
+      // Verificar se o documento pai existe
+      const parentDocSnap = await getDoc(parentDocRef);
+      console.log('🔍 Debug - Parent doc exists:', parentDocSnap.exists());
+      console.log('🔍 Debug - Parent doc data:', parentDocSnap.data());
+      
+      if (!parentDocSnap.exists()) {
+        console.error('❌ Documento pai não existe:', parentDocRef.path);
+        
+        // Listar documentos na coleção classes para debug
+        const classesRef = collection(db, 'gyms', academiaId, 'classes');
+        const classesSnapshot = await getDocs(classesRef);
+        console.log('🔍 Debug - Classes disponíveis:');
+        classesSnapshot.forEach(doc => {
+          console.log('  - ID:', doc.id, 'Nome:', doc.data().name);
+        });
+        
+        throw new Error(`Documento pai não encontrado: ${parentDocRef.path}`);
+      }
+      
+      const subcollectionRef = collection(parentDocRef, subCollection);
+      
+      console.log('🔍 Debug - Caminho da subcoleção:', subcollectionRef.path);
+      console.log('🔍 Debug - Parent doc path:', parentDocRef.path);
+      console.log('🔍 Debug - Data sendo enviada:', data);
+      
+      const docRef = await addDoc(subcollectionRef, {
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      return docRef.id;
+    } catch (error) {
+      console.error(`❌ Erro ao adicionar documento na subcoleção ${subCollection}:`, error);
+      console.error('❌ Detalhes do erro:', error.code, error.message);
+      throw error;
+    }
+  },
+
+  /**
    * Escutar mudanças em tempo real
    * @param {string} collectionName - Nome da coleção
    * @param {Function} callback - Callback para receber os dados
@@ -474,20 +578,36 @@ export const academyClassService = {
     validateAcademiaId(academiaId, 'check-in');
     
     const checkInData = {
-      classId,
       studentId,
       timestamp: new Date(),
-      date: new Date().toISOString().split('T')[0] // YYYY-MM-DD
+      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+      createdAt: new Date()
     };
     
-    return await academyFirestoreService.create('checkins', checkInData, academiaId);
+    // Usar subcoleção de check-ins dentro da turma
+    return await academyFirestoreService.addSubcollectionDocument(
+      'classes',
+      classId,
+      'checkIns',
+      checkInData,
+      academiaId
+    );
   },
 
   getCheckIns: async (classId, date, academiaId) => {
     validateAcademiaId(academiaId, 'busca de check-ins');
     
-    const checkIns = await academyFirestoreService.getWhere('checkins', 'classId', '==', classId, academiaId);
-    return checkIns.filter(checkIn => checkIn.date === date);
+    // Usar subcoleção de check-ins dentro da turma
+    const checkIns = await academyFirestoreService.getSubcollectionDocuments(
+      'classes',
+      classId,
+      'checkIns',
+      academiaId,
+      [
+        { field: 'date', operator: '==', value: date }
+      ]
+    );
+    return checkIns;
   }
 };
 

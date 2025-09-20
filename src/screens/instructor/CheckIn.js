@@ -36,6 +36,11 @@ const CheckIn = ({ navigation }) => {
   const [selectedClass, setSelectedClass] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredStudents, setFilteredStudents] = useState([]);
+  
+  // Batch check-in states
+  const [selectedStudents, setSelectedStudents] = useState(new Set());
+  const [batchProcessing, setBatchProcessing] = useState(false);
+  const [studentsWithCheckIn, setStudentsWithCheckIn] = useState(new Set());
 
   // Auto-refresh quando a tela ganha foco
   useFocusEffect(
@@ -116,18 +121,40 @@ const CheckIn = ({ navigation }) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const todayCheckIns = await academyFirestoreService.getDocuments(
-        'checkIns',
-        userProfile.academiaId,
-        [
-          { field: 'date', operator: '>=', value: today },
-          { field: 'instructorId', operator: '==', value: user.uid }
-        ],
-        { field: 'createdAt', direction: 'desc' }
-      );
+      let allCheckIns = [];
 
-      setRecentCheckIns(todayCheckIns.slice(0, 10)); // Últimos 10
-      console.log('📋 Check-ins recentes carregados:', todayCheckIns.length);
+      // Para cada turma do instrutor, buscar check-ins na subcoleção
+      for (const classItem of classes) {
+        try {
+          const classCheckIns = await academyFirestoreService.getSubcollectionDocuments(
+            'classes',
+            classItem.id,
+            'checkIns',
+            userProfile.academiaId,
+            [
+              { field: 'date', operator: '>=', value: today }
+            ],
+            { field: 'createdAt', direction: 'desc' },
+            10
+          );
+
+          // Adicionar informações da turma aos check-ins
+          const enrichedCheckIns = classCheckIns.map(checkIn => ({
+            ...checkIn,
+            className: classItem.name,
+            classId: classItem.id
+          }));
+
+          allCheckIns = [...allCheckIns, ...enrichedCheckIns];
+        } catch (error) {
+          console.error(`❌ Erro ao carregar check-ins da turma ${classItem.id}:`, error);
+        }
+      }
+
+      // Ordenar por data de criação e limitar a 10
+      allCheckIns.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setRecentCheckIns(allCheckIns.slice(0, 10));
+      console.log('📋 Check-ins recentes carregados:', allCheckIns.length);
     } catch (error) {
       console.error('❌ Erro ao carregar check-ins recentes:', error);
       setRecentCheckIns([]);
@@ -215,8 +242,10 @@ const CheckIn = ({ navigation }) => {
                   updatedAt: new Date()
                 }, userProfile.academiaId);
 
-                // Recarregar dados
-                await loadActiveCheckIns();
+                // Limpar seleção e recarregar dados
+                setSelectedStudents(new Set());
+                await loadRecentCheckIns();
+                await loadTodayCheckIns();
                 
                 Alert.alert('Sucesso', 'Sessão de check-in finalizada');
               } catch (error) {
@@ -234,11 +263,21 @@ const CheckIn = ({ navigation }) => {
 
   const handleManualCheckIn = async (studentId, studentName) => {
     try {
+      // Debug: verificar token do usuário
+      const token = await user.getIdTokenResult();
+      console.log('🔍 Debug - Token claims:', token.claims);
+      console.log('🔍 Debug - User role:', token.claims.role);
+      console.log('🔍 Debug - Academia ID:', token.claims.academiaId);
+      console.log('🔍 Debug - User profile:', userProfile);
+      
       if (!selectedClass) {
         Alert.alert('Erro', 'Selecione uma turma primeiro');
         return;
       }
 
+      // Usar academiaId do token (que é usado pelas regras do Firestore)
+      const tokenAcademiaId = token.claims.academiaId;
+      
       const checkInData = {
         studentId,
         studentName,
@@ -246,29 +285,30 @@ const CheckIn = ({ navigation }) => {
         className: selectedClass.name,
         instructorId: user.uid,
         instructorName: userProfile?.name || user.email,
-        academiaId: userProfile.academiaId,
+        academiaId: tokenAcademiaId,
         type: 'manual',
-        date: new Date(),
+        date: new Date().toISOString().split('T')[0], // Formato YYYY-MM-DD
+        timestamp: new Date(),
         createdAt: new Date()
       };
 
-      await academyFirestoreService.create('checkIns', checkInData, userProfile.academiaId);
-      
-      // Atualizar contador da sessão se existir
-      const activeSession = activeCheckIns.find(session => session.classId === selectedClass.id);
-      if (activeSession) {
-        await academyFirestoreService.update('checkInSessions', activeSession.id, {
-          checkInCount: (activeSession.checkInCount || 0) + 1,
-          updatedAt: new Date()
-        }, userProfile.academiaId);
-      }
+      console.log('🔍 Debug - Usando academiaId do token:', tokenAcademiaId);
+      console.log('🔍 Debug - CheckIn data:', checkInData);
 
-      setManualCheckInVisible(false);
-      setSelectedClass(null);
-      await loadRecentCheckIns();
-      await loadActiveCheckIns();
+      // Usar subcoleção de check-ins dentro da turma selecionada
+      await academyFirestoreService.addSubcollectionDocument(
+        'classes',
+        selectedClass.id,
+        'checkIns',
+        checkInData,
+        tokenAcademiaId
+      );
       
-      Alert.alert('Sucesso', `Check-in realizado para ${studentName}`);
+      Alert.alert('Sucesso', `Check-in realizado para ${studentName}!`);
+      
+      // Recarregar dados
+      await loadRecentCheckIns();
+      await loadTodayCheckIns();
     } catch (error) {
       console.error('❌ Erro no check-in manual:', error);
       Alert.alert('Erro', 'Não foi possível realizar o check-in');
@@ -282,7 +322,7 @@ const CheckIn = ({ navigation }) => {
 
   const filterStudents = (query) => {
     setSearchQuery(query);
-    if (query.trim() === '') {
+    if (!query.trim()) {
       setFilteredStudents(students);
     } else {
       const filtered = students.filter(student =>
@@ -290,6 +330,106 @@ const CheckIn = ({ navigation }) => {
         student.email?.toLowerCase().includes(query.toLowerCase())
       );
       setFilteredStudents(filtered);
+    }
+  };
+
+  const loadTodayCheckIns = async () => {
+    if (!selectedClass || !userProfile?.academiaId) return;
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const todayCheckIns = await academyFirestoreService.getSubcollectionDocuments(
+        'classes',
+        selectedClass.id,
+        'checkIns',
+        userProfile.academiaId,
+        [{ field: 'date', operator: '==', value: today }]
+      );
+
+      const checkedInStudentIds = new Set(
+        todayCheckIns.map(checkIn => checkIn.studentId)
+      );
+      
+      setStudentsWithCheckIn(checkedInStudentIds);
+    } catch (error) {
+      console.error('❌ Erro ao carregar check-ins de hoje:', error);
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedStudents(new Set());
+  };
+
+  const selectAllStudents = () => {
+    // Selecionar apenas alunos que ainda não fizeram check-in
+    const availableStudents = filteredStudents.filter(student => 
+      !studentsWithCheckIn.has(student.id)
+    );
+    const allStudentIds = new Set(availableStudents.map(student => student.id));
+    setSelectedStudents(allStudentIds);
+  };
+
+  const handleBatchCheckIn = async () => {
+    if (selectedStudents.size === 0) {
+      Alert.alert('Atenção', 'Selecione pelo menos um aluno para fazer check-in');
+      return;
+    }
+
+    if (!selectedClass) {
+      Alert.alert('Erro', 'Selecione uma turma primeiro');
+      return;
+    }
+
+    setBatchProcessing(true);
+    
+    try {
+      const token = await user.getIdTokenResult();
+      const tokenAcademiaId = token.claims.academiaId;
+      
+      const checkInPromises = Array.from(selectedStudents).map(async (studentId) => {
+        const student = students.find(s => s.id === studentId);
+        
+        const checkInData = {
+          studentId,
+          studentName: student?.name || 'Nome não informado',
+          classId: selectedClass.id,
+          className: selectedClass.name,
+          instructorId: user.uid,
+          instructorName: userProfile?.name || user.email,
+          academiaId: tokenAcademiaId,
+          type: 'manual',
+          date: new Date().toISOString().split('T')[0],
+          timestamp: new Date(),
+          createdAt: new Date()
+        };
+
+        return academyFirestoreService.addSubcollectionDocument(
+          'classes',
+          selectedClass.id,
+          'checkIns',
+          checkInData,
+          tokenAcademiaId
+        );
+      });
+
+      await Promise.all(checkInPromises);
+      
+      Alert.alert(
+        'Sucesso! ✅', 
+        `Check-in realizado para ${selectedStudents.size} aluno(s)!`
+      );
+      
+      // Limpar seleção e recarregar dados
+      setSelectedStudents(new Set());
+      await loadRecentCheckIns();
+      await loadTodayCheckIns();
+      
+    } catch (error) {
+      console.error('❌ Erro no check-in em lote:', error);
+      Alert.alert('Erro', 'Falha ao realizar check-in em lote. Tente novamente.');
+    } finally {
+      setBatchProcessing(false);
     }
   };
 
@@ -313,7 +453,7 @@ const CheckIn = ({ navigation }) => {
               classes.map((classItem) => (
                 <Surface key={classItem.id} style={styles.checkInItem}>
                   <View style={styles.checkInHeader}>
-                    <Text style={styles.aulaName}>{classItem.name}</Text>
+                    <Text style={styles.aulaName}>{String(classItem.name || 'Turma sem nome')}</Text>
                     <Chip 
                       mode="flat"
                       style={[
@@ -322,19 +462,32 @@ const CheckIn = ({ navigation }) => {
                       ]}
                       textStyle={{ color: 'white' }}
                     >
-                      {classItem.modality}
+                      {typeof classItem.modality === 'object' && classItem.modality
+                        ? classItem.modality.name || 'Modalidade'
+                        : classItem.modality || 'Modalidade'
+                      }
                     </Chip>
                   </View>
                   
                   <View style={styles.checkInDetails}>
                     <View style={styles.detailItem}>
                       <MaterialCommunityIcons name="clock" size={16} color="#666" />
-                      <Text style={styles.detailText}>{classItem.schedule || 'Horário não definido'}</Text>
+                      <Text style={styles.detailText}>
+                        {(() => {
+                          if (typeof classItem.schedule === 'object' && classItem.schedule) {
+                            const day = String(classItem.schedule.dayOfWeek || '');
+                            const hour = String(classItem.schedule.hour || '00').padStart(2, '0');
+                            const minute = String(classItem.schedule.minute || 0).padStart(2, '0');
+                            return `${day} ${hour}:${minute}`;
+                          }
+                          return String(classItem.schedule || 'Horário não definido');
+                        })()}
+                      </Text>
                     </View>
                     <View style={styles.detailItem}>
                       <MaterialCommunityIcons name="account-group" size={16} color="#666" />
                       <Text style={styles.detailText}>
-                        {classItem.currentStudents || 0}/{classItem.maxStudents} alunos
+                        {String(classItem.currentStudents || 0)}/{String(classItem.maxStudents || 0)} alunos
                       </Text>
                     </View>
                   </View>
@@ -474,7 +627,14 @@ const CheckIn = ({ navigation }) => {
               <Chip
                 key={classItem.id}
                 selected={selectedClass?.id === classItem.id}
-                onPress={() => setSelectedClass(classItem)}
+                onPress={() => {
+                  setSelectedClass(classItem);
+                  // Limpar seleções anteriores ao trocar de turma
+                  setSelectedStudents(new Set());
+                  setStudentsWithCheckIn(new Set());
+                  // Carregar check-ins da nova turma
+                  setTimeout(() => loadTodayCheckIns(), 100);
+                }}
                 style={styles.classChip}
                 mode={selectedClass?.id === classItem.id ? 'flat' : 'outlined'}
               >
@@ -491,29 +651,106 @@ const CheckIn = ({ navigation }) => {
             style={styles.searchbar}
           />
 
+          {/* Controles de Seleção em Lote */}
+          {filteredStudents.length > 0 && (
+            <View style={styles.batchControls}>
+              <Text style={styles.selectionCount}>
+                {selectedStudents.size} de {filteredStudents.length} selecionados
+              </Text>
+              <View style={styles.batchButtons}>
+                <Button
+                  mode="outlined"
+                  compact
+                  onPress={selectAllStudents}
+                  style={styles.batchButton}
+                >
+                  Selecionar Todos
+                </Button>
+                <Button
+                  mode="outlined"
+                  compact
+                  onPress={clearSelection}
+                  style={styles.batchButton}
+                >
+                  Limpar
+                </Button>
+              </View>
+            </View>
+          )}
+
           {/* Lista de Alunos */}
           <ScrollView style={styles.studentsList}>
             {filteredStudents.length > 0 ? (
-              filteredStudents.map((student) => (
-                <List.Item
-                  key={student.id}
-                  title={student.name || 'Nome não informado'}
-                  description={student.email || 'Email não informado'}
-                  left={() => (
-                    <List.Icon icon="account" color="#2196F3" />
-                  )}
-                  right={() => (
-                    <Button
-                      mode="contained"
-                      compact
-                      onPress={() => handleManualCheckIn(student.id, student.name)}
-                      disabled={!selectedClass}
-                    >
-                      Check-in
-                    </Button>
-                  )}
-                />
-              ))
+              filteredStudents.map((student) => {
+                const hasCheckIn = studentsWithCheckIn.has(student.id);
+                const isSelected = selectedStudents.has(student.id);
+                
+                return (
+                  <List.Item
+                    key={student.id}
+                    title={student.name || 'Nome não informado'}
+                    description={
+                      <View style={styles.studentDescription}>
+                        <Text style={styles.studentEmail}>
+                          {student.email || 'Email não informado'}
+                        </Text>
+                        {hasCheckIn && (
+                          <Chip
+                            icon="check-circle"
+                            mode="flat"
+                            style={styles.checkInChip}
+                            textStyle={styles.checkInChipText}
+                          >
+                            Presente
+                          </Chip>
+                        )}
+                      </View>
+                    }
+                    left={() => (
+                      <View style={styles.studentLeftSection}>
+                        <Button
+                          mode={isSelected ? "contained" : "outlined"}
+                          compact
+                          onPress={() => toggleStudentSelection(student.id)}
+                          style={[
+                            styles.selectButton,
+                            hasCheckIn && styles.selectButtonDisabled
+                          ]}
+                          disabled={hasCheckIn}
+                        >
+                          {isSelected ? '✓' : '+'}
+                        </Button>
+                        {hasCheckIn && (
+                          <MaterialCommunityIcons 
+                            name="check-circle" 
+                            size={24} 
+                            color="#4CAF50" 
+                            style={styles.checkInIcon}
+                          />
+                        )}
+                      </View>
+                    )}
+                    right={() => (
+                      <Button
+                        mode={hasCheckIn ? "outlined" : "contained"}
+                        compact
+                        onPress={() => handleManualCheckIn(student.id, student.name)}
+                        disabled={!selectedClass || hasCheckIn}
+                        style={[
+                          styles.individualCheckInButton,
+                          hasCheckIn && styles.alreadyCheckedInButton
+                        ]}
+                      >
+                        {hasCheckIn ? 'Presente' : 'Check-in'}
+                      </Button>
+                    )}
+                    style={[
+                      styles.studentItem,
+                      hasCheckIn && styles.studentItemCheckedIn
+                    ]}
+                  />
+                );
+              })
             ) : (
               <View style={styles.emptyState}>
                 <MaterialCommunityIcons name="account-off" size={48} color="#ccc" />
@@ -535,6 +772,17 @@ const CheckIn = ({ navigation }) => {
             >
               Cancelar
             </Button>
+            {selectedStudents.size > 0 && (
+              <Button
+                mode="contained"
+                onPress={handleBatchCheckIn}
+                loading={batchProcessing}
+                disabled={!selectedClass || batchProcessing}
+                style={[styles.modalButton, styles.batchCheckInButton]}
+              >
+                Check-in em Lote ({selectedStudents.size})
+              </Button>
+            )}
           </View>
         </Modal>
       </Portal>
@@ -651,6 +899,114 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
     textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#333',
+  },
+  classSelection: {
+    maxHeight: 60,
+    marginBottom: 16,
+  },
+  classChip: {
+    marginRight: 8,
+  },
+  searchbar: {
+    marginBottom: 16,
+  },
+  batchControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  selectionCount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2196F3',
+  },
+  batchButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  batchButton: {
+    minWidth: 80,
+  },
+  studentsList: {
+    maxHeight: 300,
+    marginBottom: 16,
+  },
+  selectButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  individualCheckInButton: {
+    minWidth: 80,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+  },
+  batchCheckInButton: {
+    backgroundColor: '#4CAF50',
+  },
+  // Estilos para indicadores visuais de check-in
+  studentDescription: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flex: 1,
+  },
+  studentEmail: {
+    fontSize: 14,
+    color: '#666',
+    flex: 1,
+  },
+  checkInChip: {
+    backgroundColor: '#E8F5E8',
+    marginLeft: 8,
+  },
+  checkInChipText: {
+    color: '#4CAF50',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  studentLeftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkInIcon: {
+    marginLeft: 8,
+  },
+  studentItem: {
+    borderRadius: 8,
+    marginVertical: 2,
+    backgroundColor: '#FFFFFF',
+  },
+  studentItemCheckedIn: {
+    backgroundColor: '#F8F9FA',
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
+  },
+  selectButtonDisabled: {
+    opacity: 0.5,
+  },
+  alreadyCheckedInButton: {
+    backgroundColor: '#E8F5E8',
+    borderColor: '#4CAF50',
   },
   modalSubtitle: {
     fontSize: 16,

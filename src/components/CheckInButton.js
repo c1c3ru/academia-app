@@ -4,12 +4,15 @@ import { Button, Text, Card, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import locationService from '../services/locationService';
 import { firestoreService } from '../services/firestoreService';
+import { academyFirestoreService } from '../services/academyFirestoreService';
 import { useAuth } from '../contexts/AuthProvider';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 const CheckInButton = ({ classId, className, onCheckInSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [locationStatus, setLocationStatus] = useState(null);
   const { user } = useAuth();
+  const { userProfile } = useUserProfile();
 
   const handleCheckIn = async () => {
     if (!user || !classId) {
@@ -53,7 +56,29 @@ const CheckInButton = ({ classId, className, onCheckInSuccess }) => {
         updatedAt: new Date()
       };
 
-      await firestoreService.addDocument('checkins', checkInData);
+      // Buscar a turma do usuário para fazer check-in na subcoleção
+      const studentClasses = await academyFirestoreService.getWhere(
+        'classes', 
+        'students', 
+        'array-contains', 
+        user.uid, 
+        userProfile.academiaId
+      );
+      
+      if (studentClasses.length === 0) {
+        throw new Error('Nenhuma turma encontrada para este usuário');
+      }
+      
+      // Usar a primeira turma encontrada
+      const classId = studentClasses[0].id;
+      
+      await academyFirestoreService.addSubcollectionDocument(
+        'classes',
+        classId,
+        'checkIns',
+        checkInData,
+        userProfile.academiaId
+      );
 
       setLocationStatus('Check-in realizado!');
       

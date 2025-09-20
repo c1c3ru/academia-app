@@ -40,16 +40,34 @@ const CheckInScreen = ({ navigation }) => {
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      // Buscar check-in de hoje
-      const todayCheckIns = await academyFirestoreService.getDocuments(
-        'checkins',
-        academia.id,
-        [
-          { field: 'userId', operator: '==', value: user.uid },
-          { field: 'date', operator: '>=', value: today },
-          { field: 'date', operator: '<', value: tomorrow }
-        ]
+      // Buscar check-in de hoje nas subcoleções das turmas do aluno
+      let todayCheckIns = [];
+      
+      // Buscar turmas do aluno primeiro
+      const studentClasses = await academyFirestoreService.getWhere(
+        'classes', 
+        'students', 
+        'array-contains', 
+        user.uid, 
+        academia.id
       );
+      
+      // Para cada turma, buscar check-ins do aluno
+      for (const classItem of studentClasses) {
+        const classCheckIns = await academyFirestoreService.getSubcollectionDocuments(
+          'classes',
+          classItem.id,
+          'checkIns',
+          academia.id,
+          [
+              { field: 'studentId', operator: '==', value: user.uid },
+            { field: 'date', operator: '>=', value: today },
+            { field: 'date', operator: '<', value: tomorrow }
+          ]
+        );
+        
+        todayCheckIns = [...todayCheckIns, ...classCheckIns];
+      }
 
       if (todayCheckIns.length > 0) {
         setTodayCheckIn(todayCheckIns[0]);
@@ -59,16 +77,27 @@ const CheckInScreen = ({ navigation }) => {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
 
-      const recentCheckIns = await academyFirestoreService.getDocuments(
-        'checkins',
-        academia.id,
-        [
-          { field: 'userId', operator: '==', value: user.uid },
-          { field: 'date', operator: '>=', value: weekAgo }
-        ],
-        { field: 'date', direction: 'desc' }
-      );
+      let recentCheckIns = [];
+      
+      // Para cada turma, buscar check-ins recentes do aluno
+      for (const classItem of studentClasses) {
+        const classRecentCheckIns = await academyFirestoreService.getSubcollectionDocuments(
+          'classes',
+          classItem.id,
+          'checkIns',
+          academia.id,
+          [
+            { field: 'studentId', operator: '==', value: user.uid },
+            { field: 'date', operator: '>=', value: weekAgo }
+          ],
+          { field: 'date', direction: 'desc' }
+        );
+        
+        recentCheckIns = [...recentCheckIns, ...classRecentCheckIns];
+      }
 
+      // Ordenar por data mais recente
+      recentCheckIns.sort((a, b) => new Date(b.date) - new Date(a.date));
       setRecentCheckIns(recentCheckIns);
     } catch (error) {
       console.error('Erro ao carregar dados de check-in:', error);
@@ -100,17 +129,36 @@ const CheckInScreen = ({ navigation }) => {
       setLoading(true);
 
       const checkInData = {
-        userId: user.uid,
-        userName: userProfile?.name || user.email,
-        academiaId: academia.id,
-        date: new Date(),
-        classId: classId,
-        className: className,
-        type: classId ? 'class' : 'general',
+        studentId: user.uid,
+        studentName: userProfile?.name || user.email,
+        date: new Date().toISOString().split('T')[0],
+        timestamp: new Date(),
         createdAt: new Date()
       };
 
-      await academyFirestoreService.create('checkins', checkInData, academia.id);
+      // Buscar a turma do aluno para fazer check-in na subcoleção
+      const studentClasses = await academyFirestoreService.getWhere(
+        'classes', 
+        'students', 
+        'array-contains', 
+        user.uid, 
+        academia.id
+      );
+      
+      if (studentClasses.length === 0) {
+        throw new Error('Nenhuma turma encontrada para este aluno');
+      }
+      
+      // Usar a turma selecionada ou a primeira encontrada
+      const targetClassId = classId || studentClasses[0].id;
+      
+      await academyFirestoreService.addSubcollectionDocument(
+        'classes',
+        targetClassId,
+        'checkIns',
+        checkInData,
+        academia.id
+      );
 
       Alert.alert(
         '✅ Check-in realizado!',
