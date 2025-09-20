@@ -40,7 +40,8 @@ const EditStudentScreen = ({ navigation, route }) => {
     emergencyPhone: '',
     medicalConditions: '',
     goals: '',
-    status: 'active'
+    status: 'active',
+    sexo: '' // 'masculino' | 'feminino' | 'outro'
   });
 
   const [errors, setErrors] = useState({});

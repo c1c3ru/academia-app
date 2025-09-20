@@ -37,11 +37,15 @@ export default function ModalityPicker({
       // Buscar modalidades usando o novo serviço
       const modalities = await academyCollectionsService.getModalities(userProfile.academiaId);
       console.log('✅ ModalityPicker: Modalidades carregadas:', modalities.length);
+      console.log('🔍 ModalityPicker: Modalidades brutas:', modalities.map(m => ({ id: m.id, name: m.name })));
       
       // Remover duplicatas baseado no ID e nome
       const uniqueModalities = modalities.filter((modality, index, self) => 
         index === self.findIndex(m => m.id === modality.id || m.name === modality.name)
       );
+      
+      console.log('🧹 ModalityPicker: Modalidades após deduplicação:', uniqueModalities.length);
+      console.log('📝 ModalityPicker: Lista final:', uniqueModalities.map(m => ({ id: m.id, name: m.name })));
       
       // Se não conseguiu carregar nenhuma modalidade, usar fallback
       if (uniqueModalities.length === 0) {
@@ -79,18 +83,30 @@ export default function ModalityPicker({
   };
 
   const handleModalityToggle = (modalityId) => {
+    console.log('🔄 ModalityPicker: Toggle clicado para modalidade:', modalityId);
+    console.log('🔄 ModalityPicker: Modalidades selecionadas antes:', selectedModalities);
+    
     const isSelected = selectedModalities.includes(modalityId);
     let newSelection;
     
     if (isSelected) {
       // Remover modalidade
       newSelection = selectedModalities.filter(id => id !== modalityId);
+      console.log('➖ ModalityPicker: Removendo modalidade:', modalityId);
     } else {
       // Adicionar modalidade
       newSelection = [...selectedModalities, modalityId];
+      console.log('➕ ModalityPicker: Adicionando modalidade:', modalityId);
     }
     
-    onModalitiesChange(newSelection);
+    console.log('🔄 ModalityPicker: Nova seleção:', newSelection);
+    
+    if (onModalitiesChange && typeof onModalitiesChange === 'function') {
+      onModalitiesChange(newSelection);
+      console.log('✅ ModalityPicker: Callback executado com sucesso');
+    } else {
+      console.error('❌ ModalityPicker: onModalitiesChange não é uma função válida:', onModalitiesChange);
+    }
   };
 
   const getModalityName = (modalityId) => {

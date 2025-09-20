@@ -171,9 +171,9 @@ const ChangePasswordScreen = ({ navigation }) => {
                 />
               }
             />
-            {errors.currentPassword && (
+            {errors.currentPassword ? (
               <HelperText type="error">{errors.currentPassword}</HelperText>
-            )}
+            ) : null}
 
             {/* Nova Senha */}
             <TextInput
@@ -191,14 +191,14 @@ const ChangePasswordScreen = ({ navigation }) => {
                 />
               }
             />
-            {errors.newPassword && (
+            {errors.newPassword ? (
               <HelperText type="error">{errors.newPassword}</HelperText>
-            )}
-            {!errors.newPassword && formData.newPassword && (
+            ) : null}
+            {!errors.newPassword && formData.newPassword ? (
               <HelperText type="info">
                 A senha deve ter pelo menos 6 caracteres
               </HelperText>
-            )}
+            ) : null}
 
             {/* Confirmar Nova Senha */}
             <TextInput
@@ -216,9 +216,9 @@ const ChangePasswordScreen = ({ navigation }) => {
                 />
               }
             />
-            {errors.confirmPassword && (
+            {errors.confirmPassword ? (
               <HelperText type="error">{errors.confirmPassword}</HelperText>
-            )}
+            ) : null}
 
             {/* Botões */}
             <View style={styles.buttonContainer}>

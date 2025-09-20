@@ -55,7 +55,8 @@ const AddStudentScreen = ({ navigation, route }) => {
     medicalConditions: '',
     goals: '',
     status: 'active',
-    userType: 'student'
+    userType: 'student',
+    sexo: '' // 'masculino' | 'feminino' | 'outro'
   });
 
   const [errors, setErrors] = useState({});
@@ -143,6 +144,10 @@ const AddStudentScreen = ({ navigation, route }) => {
 
     if (!formData.emergencyPhone.trim()) {
       newErrors.emergencyPhone = 'Telefone de emergência é obrigatório';
+    }
+
+    if (!formData.sexo.trim()) {
+      newErrors.sexo = 'Sexo é obrigatório';
     }
 
     setErrors(newErrors);
@@ -366,6 +371,29 @@ const AddStudentScreen = ({ navigation, route }) => {
               left={<TextInput.Icon icon="calendar" />}
             />
             {errors.birthDate && <HelperText type="error">{errors.birthDate}</HelperText>}
+
+            {/* Campo Sexo */}
+            <Text style={styles.fieldLabel}>Sexo *</Text>
+            <RadioButton.Group 
+              onValueChange={(value) => updateFormData('sexo', value)} 
+              value={formData.sexo}
+            >
+              <View style={styles.radioContainer}>
+                <View style={styles.radioItem}>
+                  <RadioButton value="masculino" />
+                  <Text style={styles.radioLabel}>Masculino</Text>
+                </View>
+                <View style={styles.radioItem}>
+                  <RadioButton value="feminino" />
+                  <Text style={styles.radioLabel}>Feminino</Text>
+                </View>
+                <View style={styles.radioItem}>
+                  <RadioButton value="outro" />
+                  <Text style={styles.radioLabel}>Outro</Text>
+                </View>
+              </View>
+            </RadioButton.Group>
+            {errors.sexo && <HelperText type="error">{errors.sexo}</HelperText>}
 
             <TextInput
               label="Endereço (opcional)"
@@ -693,9 +721,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     color: '#333',
   },
+  fieldLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    marginTop: 8,
+    color: '#333',
+  },
   radioContainer: {
-    marginBottom: 20,
-    marginTop: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+    marginTop: 8,
+    paddingHorizontal: 16,
   },
   radioItem: {
     flexDirection: 'row',

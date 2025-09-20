@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { 
   Card, 
@@ -44,6 +44,7 @@ const InstructorStudents = ({ navigation }) => {
   const [modalities, setModalities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [modalityButtonDisabled, setModalityButtonDisabled] = useState(false);
 
   // Auto-refresh quando a tela ganha foco
   useFocusEffect(
@@ -97,6 +98,18 @@ const InstructorStudents = ({ navigation }) => {
       let allModalities = [];
       try {
         allModalities = await academyFirestoreService.getAll('modalities', userProfile.academiaId);
+        console.log('🔍 InstructorStudents: Modalidades brutas carregadas:', allModalities.length);
+        console.log('📋 InstructorStudents: Lista de modalidades:', allModalities.map(m => ({ id: m.id, name: m.name })));
+        
+        // Remover duplicatas baseado no ID e nome
+        const uniqueModalities = allModalities.filter((modality, index, self) => 
+          index === self.findIndex(m => m.id === modality.id || m.name === modality.name)
+        );
+        
+        console.log('🧹 InstructorStudents: Modalidades após deduplicação:', uniqueModalities.length);
+        console.log('✅ InstructorStudents: Lista final:', uniqueModalities.map(m => ({ id: m.id, name: m.name })));
+        
+        allModalities = uniqueModalities;
         console.log(getString('modalitiesLoaded').replace('{count}', allModalities.length));
       } catch (modalityError) {
         console.warn(getString('errorSearchingModalities'), modalityError);
@@ -300,72 +313,132 @@ const InstructorStudents = ({ navigation }) => {
           style={styles.searchbar}
         />
         
-        <View style={styles.filterRow}>
-          <Menu
-            visible={filterVisible}
-            onDismiss={() => setFilterVisible(false)}
-            anchor={
-              <Button 
-                mode="outlined" 
-                onPress={() => setFilterVisible(true)}
-                icon="filter"
-                style={styles.filterButton}
-              >
-                {getFilterText(selectedFilter)}
-              </Button>
-            }
-          >
-            <Menu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title={getString('allStudents')} />
-            <Menu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title={getString('activeStudents')} />
-            <Menu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title={getString('inactiveStudents')} />
-            <Menu.Item onPress={() => { setSelectedFilter('payment_pending'); setFilterVisible(false); }} title={getString('paymentPendingStudents')} />
-          </Menu>
+        {/* Filtros Avançados - Linha 1 */}
+        <View style={styles.filtersRow}>
+          <View style={styles.filtersContainer}>
+            <Menu
+              visible={filterVisible}
+              onDismiss={() => setFilterVisible(false)}
+              anchor={
+                <Button 
+                  mode={selectedFilter !== 'all' ? "contained" : "outlined"}
+                  onPress={() => setFilterVisible(true)}
+                  icon="filter"
+                  style={[
+                    styles.filterButtonImproved,
+                    selectedFilter !== 'all' && styles.filterButtonActive
+                  ]}
+                  labelStyle={styles.filterButtonLabel}
+                  contentStyle={styles.filterButtonContent}
+                >
+                  {getFilterText(selectedFilter)}
+                </Button>
+              }
+            >
+              <Menu.Item onPress={() => { setSelectedFilter('all'); setFilterVisible(false); }} title={getString('allStudents')} />
+              <Menu.Item onPress={() => { setSelectedFilter('active'); setFilterVisible(false); }} title={getString('activeStudents')} />
+              <Menu.Item onPress={() => { setSelectedFilter('inactive'); setFilterVisible(false); }} title={getString('inactiveStudents')} />
+              <Menu.Item onPress={() => { setSelectedFilter('payment_pending'); setFilterVisible(false); }} title={getString('paymentPendingStudents')} />
+            </Menu>
 
-          <Menu
-            visible={genderMenuVisible}
-            onDismiss={() => setGenderMenuVisible(false)}
-            anchor={
-              <Button 
-                mode="outlined" 
-                onPress={() => setGenderMenuVisible(true)}
-                icon="account"
-                style={styles.filterButton}
-              >
-                {genderLabel(selectedGender)}
-              </Button>
-            }
-          >
-            <Menu.Item onPress={() => { setSelectedGender(''); setGenderMenuVisible(false); }} title={getString('allGenders')} />
-            <Menu.Item onPress={() => { setSelectedGender('male'); setGenderMenuVisible(false); }} title={getString('male')} />
-            <Menu.Item onPress={() => { setSelectedGender('female'); setGenderMenuVisible(false); }} title={getString('female')} />
-          </Menu>
+            <Menu
+              visible={genderMenuVisible}
+              onDismiss={() => setGenderMenuVisible(false)}
+              anchor={
+                <Button 
+                  mode={selectedGender ? "contained" : "outlined"}
+                  onPress={() => setGenderMenuVisible(true)}
+                  icon="human-male-female"
+                  style={[
+                    styles.filterButtonImproved,
+                    selectedGender && styles.filterButtonActive
+                  ]}
+                  labelStyle={styles.filterButtonLabel}
+                  contentStyle={styles.filterButtonContent}
+                >
+                  {genderLabel(selectedGender)}
+                </Button>
+              }
+            >
+              <Menu.Item onPress={() => { setSelectedGender(''); setGenderMenuVisible(false); }} title={getString('allGenders')} />
+              <Menu.Item onPress={() => { setSelectedGender('male'); setGenderMenuVisible(false); }} title={getString('male')} />
+              <Menu.Item onPress={() => { setSelectedGender('female'); setGenderMenuVisible(false); }} title={getString('female')} />
+            </Menu>
 
-          <Menu
-            visible={modalityMenuVisible}
-            onDismiss={() => setModalityMenuVisible(false)}
-            anchor={
+            {/* Dropdown de Modalidade - Integrado na mesma linha */}
+            <View style={styles.dropdownContainer}>
               <Button 
-                mode="outlined" 
-                onPress={() => setModalityMenuVisible(true)}
+                mode={selectedModalityId ? "contained" : "outlined"}
+                onPress={() => setModalityMenuVisible(!modalityMenuVisible)}
                 icon="dumbbell"
-                style={styles.filterButton}
+                style={[
+                  styles.filterButtonImproved,
+                  selectedModalityId && styles.filterButtonActive
+                ]}
+                labelStyle={styles.filterButtonLabel}
+                contentStyle={styles.filterButtonContent}
               >
                 {getModalityNameById(selectedModalityId) || getString('modality')}
               </Button>
-            }
-          >
-            <Menu.Item onPress={() => { setSelectedModalityId(''); setModalityMenuVisible(false); }} title={getString('allModalities')} />
-            {modalities.map(m => (
-              <Menu.Item key={m.id} onPress={() => { setSelectedModalityId(m.id); setModalityMenuVisible(false); }} title={m.name} />
-            ))}
-          </Menu>
+              
+              {modalityMenuVisible && (
+                <View style={styles.dropdownList}>
+                  <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={true}>
+                    <TouchableOpacity 
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setSelectedModalityId('');
+                        setModalityMenuVisible(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemText}>{getString('allModalities')}</Text>
+                    </TouchableOpacity>
+                    
+                    {modalities.map(m => (
+                      <TouchableOpacity 
+                        key={m.id}
+                        style={[
+                          styles.dropdownItem,
+                          selectedModalityId === m.id && styles.dropdownItemSelected
+                        ]}
+                        onPress={() => {
+                          setSelectedModalityId(m.id);
+                          setModalityMenuVisible(false);
+                        }}
+                      >
+                        <Text style={[
+                          styles.dropdownItemText,
+                          selectedModalityId === m.id && styles.dropdownItemTextSelected
+                        ]}>
+                          {m.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+            </View>
+          </View>
         </View>
 
+        {/* Botões de Ação dos Filtros */}
         <View style={styles.filterActionsRow}>
-          <Button mode="outlined" onPress={clearFilters} style={styles.clearButton}>
+          <Button 
+            mode="outlined" 
+            onPress={clearFilters} 
+            style={styles.clearButtonImproved}
+            icon="filter-remove"
+            labelStyle={styles.actionButtonLabel}
+          >
             {getString('clearFilters')}
           </Button>
-          <Button mode="contained" onPress={applyFilters} style={styles.applyButton}>
+          <Button 
+            mode="contained" 
+            onPress={applyFilters} 
+            style={styles.applyButtonImproved}
+            icon="check"
+            labelStyle={styles.actionButtonLabel}
+          >
             {getString('applyFilters')}
           </Button>
         </View>
@@ -587,6 +660,47 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     marginBottom: 8,
   },
+  // Novos estilos para filtros melhorados
+  filtersContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginTop: 12,
+    marginBottom: 8,
+    gap: 8,
+  },
+  filtersGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 12,
+  },
+  filterButtonImproved: {
+    flex: 1,
+    minWidth: 100,
+    maxWidth: 140,
+    borderRadius: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    marginHorizontal: 2,
+  },
+  filterButtonActive: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#4CAF50',
+  },
+  filterButtonLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterButtonContent: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  // Estilos antigos mantidos para compatibilidade
   filterRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -602,8 +716,82 @@ const styles = StyleSheet.create({
   },
   filterActionsRow: {
     flexDirection: 'row',
-    marginBottom: 8,
-    gap: 8,
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    gap: 12,
+  },
+  clearButtonImproved: {
+    flex: 1,
+    borderRadius: 20,
+    borderColor: '#FF5722',
+    borderWidth: 1.5,
+  },
+  applyButtonImproved: {
+    flex: 1,
+    borderRadius: 20,
+    backgroundColor: '#4CAF50',
+    elevation: 3,
+  },
+  actionButtonLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  menuContent: {
+    maxHeight: 300,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  filterButtonDisabled: {
+    opacity: 0.6,
+  },
+  dropdownContainer: {
+    position: 'relative',
+    flex: 1,
+    zIndex: 99999,
+    elevation: 99999,
+  },
+  dropdownList: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    elevation: 99999,
+    zIndex: 99999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    maxHeight: 200,
+    marginTop: 4,
+    borderWidth: 2,
+    borderColor: '#2196F3',
+  },
+  dropdownScroll: {
+    maxHeight: 200,
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  dropdownItemSelected: {
+    backgroundColor: '#e3f2fd',
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  dropdownItemTextSelected: {
+    color: '#1976d2',
+    fontWeight: '600',
   },
   advancedFilterInput: {
     flexGrow: 1,
