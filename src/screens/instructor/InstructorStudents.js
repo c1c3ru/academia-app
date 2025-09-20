@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity, Modal } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { 
   Card, 
@@ -365,11 +365,11 @@ const InstructorStudents = ({ navigation }) => {
               <Menu.Item onPress={() => { setSelectedGender('female'); setGenderMenuVisible(false); }} title={getString('female')} />
             </Menu>
 
-            {/* Dropdown de Modalidade - Integrado na mesma linha */}
+            {/* Dropdown de Modalidade - Usando Modal */}
             <View style={styles.dropdownContainer}>
               <Button 
                 mode={selectedModalityId ? "contained" : "outlined"}
-                onPress={() => setModalityMenuVisible(!modalityMenuVisible)}
+                onPress={() => setModalityMenuVisible(true)}
                 icon="dumbbell"
                 style={[
                   styles.filterButtonImproved,
@@ -380,43 +380,6 @@ const InstructorStudents = ({ navigation }) => {
               >
                 {getModalityNameById(selectedModalityId) || getString('modality')}
               </Button>
-              
-              {modalityMenuVisible && (
-                <View style={styles.dropdownList}>
-                  <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={true}>
-                    <TouchableOpacity 
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setSelectedModalityId('');
-                        setModalityMenuVisible(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{getString('allModalities')}</Text>
-                    </TouchableOpacity>
-                    
-                    {modalities.map(m => (
-                      <TouchableOpacity 
-                        key={m.id}
-                        style={[
-                          styles.dropdownItem,
-                          selectedModalityId === m.id && styles.dropdownItemSelected
-                        ]}
-                        onPress={() => {
-                          setSelectedModalityId(m.id);
-                          setModalityMenuVisible(false);
-                        }}
-                      >
-                        <Text style={[
-                          styles.dropdownItemText,
-                          selectedModalityId === m.id && styles.dropdownItemTextSelected
-                        ]}>
-                          {m.name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
             </View>
           </View>
         </View>
@@ -641,6 +604,57 @@ const InstructorStudents = ({ navigation }) => {
         label="Novo Aluno"
         onPress={() => navigation.navigate('AddStudent')}
       />
+
+      {/* Modal para Dropdown de Modalidade */}
+      <Modal
+        visible={modalityMenuVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setModalityMenuVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setModalityMenuVisible(false)}
+        >
+          <View style={styles.modalDropdownContainer}>
+            <View style={styles.modalDropdownList}>
+              <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={true}>
+                <TouchableOpacity 
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setSelectedModalityId('');
+                    setModalityMenuVisible(false);
+                  }}
+                >
+                  <Text style={styles.dropdownItemText}>{getString('allModalities')}</Text>
+                </TouchableOpacity>
+                
+                {modalities.map(m => (
+                  <TouchableOpacity 
+                    key={m.id}
+                    style={[
+                      styles.dropdownItem,
+                      selectedModalityId === m.id && styles.dropdownItemSelected
+                    ]}
+                    onPress={() => {
+                      setSelectedModalityId(m.id);
+                      setModalityMenuVisible(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.dropdownItemText,
+                      selectedModalityId === m.id && styles.dropdownItemTextSelected
+                    ]}>
+                      {m.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -750,31 +764,37 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   dropdownContainer: {
-    position: 'relative',
     flex: 1,
-    zIndex: 99999,
-    elevation: 99999,
   },
-  dropdownList: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: 120,
+    paddingBottom: 50,
+    paddingHorizontal: 20,
+  },
+  modalDropdownContainer: {
+    width: '80%',
+    maxWidth: 300,
+    marginTop: 40,
+    marginBottom: 20,
+  },
+  modalDropdownList: {
     backgroundColor: '#fff',
-    borderRadius: 8,
-    elevation: 99999,
-    zIndex: 99999,
+    borderRadius: 12,
+    elevation: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    maxHeight: 200,
-    marginTop: 4,
-    borderWidth: 2,
-    borderColor: '#2196F3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    maxHeight: 300,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   dropdownScroll: {
-    maxHeight: 200,
+    maxHeight: 300,
   },
   dropdownItem: {
     paddingVertical: 12,

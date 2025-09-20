@@ -80,7 +80,8 @@ service cloud.firestore {
         allow read: if isMemberOf(academiaId);
         allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
         // Temporary: allow authenticated users to create sample data
-        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
+        allow write: if isSignedIn() && (request.auth.token.email == 'cti.maracanau@ifce.edu.br' || 
+                                        request.auth.token.email == 'deppi.maracanau@ifce.edu.br');
       }
       
       // Instructors
@@ -88,7 +89,8 @@ service cloud.firestore {
         allow read: if isMemberOf(academiaId);
         allow write: if isAdminOf(academiaId);
         // Temporary: allow authenticated users to create sample data
-        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
+        allow write: if isSignedIn() && (request.auth.token.email == 'cti.maracanau@ifce.edu.br' || 
+                                        request.auth.token.email == 'deppi.maracanau@ifce.edu.br');
       }
       
       // Classes
@@ -119,7 +121,8 @@ service cloud.firestore {
         // Only admins can create/edit/delete payments
         allow write: if isAdminOf(academiaId);
         // Temporary: allow authenticated users to create sample data
-        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
+        allow write: if isSignedIn() && (request.auth.token.email == 'cti.maracanau@ifce.edu.br' || 
+                                        request.auth.token.email == 'deppi.maracanau@ifce.edu.br');
       }
       
       // Plans
@@ -127,7 +130,8 @@ service cloud.firestore {
         allow read: if isMemberOf(academiaId);
         allow write: if isAdminOf(academiaId);
         // Temporary: allow authenticated users to create sample data
-        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
+        allow write: if isSignedIn() && (request.auth.token.email == 'cti.maracanau@ifce.edu.br' || 
+                                        request.auth.token.email == 'deppi.maracanau@ifce.edu.br');
       }
       
       // Modalities
@@ -135,7 +139,8 @@ service cloud.firestore {
         allow read: if isMemberOf(academiaId);
         allow write: if isAdminOf(academiaId);
         // Temporary: allow authenticated users to create sample data
-        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
+        allow write: if isSignedIn() && (request.auth.token.email == 'cti.maracanau@ifce.edu.br' || 
+                                        request.auth.token.email == 'deppi.maracanau@ifce.edu.br');
       }
       
       // Announcements
@@ -143,7 +148,8 @@ service cloud.firestore {
         allow read: if isMemberOf(academiaId);
         allow write: if isAdminOf(academiaId);
         // Temporary: allow authenticated users to create sample data
-        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
+        allow write: if isSignedIn() && (request.auth.token.email == 'cti.maracanau@ifce.edu.br' || 
+                                        request.auth.token.email == 'deppi.maracanau@ifce.edu.br');
       }
       
       // Graduation Levels
@@ -157,7 +163,8 @@ service cloud.firestore {
         allow read: if isMemberOf(academiaId);
         allow write: if (isAdminOf(academiaId) || isInstructorOf(academiaId));
         // Temporary: allow authenticated users to create sample data
-        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
+        allow write: if isSignedIn() && (request.auth.token.email == 'cti.maracanau@ifce.edu.br' || 
+                                        request.auth.token.email == 'deppi.maracanau@ifce.edu.br');
       }
       
       // Evaluations
@@ -251,7 +258,8 @@ service cloud.firestore {
         allow read: if isMemberOf(academiaId);
         allow write: if isAdminOf(academiaId);
         // Temporary: allow authenticated users to create sample data
-        allow write: if isSignedIn() && request.auth.token.email == 'cti.maracanau@ifce.edu.br';
+        allow write: if isSignedIn() && (request.auth.token.email == 'cti.maracanau@ifce.edu.br' || 
+                                        request.auth.token.email == 'deppi.maracanau@ifce.edu.br');
       }
       
       // Audit Logs (append-only with strict access)

@@ -335,6 +335,61 @@ exports.migrateExistingUsers = functions.https.onCall(async (data, context) => {
 });
 
 /**
+ * Cloud Function para definir claims customizados manualmente
+ */
+exports.setCustomClaims = functions.https.onCall(async (data, context) => {
+  // Verificar se o usuário está autenticado
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Usuário não autenticado');
+  }
+
+  // Verificar se o usuário é admin (ou permitir para usuários específicos)
+  const allowedEmails = ['cti.maracanau@ifce.edu.br', 'deppi.maracanau@ifce.edu.br'];
+  if (context.auth.token.role !== 'admin' && !allowedEmails.includes(context.auth.token.email)) {
+    throw new functions.https.HttpsError('permission-denied', 'Apenas admins podem definir claims');
+  }
+
+  const { uid, claims } = data;
+
+  if (!uid || !claims) {
+    throw new functions.https.HttpsError('invalid-argument', 'UID e claims são obrigatórios');
+  }
+
+  try {
+    // Definir claims no token do usuário
+    await admin.auth().setCustomUserClaims(uid, claims);
+    
+    console.log(`Claims definidos para usuário ${uid}:`, claims);
+    
+    // Tentar atualizar o documento do usuário também
+    try {
+      await admin.firestore().collection('users').doc(uid).update({
+        userType: claims.role,
+        academiaId: claims.academiaId,
+        claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    } catch (updateError) {
+      // Se não conseguir atualizar em 'users', tentar em 'usuarios'
+      try {
+        await admin.firestore().collection('usuarios').doc(uid).update({
+          userType: claims.role,
+          academiaId: claims.academiaId,
+          claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (updateError2) {
+        console.log('Não foi possível atualizar documento do usuário, mas claims foram definidos');
+      }
+    }
+
+    return { success: true, uid, claims };
+
+  } catch (error) {
+    console.error('Erro ao definir claims:', error);
+    throw new functions.https.HttpsError('internal', 'Erro ao definir claims');
+  }
+});
+
+/**
  * Cloud Function para migrar coleções para nova estrutura
  */
 exports.migrateCollections = functions.https.onCall(async (data, context) => {

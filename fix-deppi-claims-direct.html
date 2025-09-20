@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrigir Claims - deppi.maracanau@ifce.edu.br</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .info {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .user-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Corrigir Claims - deppi.maracanau@ifce.edu.br</h1>
+        
+        <div class="section">
+            <h3>📋 Informações</h3>
+            <div class="user-info">
+                <strong>Usuário:</strong> deppi.maracanau@ifce.edu.br<br>
+                <strong>Academia ID Incorreto:</strong> RBPHlgc39EXphF47Qzql<br>
+                <strong>Academia ID Correto:</strong> yCRtgOHYvw7kiHmF12aw<br>
+                <strong>Novo Role:</strong> instructor
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🔍 1. Buscar Usuário</h3>
+            <button onclick="findUser()">Buscar Usuário por Email</button>
+            <div id="userResult"></div>
+        </div>
+
+        <div class="section">
+            <h3>✅ 2. Corrigir Claims</h3>
+            <button onclick="fixClaims()" id="fixButton">Corrigir Claims Agora</button>
+            <div id="fixResult"></div>
+        </div>
+
+        <div class="section">
+            <h3>📝 Log</h3>
+            <pre id="logOutput"></pre>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNGpOOKlOhKPKJGLXGtqnUGxRYGXhQZpY",
+            authDomain: "academia-app-5cf79.firebaseapp.com",
+            projectId: "academia-app-5cf79",
+            storageBucket: "academia-app-5cf79.appspot.com",
+            messagingSenderId: "1071098434699",
+            appId: "1:1071098434699:web:4a9b5e4b5c8f3d2e1f4a5b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const functions = getFunctions(app);
+
+        const TARGET_EMAIL = 'deppi.maracanau@ifce.edu.br';
+        const CORRECT_ACADEMIA_ID = 'yCRtgOHYvw7kiHmF12aw';
+        
+        let foundUserId = null;
+
+        function log(message) {
+            const timestamp = new Date().toLocaleString('pt-BR');
+            const logOutput = document.getElementById('logOutput');
+            logOutput.textContent += `[${timestamp}] ${message}\n`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+            console.log(message);
+        }
+
+        window.findUser = async function() {
+            const resultDiv = document.getElementById('userResult');
+            try {
+                log('🔍 Buscando usuário...');
+                
+                // Login como admin
+                await signInWithEmailAndPassword(auth, 'cti.maracanau@ifce.edu.br', 'senha123');
+                log('✅ Login como admin realizado');
+
+                // Buscar na coleção users
+                const usersRef = collection(db, 'users');
+                const q = query(usersRef, where('email', '==', TARGET_EMAIL));
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    querySnapshot.forEach((doc) => {
+                        foundUserId = doc.id;
+                        const userData = doc.data();
+                        resultDiv.innerHTML = `
+                            <div class="success">
+                                ✅ Usuário encontrado na coleção 'users':<br>
+                                <strong>UID:</strong> ${doc.id}<br>
+                                <strong>Email:</strong> ${userData.email}<br>
+                                <strong>Academia ID Atual:</strong> ${userData.academiaId || 'Não definido'}<br>
+                                <strong>Role Atual:</strong> ${userData.userType || userData.role || 'Não definido'}
+                            </div>
+                        `;
+                        log(`👤 Usuário encontrado: ${doc.id}`);
+                        log(`📋 Dados: ${JSON.stringify(userData, null, 2)}`);
+                    });
+                    return;
+                }
+
+                // Se não encontrou em users, buscar em usuarios
+                const usuariosRef = collection(db, 'usuarios');
+                const q2 = query(usuariosRef, where('email', '==', TARGET_EMAIL));
+                const querySnapshot2 = await getDocs(q2);
+                
+                if (!querySnapshot2.empty) {
+                    querySnapshot2.forEach((doc) => {
+                        foundUserId = doc.id;
+                        const userData = doc.data();
+                        resultDiv.innerHTML = `
+                            <div class="success">
+                                ✅ Usuário encontrado na coleção 'usuarios':<br>
+                                <strong>UID:</strong> ${doc.id}<br>
+                                <strong>Email:</strong> ${userData.email}<br>
+                                <strong>Academia ID Atual:</strong> ${userData.academiaId || 'Não definido'}<br>
+                                <strong>Role Atual:</strong> ${userData.userType || userData.role || 'Não definido'}
+                            </div>
+                        `;
+                        log(`👤 Usuário encontrado: ${doc.id}`);
+                        log(`📋 Dados: ${JSON.stringify(userData, null, 2)}`);
+                    });
+                } else {
+                    resultDiv.innerHTML = '<div class="error">❌ Usuário não encontrado em nenhuma coleção</div>';
+                    log('❌ Usuário não encontrado');
+                }
+
+            } catch (error) {
+                log(`❌ Erro ao buscar usuário: ${error.message}`);
+                resultDiv.innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+            }
+        };
+
+        window.fixClaims = async function() {
+            const resultDiv = document.getElementById('fixResult');
+            const button = document.getElementById('fixButton');
+            
+            if (!foundUserId) {
+                resultDiv.innerHTML = '<div class="error">❌ Primeiro busque o usuário</div>';
+                return;
+            }
+            
+            try {
+                button.disabled = true;
+                log('🔧 Iniciando correção das claims...');
+                
+                // Usar a Cloud Function setCustomClaims
+                const setCustomClaims = httpsCallable(functions, 'setCustomClaims');
+                
+                const result = await setCustomClaims({
+                    uid: foundUserId,
+                    claims: {
+                        academiaId: CORRECT_ACADEMIA_ID,
+                        role: 'instructor'
+                    }
+                });
+
+                log('✅ Claims corrigidos via Cloud Function');
+                log(`📊 Resultado: ${JSON.stringify(result.data, null, 2)}`);
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        ✅ Claims corrigidos com sucesso!<br>
+                        <strong>UID:</strong> ${foundUserId}<br>
+                        <strong>Nova Academia ID:</strong> ${CORRECT_ACADEMIA_ID}<br>
+                        <strong>Novo Role:</strong> instructor<br><br>
+                        <strong>⚠️ IMPORTANTE:</strong> O usuário deve fazer logout e login novamente!
+                    </div>
+                `;
+
+            } catch (error) {
+                log(`❌ Erro ao corrigir claims: ${error.message}`);
+                resultDiv.innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+            } finally {
+                button.disabled = false;
+            }
+        };
+
+        // Inicializar
+        log('🚀 Ferramenta inicializada');
+        log(`🎯 Usuário alvo: ${TARGET_EMAIL}`);
+        log(`🏥 Academia correta: ${CORRECT_ACADEMIA_ID}`);
+    </script>
+</body>
+</html>

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrigir Claims do Usuário deppi.maracanau@ifce.edu.br</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .info {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .user-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Corrigir Claims do Usuário deppi.maracanau@ifce.edu.br</h1>
+        
+        <div class="section">
+            <h3>📋 Informações do Problema</h3>
+            <div class="user-info">
+                <strong>Usuário:</strong> deppi.maracanau@ifce.edu.br<br>
+                <strong>Academia ID Atual (Incorreto):</strong> RBPHlgc39EXphF47Qzql<br>
+                <strong>Academia ID Correto:</strong> yCRtgOHYvw7kiHmF12aw<br>
+                <strong>Problema:</strong> Claims apontam para academia inexistente
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🔍 1. Verificar Claims Atuais</h3>
+            <button onclick="checkCurrentClaims()">Verificar Claims do Usuário</button>
+            <div id="currentClaimsResult"></div>
+        </div>
+
+        <div class="section">
+            <h3>🏥 2. Verificar Academia Correta</h3>
+            <button onclick="checkAcademia()">Verificar Academia yCRtgOHYvw7kiHmF12aw</button>
+            <div id="academiaResult"></div>
+        </div>
+
+        <div class="section">
+            <h3>✅ 3. Corrigir Claims</h3>
+            <button onclick="fixUserClaims()" id="fixButton">Corrigir Claims do Usuário</button>
+            <div id="fixResult"></div>
+        </div>
+
+        <div class="section">
+            <h3>🔄 4. Verificar Correção</h3>
+            <button onclick="verifyFix()">Verificar se Claims foram Corrigidos</button>
+            <div id="verifyResult"></div>
+        </div>
+
+        <div class="section">
+            <h3>📝 Log de Operações</h3>
+            <pre id="logOutput"></pre>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNGpOOKlOhKPKJGLXGtqnUGxRYGXhQZpY",
+            authDomain: "academia-app-5cf79.firebaseapp.com",
+            projectId: "academia-app-5cf79",
+            storageBucket: "academia-app-5cf79.appspot.com",
+            messagingSenderId: "1071098434699",
+            appId: "1:1071098434699:web:4a9b5e4b5c8f3d2e1f4a5b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const functions = getFunctions(app);
+
+        const TARGET_EMAIL = 'deppi.maracanau@ifce.edu.br';
+        const CORRECT_ACADEMIA_ID = 'yCRtgOHYvw7kiHmF12aw';
+        const INCORRECT_ACADEMIA_ID = 'RBPHlgc39EXphF47Qzql';
+
+        function log(message) {
+            const timestamp = new Date().toLocaleString('pt-BR');
+            const logOutput = document.getElementById('logOutput');
+            logOutput.textContent += `[${timestamp}] ${message}\n`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+            console.log(message);
+        }
+
+        window.checkCurrentClaims = async function() {
+            const resultDiv = document.getElementById('currentClaimsResult');
+            try {
+                log('🔍 Verificando claims atuais do usuário...');
+                
+                // Primeiro, fazer login como admin para ter permissões
+                await signInWithEmailAndPassword(auth, 'cti.maracanau@ifce.edu.br', 'senha123');
+                log('✅ Login como admin realizado');
+
+                // Buscar o usuário no Firestore
+                const usersRef = collection(db, 'users');
+                const q = query(usersRef, where('email', '==', TARGET_EMAIL));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    // Tentar na coleção usuarios
+                    const usuariosRef = collection(db, 'usuarios');
+                    const q2 = query(usuariosRef, where('email', '==', TARGET_EMAIL));
+                    const querySnapshot2 = await getDocs(q2);
+                    
+                    if (querySnapshot2.empty) {
+                        resultDiv.innerHTML = '<div class="error">❌ Usuário não encontrado em nenhuma coleção</div>';
+                        return;
+                    }
+                    
+                    querySnapshot2.forEach((doc) => {
+                        const userData = doc.data();
+                        resultDiv.innerHTML = `
+                            <div class="info">
+                                <strong>Usuário encontrado na coleção 'usuarios':</strong><br>
+                                ID: ${doc.id}<br>
+                                Email: ${userData.email}<br>
+                                Academia ID: ${userData.academiaId || 'Não definido'}<br>
+                                Role: ${userData.role || 'Não definido'}
+                            </div>
+                        `;
+                        log(`📋 Dados do usuário: ${JSON.stringify(userData, null, 2)}`);
+                    });
+                } else {
+                    querySnapshot.forEach((doc) => {
+                        const userData = doc.data();
+                        resultDiv.innerHTML = `
+                            <div class="info">
+                                <strong>Usuário encontrado na coleção 'users':</strong><br>
+                                ID: ${doc.id}<br>
+                                Email: ${userData.email}<br>
+                                Academia ID: ${userData.academiaId || 'Não definido'}<br>
+                                Role: ${userData.role || 'Não definido'}
+                            </div>
+                        `;
+                        log(`📋 Dados do usuário: ${JSON.stringify(userData, null, 2)}`);
+                    });
+                }
+
+            } catch (error) {
+                log(`❌ Erro ao verificar claims: ${error.message}`);
+                resultDiv.innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+            }
+        };
+
+        window.checkAcademia = async function() {
+            const resultDiv = document.getElementById('academiaResult');
+            try {
+                log('🏥 Verificando academia correta...');
+                
+                // Verificar se a academia existe
+                const academiaDoc = await getDoc(doc(db, 'academias', CORRECT_ACADEMIA_ID));
+                
+                if (academiaDoc.exists()) {
+                    const academiaData = academiaDoc.data();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ Academia encontrada:</strong><br>
+                            ID: ${CORRECT_ACADEMIA_ID}<br>
+                            Nome: ${academiaData.name || 'Não definido'}<br>
+                            Código: ${academiaData.code || 'Não definido'}
+                        </div>
+                    `;
+                    log(`🏥 Academia válida: ${JSON.stringify(academiaData, null, 2)}`);
+                } else {
+                    // Tentar na coleção gyms
+                    const gymDoc = await getDoc(doc(db, 'gyms', CORRECT_ACADEMIA_ID));
+                    if (gymDoc.exists()) {
+                        const gymData = gymDoc.data();
+                        resultDiv.innerHTML = `
+                            <div class="success">
+                                <strong>✅ Academia encontrada na coleção 'gyms':</strong><br>
+                                ID: ${CORRECT_ACADEMIA_ID}<br>
+                                Nome: ${gymData.name || 'Não definido'}<br>
+                                Código: ${gymData.code || 'Não definido'}
+                            </div>
+                        `;
+                        log(`🏥 Academia válida (gyms): ${JSON.stringify(gymData, null, 2)}`);
+                    } else {
+                        resultDiv.innerHTML = '<div class="error">❌ Academia não encontrada em nenhuma coleção</div>';
+                        log('❌ Academia não encontrada');
+                    }
+                }
+
+            } catch (error) {
+                log(`❌ Erro ao verificar academia: ${error.message}`);
+                resultDiv.innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+            }
+        };
+
+        window.fixUserClaims = async function() {
+            const resultDiv = document.getElementById('fixResult');
+            const button = document.getElementById('fixButton');
+            
+            try {
+                button.disabled = true;
+                log('🔧 Iniciando correção das claims...');
+                
+                // Buscar o usuário primeiro
+                const usersRef = collection(db, 'users');
+                const q = query(usersRef, where('email', '==', TARGET_EMAIL));
+                const querySnapshot = await getDocs(q);
+                
+                let userId = null;
+                let isInUsuarios = false;
+                
+                if (querySnapshot.empty) {
+                    // Tentar na coleção usuarios
+                    const usuariosRef = collection(db, 'usuarios');
+                    const q2 = query(usuariosRef, where('email', '==', TARGET_EMAIL));
+                    const querySnapshot2 = await getDocs(q2);
+                    
+                    if (!querySnapshot2.empty) {
+                        querySnapshot2.forEach((doc) => {
+                            userId = doc.id;
+                            isInUsuarios = true;
+                        });
+                    }
+                } else {
+                    querySnapshot.forEach((doc) => {
+                        userId = doc.id;
+                    });
+                }
+
+                if (!userId) {
+                    throw new Error('Usuário não encontrado');
+                }
+
+                log(`👤 Usuário encontrado: ${userId} (coleção: ${isInUsuarios ? 'usuarios' : 'users'})`);
+
+                // Usar Cloud Function para atualizar claims
+                const setCustomClaims = httpsCallable(functions, 'setCustomClaims');
+                
+                const result = await setCustomClaims({
+                    uid: userId,
+                    claims: {
+                        academiaId: CORRECT_ACADEMIA_ID,
+                        role: 'instructor' // Assumindo que é instrutor
+                    }
+                });
+
+                log('✅ Claims atualizados via Cloud Function');
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        ✅ Claims corrigidos com sucesso!<br>
+                        Usuário: ${userId}<br>
+                        Nova Academia ID: ${CORRECT_ACADEMIA_ID}<br>
+                        <strong>⚠️ O usuário precisa fazer logout e login novamente para que as mudanças tenham efeito.</strong>
+                    </div>
+                `;
+
+            } catch (error) {
+                log(`❌ Erro ao corrigir claims: ${error.message}`);
+                resultDiv.innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+            } finally {
+                button.disabled = false;
+            }
+        };
+
+        window.verifyFix = async function() {
+            const resultDiv = document.getElementById('verifyResult');
+            try {
+                log('🔄 Verificando se a correção foi aplicada...');
+                
+                // Verificar se o usuário consegue acessar a nova academia
+                await checkCurrentClaims();
+                
+                resultDiv.innerHTML = `
+                    <div class="info">
+                        ℹ️ Verificação concluída. Confira os dados acima.<br>
+                        <strong>Lembre-se:</strong> O usuário deve fazer logout e login para que as claims sejam atualizadas no cliente.
+                    </div>
+                `;
+
+            } catch (error) {
+                log(`❌ Erro na verificação: ${error.message}`);
+                resultDiv.innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+            }
+        };
+
+        // Inicializar
+        log('🚀 Ferramenta de correção de claims inicializada');
+        log(`🎯 Usuário alvo: ${TARGET_EMAIL}`);
+        log(`🏥 Academia correta: ${CORRECT_ACADEMIA_ID}`);
+        log(`❌ Academia incorreta: ${INCORRECT_ACADEMIA_ID}`);
+    </script>
+</body>
+</html>

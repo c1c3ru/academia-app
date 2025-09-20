@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider, signOut, signInWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import useAuthStore from '../stores/authStore';
@@ -460,6 +460,34 @@ export const useAuthMigration = () => {
     }
   };
 
+  // Função de cadastro
+  const signUp = async (email, password, userData) => {
+    try {
+      console.log('📝 Iniciando cadastro para:', email);
+      
+      const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Criar perfil do usuário na coleção 'users'
+      await setDoc(doc(db, 'users', firebaseUser.uid), {
+        ...userData,
+        email,
+        userType: userData.userType || 'student', // Padrão para student
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      console.log('✅ Usuário criado com sucesso:', firebaseUser.uid);
+      
+      // Carregar perfil do usuário
+      await fetchUserProfile(firebaseUser.uid, firebaseUser);
+      
+      return firebaseUser;
+    } catch (error) {
+      console.error('❌ Erro no cadastro:', error);
+      throw error;
+    }
+  };
+
   // Função de logout
   const logoutUser = async () => {
     try {
@@ -491,6 +519,7 @@ export const useAuthMigration = () => {
     login,
     logout: logoutUser,
     signIn,
+    signUp,
     setUser,
     setUserProfile,
     setAcademia,
