@@ -621,27 +621,33 @@ const CheckIn = ({ navigation }) => {
           <Title style={styles.modalTitle}>Check-in Manual</Title>
           
           {/* Seleção de Turma */}
-          <Text style={styles.modalSubtitle}>Selecione a turma:</Text>
-          <ScrollView style={styles.classSelection} horizontal showsHorizontalScrollIndicator={false}>
-            {classes.map((classItem) => (
-              <Chip
-                key={classItem.id}
-                selected={selectedClass?.id === classItem.id}
-                onPress={() => {
-                  setSelectedClass(classItem);
-                  // Limpar seleções anteriores ao trocar de turma
-                  setSelectedStudents(new Set());
-                  setStudentsWithCheckIn(new Set());
-                  // Carregar check-ins da nova turma
-                  setTimeout(() => loadTodayCheckIns(), 100);
-                }}
-                style={styles.classChip}
-                mode={selectedClass?.id === classItem.id ? 'flat' : 'outlined'}
-              >
-                {classItem.name}
-              </Chip>
-            ))}
-          </ScrollView>
+          <View style={styles.classSelectionContainer}>
+            <Text style={styles.modalSubtitle}>Selecione a turma:</Text>
+            <View style={styles.classGrid}>
+              {classes.map((classItem) => (
+                <Button
+                  key={classItem.id}
+                  mode={selectedClass?.id === classItem.id ? 'contained' : 'outlined'}
+                  onPress={() => {
+                    setSelectedClass(classItem);
+                    // Limpar seleções anteriores ao trocar de turma
+                    setSelectedStudents(new Set());
+                    setStudentsWithCheckIn(new Set());
+                    // Carregar check-ins da nova turma
+                    setTimeout(() => loadTodayCheckIns(), 100);
+                  }}
+                  style={[
+                    styles.classButton,
+                    selectedClass?.id === classItem.id && styles.classButtonSelected
+                  ]}
+                  labelStyle={styles.classButtonLabel}
+                  icon={selectedClass?.id === classItem.id ? 'check-circle' : 'account-group'}
+                >
+                  {classItem.name}
+                </Button>
+              ))}
+            </View>
+          </View>
 
           {/* Busca de Alunos */}
           <Searchbar
@@ -769,8 +775,17 @@ const CheckIn = ({ navigation }) => {
               mode="outlined"
               onPress={() => setManualCheckInVisible(false)}
               style={styles.modalButton}
+              icon="close"
             >
               Cancelar
+            </Button>
+            <Button
+              mode="contained"
+              onPress={() => setManualCheckInVisible(false)}
+              style={[styles.modalButton, styles.closeButton]}
+              icon="check"
+            >
+              Concluir
             </Button>
             {selectedStudents.size > 0 && (
               <Button
@@ -779,6 +794,7 @@ const CheckIn = ({ navigation }) => {
                 loading={batchProcessing}
                 disabled={!selectedClass || batchProcessing}
                 style={[styles.modalButton, styles.batchCheckInButton]}
+                icon="account-multiple-check"
               >
                 Check-in em Lote ({selectedStudents.size})
               </Button>
@@ -1009,18 +1025,46 @@ const styles = StyleSheet.create({
     borderColor: '#4CAF50',
   },
   modalSubtitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#333',
-  },
-  classSelection: {
-    maxHeight: 60,
+    fontSize: 18,
+    fontWeight: '700',
     marginBottom: 16,
+    color: '#333',
+    textAlign: 'center',
   },
-  classChip: {
-    marginRight: 8,
+  classSelectionContainer: {
+    marginBottom: 20,
+  },
+  classGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  classButton: {
+    flex: 1,
+    minWidth: '45%',
     marginBottom: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    elevation: 2,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      },
+    }),
+  },
+  classButtonSelected: {
+    backgroundColor: '#4CAF50',
+    elevation: 4,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 4px 8px rgba(76,175,80,0.3)',
+      },
+    }),
+  },
+  classButtonLabel: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   searchbar: {
     marginBottom: 16,
@@ -1031,10 +1075,20 @@ const styles = StyleSheet.create({
   },
   modalActions: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
   },
   modalButton: {
-    minWidth: 120,
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  closeButton: {
+    backgroundColor: '#2196F3',
   },
 });
 
